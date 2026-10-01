@@ -1,0 +1,43 @@
+{
+  "asset": {
+    "generator": "glTF-Transform v4.5.0",
+    "version": "2.0"
+  },
+  "nodes": [
+    {
+      "name": "NozzleAnchors",
+      "extras": {
+        "note": "no spray rig: the foam cannon is presented as a component, not as a discharge effect"
+      }
+    },
+    {
+      "name": "4CU_TRAILER",
+      "extras": {
+        "asset": "Inferno Attac Trailer (4CU) - web production asset",
+        "units": "metres",
+        "source": "4CU_TRAILER_WEB_v01.blend <- 4CU Trailer.blend (collections Trailer + Inferno_Unit); Phase 67 asset upgrade + cutaway",
+        "scale_source": "cad-derived: Cylinder_1-4 = Ritestand Fusion assembly 'Assembly inferno attac unit v4' (mm), cylinder 0.608 x 0.990 m",
+        "feature_id_attribute": "_FEATURE_ID_0 (float per vertex, index into node extras 'features')"
+      },
+      "children": [
+        0
+      ]
+    }
+  ],
+  "scenes": [
+    {
+      "name": "4CU_EXPORT",
+      "nodes": [
+        1
+      ]
+    }
+  ],
+  "scene": 0,
+  "extensionsUsed": [
+    "KHR_materials_clearcoat",
+    "KHR_texture_basisu"
+  ],
+  "extensionsRequired": [
+    "KHR_texture_basisu"
+  ]
+}

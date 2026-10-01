@@ -1,0 +1,506 @@
+{
+ "schema": "inferno.asset/1",
+ "asset": "4CU_TRAILER",
+ "product": "4cu-trailer",
+ "assetVersion": 3,
+ "base": "4cu-trailer/",
+ "rig": "4CU_rig.gltf",
+ "lods": [
+  "4CU_LOD0.gltf",
+  "4CU_LOD1.gltf",
+  "4CU_LOD2.gltf"
+ ],
+ "defaultLOD": 0,
+ "sprayAxisLocal": "+Y",
+ "viewerYaw": 0.0,
+ "units": "metres",
+ "worldSizeM": [
+  2.1295,
+  3.3998,
+  2.3934
+ ],
+ "boundsM": {
+  "min": [
+   -1.0648,
+   -1.6999,
+   0.0
+  ],
+  "max": [
+   1.0648,
+   1.6999,
+   2.3934
+  ],
+  "axes": "Blender X, Y, Z (Z up); drawbar = +Y; tyres on z = 0, footprint centred"
+ },
+ "scale": {
+  "factorFromSource": 0.1111111,
+  "source": "cad-derived",
+  "status": "verify",
+  "published": false
+ },
+ "featureIdAttribute": "_FEATURE_ID_0",
+ "features": {
+  "4CU_CANNON": "foam-cannon",
+  "4CU_MANIFOLD_BODY": "manifold",
+  "4CU_MANIFOLD_HOSES": "manifold",
+  "4CU_CYLINDER_1": "cylinders",
+  "4CU_CYLINDER_2": "cylinders",
+  "4CU_CYLINDER_3": "cylinders",
+  "4CU_CYLINDER_4": "cylinders",
+  "4CU_LABEL_1": "cylinders",
+  "4CU_LABEL_2": "cylinders",
+  "4CU_LABEL_3": "cylinders",
+  "4CU_LABEL_4": "cylinders",
+  "4CU_VALVE_1": "valve-gauge",
+  "4CU_VALVE_2": "valve-gauge",
+  "4CU_VALVE_3": "valve-gauge",
+  "4CU_VALVE_4": "valve-gauge",
+  "4CU_SUPPLY_HOSE": "supply-hose",
+  "4CU_REEL": "hose-reel",
+  "4CU_REEL_HOSE": "hose-nozzle",
+  "4CU_NOZZLE": "hose-nozzle",
+  "4CU_FRAME": "unit-frame",
+  "4CU_TRAILER_BODY": "trailer",
+  "4CU_WHEEL_L": "trailer",
+  "4CU_WHEEL_R": "trailer",
+  "4CU_COUPLING": "trailer",
+  "4CU_JOCKEY": "trailer"
+ },
+ "anchors": [],
+ "views": {
+  "full": true,
+  "system": "the trailer (LODn_Vehicle) fades out",
+  "cutaway": "the host cylinder (LODn_CylinderCut) is replaced by its pre-cut version (cutaway), fetched on first use",
+  "gun": "the foam cannon (LODn_Cannon) framed where it is mounted; aims at the pointer, foam stream on activation (Phase 82)"
+ },
+ "cutaway": {
+  "gltf": "4CU_CUTAWAY.gltf?v=82",
+  "hostGroups": [
+   "CylinderCut"
+  ],
+  "focusFeatures": [
+   "4CU_CYLINDER_3",
+   "4CU_LABEL_3"
+  ],
+  "view": {
+   "direction": [
+    -0.7957,
+    0.0,
+    -0.6057
+   ],
+   "elevation": 25,
+   "fill": 0.85
+  },
+  "metrics": {
+   "tris": 24902,
+   "brotliMB": 0.118,
+   "materials": 11,
+   "texturesShared": [
+    "4CU_LABEL_BaseColor_2048x1448",
+    "4CU_CYL_ORM_2K",
+    "4CU_CYL_BaseColor_2K"
+   ],
+   "texturesOwn": [
+    "4CU_FOAM_Normal_1K",
+    "4CU_FOAM_ORM_2K",
+    "4CU_FOAM_BaseColor_2K"
+   ],
+   "texturesOwnKTX2MB": 2.672,
+   "gpuTexturesOwnMB": 12.0
+  }
+ },
+ "presentation": {
+  "default": "derived by the locked ProductCamera from the asset hull; the product's turn is viewerYaw",
+  "components": "products/4cu-trailer.json components[].camera (view, azimuth, elevation, fill)"
+ },
+ "textures": [
+  {
+   "file": "textures/4CU_CAN_BaseColor_1K.ktx2",
+   "set": "CAN",
+   "map": "BaseColor",
+   "size": [
+    1024,
+    1024
+   ],
+   "kb": 159.2
+  },
+  {
+   "file": "textures/4CU_CAN_ORM_1K.ktx2",
+   "set": "CAN",
+   "map": "ORM",
+   "size": [
+    1024,
+    1024
+   ],
+   "kb": 585.7
+  },
+  {
+   "file": "textures/4CU_CAN_Normal_1K.ktx2",
+   "set": "CAN",
+   "map": "Normal",
+   "size": [
+    1024,
+    1024
+   ],
+   "kb": 569.3
+  },
+  {
+   "file": "textures/4CU_VAL_BaseColor_1K.ktx2",
+   "set": "VAL",
+   "map": "BaseColor",
+   "size": [
+    1024,
+    1024
+   ],
+   "kb": 99.0
+  },
+  {
+   "file": "textures/4CU_VAL_ORM_1K.ktx2",
+   "set": "VAL",
+   "map": "ORM",
+   "size": [
+    1024,
+    1024
+   ],
+   "kb": 571.0
+  },
+  {
+   "file": "textures/4CU_VAL_Normal_1K.ktx2",
+   "set": "VAL",
+   "map": "Normal",
+   "size": [
+    1024,
+    1024
+   ],
+   "kb": 590.6
+  },
+  {
+   "file": "textures/4CU_CYL_BaseColor_2K.ktx2",
+   "set": "CYL",
+   "map": "BaseColor",
+   "size": [
+    2048,
+    2048
+   ],
+   "kb": 259.6
+  },
+  {
+   "file": "textures/4CU_CYL_ORM_2K.ktx2",
+   "set": "CYL",
+   "map": "ORM",
+   "size": [
+    2048,
+    2048
+   ],
+   "kb": 1618.4
+  },
+  {
+   "file": "textures/4CU_REEL_BaseColor_2K.ktx2",
+   "set": "REEL",
+   "map": "BaseColor",
+   "size": [
+    2048,
+    2048
+   ],
+   "kb": 501.7
+  },
+  {
+   "file": "textures/4CU_REEL_ORM_2K.ktx2",
+   "set": "REEL",
+   "map": "ORM",
+   "size": [
+    2048,
+    2048
+   ],
+   "kb": 2399.6
+  },
+  {
+   "file": "textures/4CU_REEL_Normal_1K.ktx2",
+   "set": "REEL",
+   "map": "Normal",
+   "size": [
+    1024,
+    1024
+   ],
+   "kb": 593.5
+  },
+  {
+   "file": "textures/4CU_FRM_BaseColor_2K.ktx2",
+   "set": "FRM",
+   "map": "BaseColor",
+   "size": [
+    2048,
+    2048
+   ],
+   "kb": 271.2
+  },
+  {
+   "file": "textures/4CU_FRM_ORM_2K.ktx2",
+   "set": "FRM",
+   "map": "ORM",
+   "size": [
+    2048,
+    2048
+   ],
+   "kb": 1671.6
+  },
+  {
+   "file": "textures/4CU_FRM_Normal_512.ktx2",
+   "set": "FRM",
+   "map": "Normal",
+   "size": [
+    512,
+    512
+   ],
+   "kb": 105.7
+  },
+  {
+   "file": "textures/4CU_TRL_BaseColor_2K.ktx2",
+   "set": "TRL",
+   "map": "BaseColor",
+   "size": [
+    2048,
+    2048
+   ],
+   "kb": 559.4
+  },
+  {
+   "file": "textures/4CU_TRL_ORM_2K.ktx2",
+   "set": "TRL",
+   "map": "ORM",
+   "size": [
+    2048,
+    2048
+   ],
+   "kb": 2185.6
+  },
+  {
+   "file": "textures/4CU_TRL_Normal_1K.ktx2",
+   "set": "TRL",
+   "map": "Normal",
+   "size": [
+    1024,
+    1024
+   ],
+   "kb": 467.2
+  },
+  {
+   "file": "textures/4CU_GEAR_BaseColor_1K.ktx2",
+   "set": "GEAR",
+   "map": "BaseColor",
+   "size": [
+    1024,
+    1024
+   ],
+   "kb": 257.5
+  },
+  {
+   "file": "textures/4CU_GEAR_ORM_1K.ktx2",
+   "set": "GEAR",
+   "map": "ORM",
+   "size": [
+    1024,
+    1024
+   ],
+   "kb": 649.3
+  },
+  {
+   "file": "textures/4CU_GEAR_Normal_1K.ktx2",
+   "set": "GEAR",
+   "map": "Normal",
+   "size": [
+    1024,
+    1024
+   ],
+   "kb": 633.9
+  },
+  {
+   "file": "textures/4CU_GAUGE_BaseColor_256x256.ktx2",
+   "set": "GAUGE",
+   "map": "BaseColor",
+   "size": [
+    256,
+    256
+   ],
+   "kb": 51.8
+  },
+  {
+   "file": "textures/4CU_LABEL_BaseColor_2048x1448.ktx2",
+   "set": "LABEL",
+   "map": "BaseColor",
+   "size": [
+    2048,
+    1448
+   ],
+   "kb": 1085.8
+  },
+  {
+   "file": "textures/4CU_PLATE_BaseColor_512x144.ktx2",
+   "set": "PLATE",
+   "map": "BaseColor",
+   "size": [
+    512,
+    144
+   ],
+   "kb": 46.6
+  },
+  {
+   "file": "textures/4CU_WHEEL_BaseColor_2K.ktx2",
+   "set": "WHEEL",
+   "map": "BaseColor",
+   "size": [
+    2048,
+    2048
+   ],
+   "kb": 635.7
+  },
+  {
+   "file": "textures/4CU_WHEEL_ORM_2K.ktx2",
+   "set": "WHEEL",
+   "map": "ORM",
+   "size": [
+    2048,
+    2048
+   ],
+   "kb": 3154.8
+  },
+  {
+   "file": "textures/4CU_WHEEL_Normal_2K.ktx2",
+   "set": "WHEEL",
+   "map": "Normal",
+   "size": [
+    2048,
+    2048
+   ],
+   "kb": 3123.5
+  }
+ ],
+ "materials": [
+  "BAKED_CAN",
+  "BAKED_CYL_PAINT_CUTHOST",
+  "BAKED_LABEL_CUTHOST",
+  "BAKED_CYL_PAINT",
+  "BAKED_LABEL",
+  "BAKED_FRM_PAINT_BLACK",
+  "BAKED_REEL",
+  "BAKED_REEL_PAINT",
+  "BAKED_VAL",
+  "BAKED_GAUGE_DIAL",
+  "BAKED_GEAR",
+  "BAKED_GEAR_PAINT_BLACK",
+  "BAKED_GEAR_PAINT_RED",
+  "BAKED_TRL_PAINT_RED",
+  "BAKED_TRL_PAINT_BLACK",
+  "BAKED_TRL",
+  "BAKED_PLATE",
+  "BAKED_WHEEL"
+ ],
+ "metrics": {
+  "tris": {
+   "LOD0": 338967,
+   "LOD1": 83654,
+   "LOD2": 53722
+  },
+  "brotliMB": {
+   "LOD0": 2.051,
+   "LOD1": 0.876,
+   "LOD2": 0.68
+  },
+  "texturesKTX2MB": 23.395,
+  "gpuTexturesMB": 77.6,
+  "textureSets": {
+   "CAN": "1K",
+   "VAL": "1K",
+   "CYL": "2K",
+   "REEL": "2K",
+   "FRM": "2K",
+   "TRL": "2K",
+   "GEAR": "1K",
+   "WHEEL": "2K"
+  },
+  "materials": 18,
+  "primitivesPerLOD": 20,
+  "sourceTrisAfterModifiers": 2201994,
+  "normalMaps": {
+   "CAN": "1K",
+   "VAL": "1K",
+   "REEL": "1K",
+   "FRM": "512",
+   "TRL": "1K",
+   "GEAR": "1K",
+   "WHEEL": "2K"
+  }
+ },
+ "gun": {
+  "groups": [
+   "Cannon"
+  ],
+  "focusFeatures": [
+   "4CU_CANNON"
+  ],
+  "view": {
+   "direction": [
+    -0.6,
+    0.0,
+    -0.8
+   ],
+   "elevation": 22,
+   "fill": 0.55,
+   "note": "the cannon from the unit's front three-quarter (asset frame, glTF Y up)"
+  },
+  "rig": {
+   "joint": [
+    0.00849,
+    1.71335,
+    0.36247
+   ],
+   "headPivot": [
+    -0.07718,
+    2.18335,
+    0.3627
+   ],
+   "muzzle": [
+    0.07534,
+    2.18335,
+    -0.07437
+   ],
+   "direction": [
+    0.0404,
+    -0.0026,
+    -0.9992
+   ],
+   "head": {
+    "0": [
+     [
+      0,
+      6629
+     ],
+     [
+      9453,
+      64
+     ]
+    ],
+    "1": [
+     [
+      0,
+      1752
+     ],
+     [
+      2540,
+      50
+     ]
+    ],
+    "2": [
+     [
+      0,
+      902
+     ],
+     [
+      1226,
+      4
+     ]
+    ]
+   }
+  }
+ }
+}

@@ -1,0 +1,517 @@
+{
+ "schema": "inferno.product/2",
+ "id": "4cu-trailer",
+ "identity": {
+  "name": {
+   "value": "Inferno Attac Trailer",
+   "status": "published"
+  },
+  "code": {
+   "value": "FS-INF-002",
+   "status": "published"
+  },
+  "shortDescription": {
+   "value": "Towable 4-cylinder foam unit, 31 m cannon range.",
+   "status": "published"
+  },
+  "category": {
+   "value": "Trailer-mounted",
+   "status": "published"
+  },
+  "tagline": {
+   "value": null,
+   "status": "required"
+  },
+  "status": {
+   "value": null,
+   "status": "required"
+  },
+  "internalName": {
+   "value": "4CU Trailer",
+   "status": "derived"
+  },
+  "logo": {
+   "value": "images/IA_Trailer.png",
+   "status": "published"
+  }
+ },
+ "overview": {
+  "title": {
+   "value": "Overview",
+   "status": "derived"
+  },
+  "body": {
+   "value": "The Quick Response Foam Unit on a towable trailer chassis. Up to four cylinders, foam cannon reaches 31 m, or branch hose in firm jet or wide mist mode. Mounts on any vehicle or mobile platform — no modification needed. No startup time, ready as soon as ball valves open.",
+   "status": "published"
+  },
+  "media": {
+   "value": null,
+   "status": "required"
+  }
+ },
+ "keyFeatures": [
+  {
+   "id": "towable-chassis",
+   "title": "Towable trailer chassis",
+   "description": "The Quick Response Foam Unit on a towable trailer chassis.",
+   "componentId": null,
+   "status": "derived"
+  },
+  {
+   "id": "four-cylinders",
+   "title": "Up to four cylinders",
+   "description": "Up to four cylinders, foam cannon reaches 31 m, or branch hose in firm jet or wide mist mode.",
+   "componentId": null,
+   "status": "derived"
+  },
+  {
+   "id": "no-modification",
+   "title": "No vehicle modification",
+   "description": "Mounts on any vehicle or mobile platform — no modification needed.",
+   "componentId": null,
+   "status": "derived"
+  },
+  {
+   "id": "no-startup-time",
+   "title": "No startup time",
+   "description": "No startup time, ready as soon as ball valves open.",
+   "componentId": null,
+   "status": "derived"
+  }
+ ],
+ "applications": [],
+ "specificationGroups": [
+  {
+   "id": "agent",
+   "title": "Agent"
+  },
+  {
+   "id": "operating",
+   "title": "Operating conditions"
+  },
+  {
+   "id": "delivery",
+   "title": "Delivery"
+  },
+  {
+   "id": "unit",
+   "title": "Unit"
+  }
+ ],
+ "specifications": [
+  {
+   "id": "product-code",
+   "label": "Product Code",
+   "value": "FS-INF-002",
+   "unit": null,
+   "group": null,
+   "key": true,
+   "status": "published"
+  },
+  {
+   "id": "agent",
+   "label": "Extinguishing Agent",
+   "value": "Water + 1% Telesolv foam",
+   "unit": null,
+   "group": "agent",
+   "key": true,
+   "status": "published"
+  },
+  {
+   "id": "agent-weight",
+   "label": "Agent Weight",
+   "value": "4 × 55 kg (220 kg)",
+   "unit": null,
+   "group": "agent",
+   "key": true,
+   "status": "verify"
+  },
+  {
+   "id": "propellant",
+   "label": "Propellant",
+   "value": "Air or nitrogen",
+   "unit": null,
+   "group": "agent",
+   "key": false,
+   "status": "published"
+  },
+  {
+   "id": "working-pressure",
+   "label": "Working Pressure (20°C)",
+   "value": 17,
+   "unit": "bar",
+   "group": "operating",
+   "key": false,
+   "status": "published"
+  },
+  {
+   "id": "working-temperature",
+   "label": "Working Temperature",
+   "value": "+5°C to +60°C",
+   "unit": null,
+   "group": "operating",
+   "key": false,
+   "status": "published"
+  },
+  {
+   "id": "weight-empty",
+   "label": "Weight (empty)",
+   "value": 170,
+   "unit": "kg",
+   "group": "unit",
+   "key": false,
+   "status": "verify"
+  },
+  {
+   "id": "dimensions",
+   "label": "Dimensions W×D×H",
+   "value": "1.5 × 1.0 × 0.85 m",
+   "unit": null,
+   "group": "unit",
+   "key": false,
+   "status": "verify"
+  },
+  {
+   "id": "hose-length",
+   "label": "Hose Length",
+   "value": 20,
+   "unit": "m",
+   "group": "delivery",
+   "key": false,
+   "status": "published"
+  },
+  {
+   "id": "cannon-range",
+   "label": "Cannon Range (2 / 3 / 4 cyl)",
+   "value": "26 / 29 / 31 m",
+   "unit": null,
+   "group": "delivery",
+   "key": false,
+   "status": "published"
+  },
+  {
+   "id": "cannon-duration",
+   "label": "Cannon Duration (1–4 cyl)",
+   "value": "120 – 480 s",
+   "unit": null,
+   "group": "delivery",
+   "key": false,
+   "status": "published"
+  },
+  {
+   "id": "gun-pro-foam",
+   "label": "Gun Pro — Foam Mode",
+   "value": "17–20 m, 125–500 s",
+   "unit": null,
+   "group": "delivery",
+   "key": false,
+   "status": "published"
+  },
+  {
+   "id": "gun-pro-mist",
+   "label": "Gun Pro — Mist Mode",
+   "value": "5–9 m, 175–700 s",
+   "unit": null,
+   "group": "delivery",
+   "key": false,
+   "status": "published"
+  }
+ ],
+ "media": {
+  "hero": {
+   "src": "images/drawer-trailer.png",
+   "alt": "Inferno Attac Trailer",
+   "status": "published"
+  },
+  "gallery": []
+ },
+ "seo": {
+  "title": {
+   "value": "Inferno Attac Trailer | Ritestand Fire",
+   "status": "derived"
+  },
+  "description": {
+   "value": "Towable 4-cylinder foam unit with a 31 m foam cannon.",
+   "status": "derived"
+  }
+ },
+ "viewer": {
+  "presentation": {
+   "modes": {
+    "full": true,
+    "system": true,
+    "gun": true,
+    "cutaway": true
+   },
+   "systemContext": "ghost"
+  },
+  "asset": "models/4cu-trailer.asset.json?v=3",
+  "assetClass": {
+   "value": "production",
+   "status": "derived"
+  },
+  "scale": {
+   "value": "cad-derived",
+   "status": "verify"
+  }
+ },
+ "componentCategories": [
+  {
+   "id": "fire-suppression",
+   "name": "Fire suppression",
+   "description": "The 4CU's suppression parts in this 3D model.",
+   "components": [
+    "foam-cannon",
+    "manifold",
+    "cylinders",
+    "valve-gauge",
+    "supply-hose",
+    "hose-reel",
+    "hose-nozzle",
+    "unit-frame"
+   ]
+  },
+  {
+   "id": "trailer",
+   "name": "Trailer",
+   "description": "The towable carrier the unit is mounted on in this 3D model.",
+   "components": [
+    "trailer"
+   ]
+  }
+ ],
+ "components": [
+  {
+   "id": "foam-cannon",
+   "name": "Foam cannon",
+   "shortDescription": "The unit's foam cannon on its swan-neck, with the twin handles, as modelled.",
+   "features": {
+    "ids": [
+     "4CU_CANNON"
+    ]
+   },
+   "camera": {
+    "azimuth": 35,
+    "elevation": 22
+   },
+   "interaction": {
+    "touchTolerancePx": 12
+   },
+   "information": [
+    {
+     "key": "System",
+     "val": "Fire suppression"
+    },
+    {
+     "key": "Parts in this 3D model",
+     "val": "Barrel, swan-neck, handles"
+    },
+    {
+     "key": "Cannon Range (2 / 3 / 4 cyl)",
+     "val": "26 / 29 / 31 m"
+    },
+    {
+     "key": "Cannon Duration (1–4 cyl)",
+     "val": "120 – 480 s"
+    }
+   ]
+  },
+  {
+   "id": "manifold",
+   "name": "Manifold",
+   "shortDescription": "The collector that joins the four cylinder lines and feeds the cannon, as modelled.",
+   "features": {
+    "ids": [
+     "4CU_MANIFOLD_BODY",
+     "4CU_MANIFOLD_HOSES"
+    ]
+   },
+   "camera": {
+    "azimuth": 35,
+    "elevation": 35
+   },
+   "information": [
+    {
+     "key": "System",
+     "val": "Fire suppression"
+    },
+    {
+     "key": "Parts in this 3D model",
+     "val": "Collector, stand pipe, flange, four hoses, fittings"
+    }
+   ]
+  },
+  {
+   "id": "cylinders",
+   "name": "Cylinders",
+   "shortDescription": "The unit's four cylinders with their product labels, as modelled.",
+   "features": {
+    "ids": [
+     "4CU_CYLINDER_1",
+     "4CU_CYLINDER_2",
+     "4CU_CYLINDER_3",
+     "4CU_CYLINDER_4",
+     "4CU_LABEL_1",
+     "4CU_LABEL_2",
+     "4CU_LABEL_3",
+     "4CU_LABEL_4"
+    ]
+   },
+   "camera": {
+    "azimuth": 40,
+    "elevation": 20
+   },
+   "information": [
+    {
+     "key": "System",
+     "val": "Fire suppression"
+    },
+    {
+     "key": "Parts in this 3D model",
+     "val": "4 cylinders, 4 labels"
+    }
+   ]
+  },
+  {
+   "id": "valve-gauge",
+   "name": "Cylinder valves & gauges",
+   "shortDescription": "The valve heads with lever valves and pressure gauges on the four cylinders, as modelled.",
+   "features": {
+    "ids": [
+     "4CU_VALVE_1",
+     "4CU_VALVE_2",
+     "4CU_VALVE_3",
+     "4CU_VALVE_4"
+    ]
+   },
+   "camera": {
+    "azimuth": 40,
+    "elevation": 30
+   },
+   "interaction": {
+    "touchTolerancePx": 12
+   },
+   "information": [
+    {
+     "key": "System",
+     "val": "Fire suppression"
+    },
+    {
+     "key": "Parts in this 3D model",
+     "val": "4 valve heads with gauges"
+    }
+   ]
+  },
+  {
+   "id": "supply-hose",
+   "name": "Supply hose",
+   "shortDescription": "The hose that feeds the hose reel from the manifold, as modelled.",
+   "features": {
+    "ids": [
+     "4CU_SUPPLY_HOSE"
+    ]
+   },
+   "interaction": {
+    "touchTolerancePx": 12
+   },
+   "information": [
+    {
+     "key": "System",
+     "val": "Fire suppression"
+    },
+    {
+     "key": "Parts in this 3D model",
+     "val": "Riser hose, deck hose, reel inlet fitting"
+    }
+   ]
+  },
+  {
+   "id": "hose-reel",
+   "name": "Hose reel",
+   "shortDescription": "The hose reel with its crank and inlet valve, as modelled.",
+   "features": {
+    "ids": [
+     "4CU_REEL"
+    ]
+   },
+   "information": [
+    {
+     "key": "System",
+     "val": "Fire suppression"
+    },
+    {
+     "key": "Parts in this 3D model",
+     "val": "Reel, inlet valve"
+    }
+   ]
+  },
+  {
+   "id": "hose-nozzle",
+   "name": "Hose & nozzle",
+   "shortDescription": "The hose on the reel and its hand-held nozzle, as modelled.",
+   "features": {
+    "ids": [
+     "4CU_REEL_HOSE",
+     "4CU_NOZZLE"
+    ]
+   },
+   "information": [
+    {
+     "key": "System",
+     "val": "Fire suppression"
+    },
+    {
+     "key": "Parts in this 3D model",
+     "val": "Hose, hand-held nozzle"
+    }
+   ]
+  },
+  {
+   "id": "unit-frame",
+   "name": "Cylinder frame",
+   "shortDescription": "The black frame that holds the cylinders and carries the cannon, as modelled.",
+   "features": {
+    "ids": [
+     "4CU_FRAME"
+    ]
+   },
+   "information": [
+    {
+     "key": "System",
+     "val": "Fire suppression"
+    },
+    {
+     "key": "Parts in this 3D model",
+     "val": "Posts, cross members, brackets, top plate"
+    }
+   ]
+  },
+  {
+   "id": "trailer",
+   "name": "Trailer",
+   "shortDescription": "The towable trailer: chassis, deck, running gear, lights, coupling and jockey wheel, as modelled.",
+   "features": {
+    "ids": [
+     "4CU_TRAILER_BODY",
+     "4CU_WHEEL_L",
+     "4CU_WHEEL_R",
+     "4CU_COUPLING",
+     "4CU_JOCKEY"
+    ]
+   },
+   "camera": {
+    "view": "full"
+   },
+   "information": [
+    {
+     "key": "System",
+     "val": "Trailer"
+    },
+    {
+     "key": "Parts in this 3D model",
+     "val": "Chassis, deck, suspension, 2 wheels, lights, number plate, coupling, jockey wheel"
+    }
+   ]
+  }
+ ]
+}

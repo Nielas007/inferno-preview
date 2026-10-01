@@ -1,0 +1,397 @@
+{
+  "schema": "inferno.product/2",
+  "id": "vss-830e",
+  "identity": {
+    "name": {
+      "value": "Vehicle Fire Suppression System",
+      "status": "published"
+    },
+    "code": {
+      "value": null,
+      "status": "required"
+    },
+    "shortDescription": {
+      "value": "Auto engine-compartment suppression, linear heat detection.",
+      "status": "published"
+    },
+    "category": {
+      "value": "Vehicle suppression",
+      "status": "published"
+    },
+    "tagline": {
+      "value": null,
+      "status": "required"
+    },
+    "status": {
+      "value": null,
+      "status": "required"
+    },
+    "alternateName": {
+      "value": "Vehicle Protection Systems (VSS)",
+      "status": "verify"
+    },
+    "logo": {
+      "value": "images/Fire_Logos_VSS.png",
+      "status": "published"
+    }
+  },
+  "overview": {
+    "title": {
+      "value": "Overview",
+      "status": "derived"
+    },
+    "body": {
+      "value": "Large mining and construction vehicles represent substantial investments. The Vehicle Suppression System installs in the engine compartment and other risk-identified zones to safeguard both assets and operators. Deploys a kinetically charged Foam Mist agent, tailored to the operating environment. Linear Heat Detection Tubes trigger suppression automatically — resilient to vibration and temperature, gradual cooling with no thermal shock, human-safe, quick recharge with minimal downtime.",
+      "status": "published"
+    },
+    "media": {
+      "value": null,
+      "status": "required"
+    }
+  },
+  "keyFeatures": [
+    {
+      "id": "automatic-activation",
+      "title": "Automatic activation",
+      "description": "Linear Heat Detection Tubes trigger suppression automatically.",
+      "componentId": null,
+      "status": "derived"
+    },
+    {
+      "id": "foam-mist-agent",
+      "title": "Foam Mist agent",
+      "description": "Deploys a kinetically charged Foam Mist agent, tailored to the operating environment.",
+      "componentId": null,
+      "status": "derived"
+    },
+    {
+      "id": "risk-zones",
+      "title": "Engine compartment and risk-identified zones",
+      "description": "Installs in the engine compartment and other risk-identified zones to safeguard both assets and operators.",
+      "componentId": null,
+      "status": "derived"
+    },
+    {
+      "id": "resilient",
+      "title": "Resilient to vibration and temperature",
+      "description": "Resilient to vibration and temperature.",
+      "componentId": null,
+      "status": "derived"
+    },
+    {
+      "id": "no-thermal-shock",
+      "title": "No thermal shock",
+      "description": "Gradual cooling with no thermal shock.",
+      "componentId": null,
+      "status": "derived"
+    },
+    {
+      "id": "human-safe",
+      "title": "Human-safe",
+      "description": "Human-safe.",
+      "componentId": null,
+      "status": "derived"
+    },
+    {
+      "id": "quick-recharge",
+      "title": "Quick recharge",
+      "description": "Quick recharge with minimal downtime.",
+      "componentId": null,
+      "status": "derived"
+    }
+  ],
+  "applications": [
+    {
+      "id": "mining-vehicles",
+      "title": "Mining vehicles",
+      "description": null,
+      "status": "derived"
+    },
+    {
+      "id": "construction-vehicles",
+      "title": "Construction vehicles",
+      "description": null,
+      "status": "derived"
+    }
+  ],
+  "specificationGroups": [
+    {
+      "id": "suppression",
+      "title": "Suppression"
+    },
+    {
+      "id": "detection",
+      "title": "Detection"
+    },
+    {
+      "id": "installation",
+      "title": "Installation"
+    }
+  ],
+  "specifications": [
+    {
+      "id": "agent",
+      "label": "Agent",
+      "value": "Kinetically charged Foam Mist",
+      "unit": null,
+      "group": "suppression",
+      "key": true,
+      "status": "published"
+    },
+    {
+      "id": "detection",
+      "label": "Detection",
+      "value": "Linear Heat Detection Tubes",
+      "unit": null,
+      "group": "detection",
+      "key": true,
+      "status": "published"
+    },
+    {
+      "id": "activation",
+      "label": "Activation",
+      "value": "Automatic",
+      "unit": null,
+      "group": "suppression",
+      "key": true,
+      "status": "published"
+    },
+    {
+      "id": "installation-zone",
+      "label": "Installation zone",
+      "value": "Engine compartment + risk-identified areas",
+      "unit": null,
+      "group": "installation",
+      "key": false,
+      "status": "published"
+    },
+    {
+      "id": "resilience",
+      "label": "Resilience",
+      "value": "Temperature & movement",
+      "unit": null,
+      "group": "installation",
+      "key": false,
+      "status": "published"
+    },
+    {
+      "id": "thermal-shock",
+      "label": "Thermal shock",
+      "value": "None — gradual cooling",
+      "unit": null,
+      "group": "suppression",
+      "key": false,
+      "status": "published"
+    },
+    {
+      "id": "recharge",
+      "label": "Recharge",
+      "value": "Quick, minimal downtime",
+      "unit": null,
+      "group": "suppression",
+      "key": false,
+      "status": "published"
+    },
+    {
+      "id": "safety",
+      "label": "Safety",
+      "value": "Human-safe",
+      "unit": null,
+      "group": "suppression",
+      "key": false,
+      "status": "published"
+    }
+  ],
+  "media": {
+    "hero": {
+      "src": "images/drawer-vss.png",
+      "alt": "Vehicle Fire Suppression System",
+      "status": "published"
+    },
+    "gallery": []
+  },
+  "seo": {
+    "title": {
+      "value": "Vehicle Fire Suppression System | Ritestand Fire",
+      "status": "derived"
+    },
+    "description": {
+      "value": "Automatic engine-compartment fire suppression for mining and construction vehicles, with Linear Heat Detection Tubes and a Foam Mist agent.",
+      "status": "derived"
+    }
+  },
+  "viewer": {
+    "presentation": {
+      "modes": {
+        "full": true,
+        "system": true,
+        "gun": false,
+        "cutaway": false
+      },
+      "systemContext": "ghost"
+    },
+    "asset": "models/vss-830e.asset.json?v=15",
+    "subject": {
+      "value": "Komatsu 830E haul truck (3D demonstration model)",
+      "status": "verify"
+    }
+  },
+  "componentCategories": [
+    {
+      "id": "fire-suppression",
+      "name": "Fire suppression",
+      "description": "The suppression system's parts in this 3D model.",
+      "components": [
+        "suppression-cylinders",
+        "valve-blocks",
+        "pipework",
+        "nozzles",
+        "fittings"
+      ]
+    }
+  ],
+  "components": [
+    {
+      "id": "suppression-cylinders",
+      "name": "Cylinders",
+      "shortDescription": "The suppression system's cylinder bank, as mounted on this vehicle.",
+      "features": {
+        "ids": [
+          "VSS_CYLINDER_01",
+          "VSS_CYLINDER_02",
+          "VSS_CYLINDER_03",
+          "VSS_CYLINDER_04",
+          "VSS_CYLINDER_05",
+          "VSS_CYLINDER_06",
+          "VSS_CYLINDER_07",
+          "VSS_CYLINDER_08",
+          "VSS_CYLINDER_09",
+          "VSS_CYLINDER_10",
+          "VSS_CYLINDER_11"
+        ]
+      },
+      "camera": {
+        "azimuth": 40,
+        "elevation": 20
+      },
+      "information": [
+        {
+          "key": "System",
+          "val": "Fire suppression"
+        },
+        {
+          "key": "Parts in this 3D model",
+          "val": "11"
+        }
+      ]
+    },
+    {
+      "id": "valve-blocks",
+      "name": "Valve blocks",
+      "shortDescription": "The suppression system's valve blocks.",
+      "features": {
+        "groups": [
+          {
+            "system": "FireSuppression",
+            "group": "ValveBlocks"
+          }
+        ]
+      },
+      "camera": {
+        "azimuth": 40,
+        "elevation": 20
+      },
+      "information": [
+        {
+          "key": "System",
+          "val": "Fire suppression"
+        },
+        {
+          "key": "Parts in this 3D model",
+          "val": "23"
+        }
+      ]
+    },
+    {
+      "id": "pipework",
+      "name": "Pipework",
+      "shortDescription": "The suppression system's pipework, routed around the vehicle.",
+      "features": {
+        "groups": [
+          {
+            "system": "FireSuppression",
+            "group": "Pipes"
+          }
+        ]
+      },
+      "camera": {
+        "view": "system"
+      },
+      "information": [
+        {
+          "key": "System",
+          "val": "Fire suppression"
+        },
+        {
+          "key": "Parts in this 3D model",
+          "val": "56"
+        }
+      ]
+    },
+    {
+      "id": "nozzles",
+      "name": "Nozzles",
+      "shortDescription": "Nozzle bodies, each at a discharge point of the 3D model.",
+      "features": {
+        "groups": [
+          {
+            "system": "FireSuppression",
+            "group": "NozzleBodies"
+          }
+        ]
+      },
+      "camera": {
+        "view": "system"
+      },
+      "information": [
+        {
+          "key": "System",
+          "val": "Fire suppression"
+        },
+        {
+          "key": "Parts in this 3D model",
+          "val": "76"
+        }
+      ],
+      "interaction": {
+        "touchTolerancePx": 16
+      }
+    },
+    {
+      "id": "fittings",
+      "name": "Fittings",
+      "shortDescription": "Fittings along the suppression pipework.",
+      "features": {
+        "groups": [
+          {
+            "system": "FireSuppression",
+            "group": "Fittings"
+          }
+        ]
+      },
+      "camera": {
+        "view": "system"
+      },
+      "information": [
+        {
+          "key": "System",
+          "val": "Fire suppression"
+        },
+        {
+          "key": "Parts in this 3D model",
+          "val": "777"
+        }
+      ]
+    }
+  ]
+}

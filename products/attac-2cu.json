@@ -1,0 +1,517 @@
+{
+ "schema": "inferno.product/2",
+ "id": "attac-2cu",
+ "identity": {
+  "name": {
+   "value": "Inferno Attac Unit 2CU",
+   "status": "published"
+  },
+  "code": {
+   "value": null,
+   "status": "required"
+  },
+  "shortDescription": {
+   "value": "Vehicle-mounted, 25 m foam cannon, zero startup.",
+   "status": "published"
+  },
+  "category": {
+   "value": "Vehicle-mounted",
+   "status": "published"
+  },
+  "tagline": {
+   "value": null,
+   "status": "required"
+  },
+  "status": {
+   "value": null,
+   "status": "required"
+  },
+  "internalName": {
+   "value": "2CU Bakkie",
+   "status": "derived"
+  },
+  "logo": {
+   "value": "images/Fire_Logos_4CU.png",
+   "status": "published"
+  }
+ },
+ "overview": {
+  "title": {
+   "value": "Overview",
+   "status": "derived"
+  },
+  "body": {
+   "value": "The Quick Response Foam Unit — an independent mobile extinguishing device. Foam cannon reaches up to 25 m, or use the branch-mounted hose in firm jet or wide mist mode. Run one or both cylinders to match fire intensity. No startup time — open the ball valves and it's live. Mounts easily on any vehicle or mobile platform.",
+   "status": "published"
+  },
+  "media": {
+   "value": null,
+   "status": "required"
+  }
+ },
+ "keyFeatures": [
+  {
+   "id": "card-sentence-1",
+   "title": "The Quick Response Foam Unit — an independent mobile extinguishing device",
+   "description": "The Quick Response Foam Unit — an independent mobile extinguishing device.",
+   "componentId": null,
+   "status": "derived"
+  },
+  {
+   "id": "card-sentence-2",
+   "title": "Foam cannon reaches up to 25 m, or use the branch-mounted hose in firm jet or wide mist mode",
+   "description": "Foam cannon reaches up to 25 m, or use the branch-mounted hose in firm jet or wide mist mode.",
+   "componentId": null,
+   "status": "derived"
+  },
+  {
+   "id": "card-sentence-3",
+   "title": "Run one or both cylinders to match fire intensity",
+   "description": "Run one or both cylinders to match fire intensity.",
+   "componentId": null,
+   "status": "derived"
+  },
+  {
+   "id": "card-sentence-4",
+   "title": "No startup time — open the ball valves and it's live",
+   "description": "No startup time — open the ball valves and it's live.",
+   "componentId": null,
+   "status": "derived"
+  },
+  {
+   "id": "card-sentence-5",
+   "title": "Mounts easily on any vehicle or mobile platform",
+   "description": "Mounts easily on any vehicle or mobile platform.",
+   "componentId": null,
+   "status": "derived"
+  }
+ ],
+ "applications": [],
+ "specificationGroups": [
+  {
+   "id": "agent",
+   "title": "Agent"
+  },
+  {
+   "id": "operating",
+   "title": "Operating conditions"
+  },
+  {
+   "id": "delivery",
+   "title": "Delivery"
+  },
+  {
+   "id": "unit",
+   "title": "Unit"
+  }
+ ],
+ "specifications": [
+  {
+   "id": "extinguishing-agent",
+   "label": "Extinguishing Agent",
+   "value": "Water + 1% Telesolv foam",
+   "unit": null,
+   "group": null,
+   "key": true,
+   "status": "published"
+  },
+  {
+   "id": "agent-weight",
+   "label": "Agent Weight",
+   "value": "2 × 55 kg",
+   "unit": null,
+   "group": null,
+   "key": true,
+   "status": "published"
+  },
+  {
+   "id": "propellant",
+   "label": "Propellant",
+   "value": "Air or nitrogen",
+   "unit": null,
+   "group": null,
+   "key": false,
+   "status": "published"
+  },
+  {
+   "id": "working-pressure-20-c",
+   "label": "Working Pressure (20°C)",
+   "value": "17 bar",
+   "unit": null,
+   "group": null,
+   "key": false,
+   "status": "published"
+  },
+  {
+   "id": "working-temperature",
+   "label": "Working Temperature",
+   "value": "+5°C to +60°C",
+   "unit": null,
+   "group": null,
+   "key": false,
+   "status": "published"
+  },
+  {
+   "id": "weight-empty",
+   "label": "Weight (empty)",
+   "value": "170 kg",
+   "unit": null,
+   "group": null,
+   "key": false,
+   "status": "published"
+  },
+  {
+   "id": "dimensions-w-d-h",
+   "label": "Dimensions W×D×H",
+   "value": "1.5 × 1.0 × 0.85 m",
+   "unit": null,
+   "group": null,
+   "key": false,
+   "status": "published"
+  },
+  {
+   "id": "hose-length",
+   "label": "Hose Length",
+   "value": "20 m",
+   "unit": null,
+   "group": null,
+   "key": false,
+   "status": "published"
+  },
+  {
+   "id": "cannon-range-1-2-cyl",
+   "label": "Cannon Range (1 / 2 cyl)",
+   "value": "20 / 25 m",
+   "unit": null,
+   "group": null,
+   "key": false,
+   "status": "published"
+  },
+  {
+   "id": "cannon-duration-1-2-cyl",
+   "label": "Cannon Duration (1 / 2 cyl)",
+   "value": "210 / 420 s",
+   "unit": null,
+   "group": null,
+   "key": false,
+   "status": "published"
+  },
+  {
+   "id": "gun-pro-foam-mode",
+   "label": "Gun Pro — Foam Mode",
+   "value": "17–18 m, 125–250 s",
+   "unit": null,
+   "group": null,
+   "key": false,
+   "status": "published"
+  },
+  {
+   "id": "gun-pro-mist-mode",
+   "label": "Gun Pro — Mist Mode",
+   "value": "5–6 m, 175–350 s",
+   "unit": null,
+   "group": null,
+   "key": false,
+   "status": "published"
+  }
+ ],
+ "media": {
+  "hero": {
+   "src": "images/thumb-2cu.png",
+   "alt": "Inferno Attac Unit 2CU",
+   "status": "published"
+  },
+  "gallery": [
+   {
+    "src": "images/drawer-4cu.png",
+    "status": "published"
+   }
+  ]
+ },
+ "seo": {
+  "title": {
+   "value": "Inferno Attac Unit 2CU | Ritestand Fire",
+   "status": "derived"
+  },
+  "description": {
+   "value": "Vehicle-mounted, 25 m foam cannon, zero startup.",
+   "status": "derived"
+  }
+ },
+ "viewer": {
+  "presentation": {
+   "modes": {
+    "full": true,
+    "system": true,
+    "gun": true,
+    "cutaway": true
+   },
+   "systemContext": "ghost",
+   "cutawayContext": "ghost"
+  },
+  "asset": "models/attac-2cu.asset.json?v=2",
+  "assetClass": {
+   "value": "production",
+   "status": "derived"
+  },
+  "scale": {
+   "value": "vehicle-model",
+   "status": "verify"
+  }
+ },
+ "componentCategories": [
+  {
+   "id": "fire-suppression",
+   "name": "Fire suppression",
+   "description": "The 2CU's suppression parts in this 3D model.",
+   "components": [
+    "foam-cannon",
+    "manifold",
+    "cylinders",
+    "valve-gauge",
+    "supply-hose",
+    "hose-reel",
+    "hose-nozzle",
+    "unit-frame"
+   ]
+  },
+  {
+   "id": "vehicle",
+   "name": "Vehicle",
+   "description": "The vehicle the unit is mounted on in this 3D model.",
+   "components": [
+    "vehicle"
+   ]
+  }
+ ],
+ "components": [
+  {
+   "id": "foam-cannon",
+   "name": "Foam cannon",
+   "shortDescription": "The unit's foam cannon on its swan-neck, with the twin handles, as modelled.",
+   "features": {
+    "ids": [
+     "2CU_CANNON"
+    ]
+   },
+   "camera": {
+    "azimuth": 35,
+    "elevation": 22
+   },
+   "interaction": {
+    "touchTolerancePx": 12
+   },
+   "information": [
+    {
+     "key": "System",
+     "val": "Fire suppression"
+    },
+    {
+     "key": "Parts in this 3D model",
+     "val": "Barrel, swan-neck, handles"
+    },
+    {
+     "key": "Cannon Range (1 / 2 cyl)",
+     "val": "20 / 25 m"
+    },
+    {
+     "key": "Cannon Duration (1 / 2 cyl)",
+     "val": "210 / 420 s"
+    }
+   ]
+  },
+  {
+   "id": "manifold",
+   "name": "Manifold",
+   "shortDescription": "The collector that joins the cylinder lines and feeds the cannon, as modelled.",
+   "features": {
+    "ids": [
+     "2CU_MANIFOLD_BODY",
+     "2CU_MANIFOLD_HOSES",
+     "2CU_MANIFOLD_PAINTED"
+    ]
+   },
+   "camera": {
+    "azimuth": 35,
+    "elevation": 35
+   },
+   "information": [
+    {
+     "key": "System",
+     "val": "Fire suppression"
+    },
+    {
+     "key": "Parts in this 3D model",
+     "val": "Collector, stand pipe, flange, four hoses, fittings"
+    }
+   ]
+  },
+  {
+   "id": "cylinders",
+   "name": "Cylinders",
+   "shortDescription": "The unit's 2 cylinders with their product labels, as modelled.",
+   "features": {
+    "ids": [
+     "2CU_CYLINDER_1",
+     "2CU_CYLINDER_2",
+     "2CU_LABEL_1",
+     "2CU_LABEL_2"
+    ]
+   },
+   "camera": {
+    "azimuth": 40,
+    "elevation": 20
+   },
+   "information": [
+    {
+     "key": "System",
+     "val": "Fire suppression"
+    },
+    {
+     "key": "Parts in this 3D model",
+     "val": "2 cylinders, 2 labels"
+    }
+   ]
+  },
+  {
+   "id": "valve-gauge",
+   "name": "Cylinder valves & gauges",
+   "shortDescription": "The valve heads with lever valves and pressure gauges on the 2 cylinders, as modelled.",
+   "features": {
+    "ids": [
+     "2CU_VALVE_1",
+     "2CU_VALVE_2"
+    ]
+   },
+   "camera": {
+    "azimuth": 40,
+    "elevation": 30
+   },
+   "interaction": {
+    "touchTolerancePx": 12
+   },
+   "information": [
+    {
+     "key": "System",
+     "val": "Fire suppression"
+    },
+    {
+     "key": "Parts in this 3D model",
+     "val": "2 valve heads with gauges"
+    }
+   ]
+  },
+  {
+   "id": "supply-hose",
+   "name": "Supply hose",
+   "shortDescription": "The hose that feeds the hose reel from the manifold, as modelled.",
+   "features": {
+    "ids": [
+     "2CU_SUPPLY_HOSE"
+    ]
+   },
+   "interaction": {
+    "touchTolerancePx": 12
+   },
+   "information": [
+    {
+     "key": "System",
+     "val": "Fire suppression"
+    },
+    {
+     "key": "Parts in this 3D model",
+     "val": "Riser hose, deck hose, reel inlet fitting"
+    }
+   ]
+  },
+  {
+   "id": "hose-reel",
+   "name": "Hose reel",
+   "shortDescription": "The hose reel with its crank and inlet valve, as modelled.",
+   "features": {
+    "ids": [
+     "2CU_REEL"
+    ]
+   },
+   "information": [
+    {
+     "key": "System",
+     "val": "Fire suppression"
+    },
+    {
+     "key": "Parts in this 3D model",
+     "val": "Reel, inlet valve"
+    }
+   ]
+  },
+  {
+   "id": "hose-nozzle",
+   "name": "Hose & nozzle",
+   "shortDescription": "The hose on the reel and its hand-held nozzle, as modelled.",
+   "features": {
+    "ids": [
+     "2CU_NOZZLE",
+     "2CU_REEL_HOSE"
+    ]
+   },
+   "information": [
+    {
+     "key": "System",
+     "val": "Fire suppression"
+    },
+    {
+     "key": "Parts in this 3D model",
+     "val": "Hose, hand-held nozzle"
+    }
+   ]
+  },
+  {
+   "id": "unit-frame",
+   "name": "Cylinder frame",
+   "shortDescription": "The black skid frame that holds the cylinders on the load bed and carries the cannon, as modelled.",
+   "features": {
+    "ids": [
+     "2CU_FRAME"
+    ]
+   },
+   "information": [
+    {
+     "key": "System",
+     "val": "Fire suppression"
+    },
+    {
+     "key": "Parts in this 3D model",
+     "val": "Skid frame, posts, cross members, brackets"
+    }
+   ]
+  },
+  {
+   "id": "vehicle",
+   "name": "Vehicle",
+   "shortDescription": "The vehicle the unit is mounted on, as modelled.",
+   "features": {
+    "ids": [
+     "2CU_BODY",
+     "2CU_CHASSIS",
+     "2CU_GLAZING",
+     "2CU_PLATES",
+     "2CU_TRIM",
+     "2CU_WHEELS"
+    ]
+   },
+   "camera": {
+    "view": "full"
+   },
+   "information": [
+    {
+     "key": "System",
+     "val": "Vehicle"
+    },
+    {
+     "key": "Parts in this 3D model",
+     "val": "Body with livery, trim, glazing, wheels, chassis, number plates"
+    }
+   ]
+  }
+ ]
+}

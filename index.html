@@ -1,0 +1,1197 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta name="robots" content="noindex, nofollow">  <!-- client test preview: never indexed -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Ritestand Fire — Water Mist Technology</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="preload" href="fonts/Gesrics.otf" as="font" type="font/otf" crossorigin />
+  <link rel="preload" href="fonts/inter-latin-var.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="styles.css?v=site37" />
+  <!-- Three.js via importmap (Phase 70: in the head, before every module — the hero boot is an async module in the body,
+       and an import map that arrives after a module has started loading is ignored). -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body id="top">
+  <!-- Fixed studio background. Poster split: black left, red right, neon spine. -->
+  <div class="studio-bg" aria-hidden="true">
+    <div class="studio-bg__paper"></div>
+    <div class="studio-bg__blueprint"></div>
+    <div class="studio-bg__split"></div>
+    <div class="studio-bg__neon"></div>
+    <div class="studio-bg__vignette"></div>
+  </div>
+
+  <!-- Site navbar — Ritestand Fire wordmark + primary nav links. -->
+  <header class="site-nav" id="site-nav">
+    <a href="#top" class="site-nav__brand" aria-label="Ritestand Fire — home">
+      <span class="site-nav__logo-wrap">
+        <img class="site-nav__logo" src="images/Ritestand_Fire_W.png" alt="Ritestand Fire">
+        <span class="site-nav__shimmer" aria-hidden="true"></span>
+        <span class="site-nav__flare" aria-hidden="true"></span>
+      </span>
+    </a>
+    <nav class="site-nav__links" aria-label="Primary">
+      <a href="#products" class="site-nav__link">Products</a>
+      <a href="#contact"  class="site-nav__link">Contact</a>
+      <a href="tel:+27104492051" class="site-nav__cta">
+        <span class="site-nav__cta-dot" aria-hidden="true"></span>
+        +27 10 449 2051
+      </a>
+    </nav>
+  </header>
+  <!-- Hero (Phase 70) — poster first, live 3D second, content on top.
+       The hero product is declared once, here (data-hero-model) + the four band posters (images/hero/, rendered from the
+       live scene's own camera per band). Copy: the H1 is the company name; the approved headline and value line are
+       CONTENT REQUIRED — their slots below stay empty and hidden until approved text exists. -->
+  <section class="hero" id="hero" aria-labelledby="hero-title" data-hero-product="attac-bakkie-4cu" data-hero-model="models/hero.glb?v=1">
+    <div class="stage" aria-hidden="true">
+      <picture class="stage__poster">
+        <source media="(max-aspect-ratio: 31/50)" srcset="images/hero/hero-phone.webp" type="image/webp">
+        <source media="(max-aspect-ratio: 23/20)" srcset="images/hero/hero-tablet.webp" type="image/webp">
+        <source media="(max-aspect-ratio: 29/20)" srcset="images/hero/hero-standard.webp" type="image/webp">
+        <img src="images/hero/hero-wide.webp" alt="" width="3600" height="1500" fetchpriority="high" decoding="async" elementtiming="hero-poster">
+      </picture>
+      <canvas id="scene"></canvas>
+    </div>
+    <div class="hero__veil" aria-hidden="true"></div>
+    <div class="hero__progress" aria-hidden="true"></div>
+    <div class="hero__content">
+      <p class="hero__eyebrow" data-content-slot="hero.eyebrow" hidden></p>
+      <h1 class="hero__title" id="hero-title">Ritestand Fire</h1>
+      <p class="hero__lede" data-content-slot="hero.valueLine" hidden></p>
+      <div class="hero__actions">
+        <a class="btn btn--primary" href="#products">Our Products</a>
+        <a class="btn btn--ghost" href="#contact">Request a Quote</a>
+      </div>
+      <p class="hero__product">Inferno Attac Bakkie 4CU</p>
+    </div>
+  </section>
+  <!-- The hero boot runs as soon as it arrives (async, right after the hero it drives), so the live scene's modules and the
+       hero model start downloading while the rest of the page is still parsing, not after every deferred module. -->
+  <script type="module" async src="showroom.js?v=25"></script>
+
+  <!-- Products section — scrolled into view from the bakkie panel button -->
+  <section class="products-section" id="products">
+    <div class="products-header">
+      <div class="products-header__lead">
+        <div class="products-header__label">Our Products</div>
+        <h2 class="products-header__title">Full Suppression Range</h2>
+      </div>
+    </div>
+
+    <div class="products-groups">
+
+    <div class="products-group">
+      <div class="products-group__header">
+        <div class="products-group__meta">
+          <div class="products-group__num">01</div>
+          <div class="products-group__titles">
+            <div class="products-group__label">Mobile &amp; Vehicle Systems</div>
+            <div class="products-group__count">Six deployment platforms</div>
+          </div>
+        </div>
+        <p class="products-group__desc">Rapid-response rigs mounted on bakkies, trailers, skids and heavy machinery — for mining, agriculture, and mobile industrial fleets.</p>
+      </div>
+      <div class="products-grid">
+
+      <div class="product-card" role="button" tabindex="0" aria-labelledby="pc-01-name" aria-describedby="pc-01-desc"
+        data-product-index="01"
+        data-product-name="Inferno Attac Unit 2CU"
+        data-product-glb="models/attac-2cu.asset.json?v=2"
+        data-product-viewer="product-first"
+        data-product-config="products/attac-2cu.json?v=2"
+        data-product-rig="true"
+        data-product-logo="images/Fire_Logos_4CU.png"
+        data-product-thumb="images/thumb-2cu.png"
+        data-product-model="true"
+        data-product-photos='["images/thumb-2cu.png","images/drawer-4cu.png"]'
+        data-product-desc="The Quick Response Foam Unit — an independent mobile extinguishing device. Foam cannon reaches up to 25 m, or use the branch-mounted hose in firm jet or wide mist mode. Run one or both cylinders to match fire intensity. No startup time — open the ball valves and it's live. Mounts easily on any vehicle or mobile platform."
+        data-product-specs='[{"key":"Extinguishing Agent","val":"Water + 1% Telesolv foam"},{"key":"Agent Weight","val":"2 × 55 kg"},{"key":"Propellant","val":"Air or nitrogen"},{"key":"Working Pressure (20°C)","val":"17 bar"},{"key":"Working Temperature","val":"+5°C to +60°C"},{"key":"Weight (empty)","val":"170 kg"},{"key":"Dimensions W×D×H","val":"1.5 × 1.0 × 0.85 m"},{"key":"Hose Length","val":"20 m"},{"key":"Cannon Range (1 / 2 cyl)","val":"20 / 25 m"},{"key":"Cannon Duration (1 / 2 cyl)","val":"210 / 420 s"},{"key":"Gun Pro — Foam Mode","val":"17–18 m, 125–250 s"},{"key":"Gun Pro — Mist Mode","val":"5–6 m, 175–350 s"}]'>
+        <div class="product-card__media">
+          <img class="product-card__img" src="images/cards/attac-unit-2cu-640.webp?v=80" srcset="images/cards/attac-unit-2cu-640.webp?v=80 640w, images/cards/attac-unit-2cu-1280.webp?v=80 1280w" sizes="(max-width: 600px) 40vw, (max-width: 1023px) 46vw, 31vw" width="640" height="480" alt="" loading="lazy" decoding="async">
+        </div>
+        <div class="product-card__body">
+          <div class="product-card__index">01</div>
+          <h3 class="product-card__name" id="pc-01-name">Inferno Attac Unit 2CU</h3>
+          <p class="product-card__desc" id="pc-01-desc">Vehicle-mounted, 25 m foam cannon, zero startup.</p>
+          <div class="product-card__cta" aria-hidden="true">View Details →</div>
+        </div>
+      </div>
+
+      <div class="product-card" role="button" tabindex="0" aria-labelledby="pc-02-name" aria-describedby="pc-02-desc"
+        data-product-index="02"
+        data-product-name="Inferno Attac Bakkie 4CU"
+        data-product-glb="models/attac-4cu.asset.json?v=2"
+        data-product-viewer="product-first"
+        data-product-config="products/attac-4cu.json?v=2"
+        data-product-rig="true"
+        data-product-logo="images/Fire_Logos_2CU.png"
+        data-product-thumb="images/thumb-4cu.png"
+        data-product-model="true"
+        data-product-photos='["images/thumb-4cu.png","images/drawer-2cu.png"]'
+        data-product-desc="The Quick Response Foam Unit — full-power vehicle platform with four cylinders. Foam cannon reaches up to 31 m, or branch hose with firm jet / wide mist. Selectable cylinder count — deploy one or all four depending on fire intensity. No startup time, ready immediately when ball valves open."
+        data-product-specs='[{"key":"Product Code","val":"FS-INF-001"},{"key":"Extinguishing Agent","val":"Water + 1% Telesolv foam"},{"key":"Agent Weight","val":"4 × 55 kg (220 kg)"},{"key":"Propellant","val":"Air or nitrogen"},{"key":"Working Pressure (20°C)","val":"17 bar"},{"key":"Working Temperature","val":"+5°C to +60°C"},{"key":"Weight (empty)","val":"170 kg"},{"key":"Dimensions W×D×H","val":"1.5 × 1.0 × 0.85 m"},{"key":"Hose Length","val":"20 m"},{"key":"Cannon Range (2 / 3 / 4 cyl)","val":"26 / 29 / 31 m"},{"key":"Cannon Duration (1–4 cyl)","val":"120 – 480 s"},{"key":"Gun Pro — Foam Mode","val":"17–20 m, 125–500 s"},{"key":"Gun Pro — Mist Mode","val":"5–9 m, 175–700 s"}]'>
+        <div class="product-card__media">
+          <img class="product-card__img" src="images/cards/attac-bakkie-4cu-640.webp?v=80" srcset="images/cards/attac-bakkie-4cu-640.webp?v=80 640w, images/cards/attac-bakkie-4cu-1280.webp?v=80 1280w" sizes="(max-width: 600px) 40vw, (max-width: 1023px) 46vw, 31vw" width="640" height="480" alt="" loading="lazy" decoding="async">
+        </div>
+        <div class="product-card__body">
+          <div class="product-card__index">02</div>
+          <h3 class="product-card__name" id="pc-02-name">Inferno Attac Bakkie 4CU</h3>
+          <p class="product-card__desc" id="pc-02-desc">Four cylinders, 31 m cannon, zero startup.</p>
+          <div class="product-card__cta" aria-hidden="true">View Details →</div>
+        </div>
+      </div>
+
+      <div class="product-card" role="button" tabindex="0" aria-labelledby="pc-03-name" aria-describedby="pc-03-desc"
+        data-product-index="03"
+        data-product-name="Inferno Attac Trailer"
+        data-product-model="true"
+        data-product-glb="models/4cu-trailer.asset.json?v=4"
+        data-product-viewer="product-first"
+        data-product-config="products/4cu-trailer.json?v=6"
+        data-product-rig="true"
+        data-product-logo="images/IA_Trailer.png"
+        data-product-thumb="images/drawer-trailer.png"
+        data-product-desc="The Quick Response Foam Unit on a towable trailer chassis. Up to four cylinders, foam cannon reaches 31 m, or branch hose in firm jet or wide mist mode. Mounts on any vehicle or mobile platform — no modification needed. No startup time, ready as soon as ball valves open."
+        data-product-specs='[{"key":"Product Code","val":"FS-INF-002"},{"key":"Extinguishing Agent","val":"Water + 1% Telesolv foam"},{"key":"Agent Weight","val":"4 × 55 kg (220 kg)"},{"key":"Propellant","val":"Air or nitrogen"},{"key":"Working Pressure (20°C)","val":"17 bar"},{"key":"Working Temperature","val":"+5°C to +60°C"},{"key":"Weight (empty)","val":"170 kg"},{"key":"Dimensions W×D×H","val":"1.5 × 1.0 × 0.85 m"},{"key":"Hose Length","val":"20 m"},{"key":"Cannon Range (2 / 3 / 4 cyl)","val":"26 / 29 / 31 m"},{"key":"Cannon Duration (1–4 cyl)","val":"120 – 480 s"},{"key":"Gun Pro — Foam Mode","val":"17–20 m, 125–500 s"},{"key":"Gun Pro — Mist Mode","val":"5–9 m, 175–700 s"}]'>
+        <div class="product-card__media">
+          <img class="product-card__img" src="images/cards/attac-trailer-640.webp?v=73" srcset="images/cards/attac-trailer-640.webp?v=73 640w, images/cards/attac-trailer-1280.webp?v=73 1280w" sizes="(max-width: 600px) 40vw, (max-width: 1023px) 46vw, 31vw" width="640" height="480" alt="" loading="lazy" decoding="async">
+        </div>
+        <div class="product-card__body">
+          <div class="product-card__index">03</div>
+          <h3 class="product-card__name" id="pc-03-name">Inferno Attac Trailer</h3>
+          <p class="product-card__desc" id="pc-03-desc">Towable 4-cylinder foam unit, 31 m cannon range.</p>
+          <div class="product-card__cta" aria-hidden="true">View Details →</div>
+        </div>
+      </div>
+
+      <div class="product-card" role="button" tabindex="0" aria-labelledby="pc-04-name" aria-describedby="pc-04-desc"
+        data-product-index="04"
+        data-product-name="Inferno Beast"
+        data-product-logo="images/IA_Beast_logo.png"
+        data-product-thumb="images/drawer-beast.png"
+        data-product-desc="Cost-effective self-contained rapid fire response system to protect assets. Six 230 L pressurised, premixed foam cylinders — no external water or electrical supply required. High-performance cannon discharges to ~30 m. Retractable hose reel with additional gun lets two firefighters fight the same fire simultaneously. Rapidly recharged with water + foam additive and re-pressurised with nitrogen."
+        data-product-specs='[{"key":"Product Code","val":"FS-BEAST-001"},{"key":"Cylinders","val":"6 × 230 L pressurised premixed foam"},{"key":"Cannon Range","val":"~30 m"},{"key":"Operators","val":"2 simultaneous (cannon + hose reel)"},{"key":"External Supply","val":"None required"},{"key":"Startup Time","val":"Zero"},{"key":"Recharge","val":"Water + foam additive, N₂ re-pressurised"},{"key":"Per 6 Cylinders","val":"1 Attac-Pac · 2 Cabinets · 2 Hose Reels · 2 Fire Jackets · 4 Water Mist Extinguishers"},{"key":"Industries","val":"Military, Aerospace, Oil & Refinery, Petroleum, Industrial Manufacturing, Mining & Forestry, Agriculture, Airports"}]'>
+        <div class="product-card__media">
+          <img class="product-card__img" src="images/cards/inferno-beast-640.webp" srcset="images/cards/inferno-beast-640.webp 640w, images/cards/inferno-beast-1280.webp 1280w" sizes="(max-width: 600px) 40vw, (max-width: 1023px) 46vw, 31vw" width="640" height="480" alt="" loading="lazy" decoding="async">
+        </div>
+        <div class="product-card__body">
+          <div class="product-card__index">04</div>
+          <h3 class="product-card__name" id="pc-04-name">Inferno Beast</h3>
+          <p class="product-card__desc" id="pc-04-desc">6 × 230 L, dual-operator, zero startup, 30 m range.</p>
+          <div class="product-card__cta" aria-hidden="true">View Details →</div>
+        </div>
+      </div>
+
+      <div class="product-card" role="button" tabindex="0" aria-labelledby="pc-05-name" aria-describedby="pc-05-desc"
+        data-product-index="05"
+        data-product-name="Skiddy Mobile Response Unit"
+        data-product-model="true"
+        data-product-glb="models/skiddy.asset.json?v=5"
+        data-product-rig="true"
+        data-product-viewer="product-first"
+        data-product-config="products/skiddy.json?v=8"
+        data-product-logo="images/IA_Skiddy.png"
+        data-product-thumb="images/drawer-skiddy.png"
+        data-product-desc="The ultimate mobile rapid response unit, custom-built for storage facilities and warehouses. 230 L cylinder with a unique forklift-locking system, allowing it to be securely lifted and transported with ease. Perfect for urgent tasks and streamlining operations — unmatched mobility and convenience in any warehouse environment."
+        data-product-specs='[{"key":"Product Code","val":"FS-SKIDDY-001"},{"key":"Cylinder Capacity","val":"230 L"},{"key":"Transport","val":"Custom forklift-locking system"},{"key":"Form Factor","val":"Compact & mobile"},{"key":"Application","val":"Warehouses & storage facilities"},{"key":"Use Case","val":"Urgent response, streamlined operations"}]'>
+        <div class="product-card__media">
+          <img class="product-card__img" src="images/cards/skiddy-640.webp?v=73" srcset="images/cards/skiddy-640.webp?v=73 640w, images/cards/skiddy-1280.webp?v=73 1280w" sizes="(max-width: 600px) 40vw, (max-width: 1023px) 46vw, 31vw" width="640" height="480" alt="" loading="lazy" decoding="async">
+        </div>
+        <div class="product-card__body">
+          <div class="product-card__index">05</div>
+          <h3 class="product-card__name" id="pc-05-name">Skiddy Mobile Response Unit</h3>
+          <p class="product-card__desc" id="pc-05-desc">230 L forklift-ready warehouse response unit.</p>
+          <div class="product-card__cta" aria-hidden="true">View Details →</div>
+        </div>
+      </div>
+
+      <div class="product-card" role="button" tabindex="0" aria-labelledby="pc-06-name" aria-describedby="pc-06-desc"
+        data-product-index="06"
+        data-product-name="Vehicle Fire Suppression System"
+        data-product-logo="images/Fire_Logos_VSS.png"
+        data-product-thumb="images/drawer-vss.png"
+        data-product-model="true"
+        data-product-glb="models/vss-830e.asset.json?v=15"
+        data-product-rig="true"
+        data-product-viewer="product-first"
+        data-product-config="products/vss-830e.json?v=9"
+        data-product-desc="Large mining and construction vehicles represent substantial investments. The Vehicle Suppression System installs in the engine compartment and other risk-identified zones to safeguard both assets and operators. Deploys a kinetically charged Foam Mist agent, tailored to the operating environment. Linear Heat Detection Tubes trigger suppression automatically — resilient to vibration and temperature, gradual cooling with no thermal shock, human-safe, quick recharge with minimal downtime."
+        data-product-specs='[{"key":"Agent","val":"Kinetically charged Foam Mist"},{"key":"Detection","val":"Linear Heat Detection Tubes"},{"key":"Activation","val":"Automatic"},{"key":"Installation Zone","val":"Engine compartment + risk-identified areas"},{"key":"Application","val":"Mining & construction vehicles"},{"key":"Resilience","val":"Temperature & movement"},{"key":"Thermal Shock","val":"None — gradual cooling"},{"key":"Recharge","val":"Quick, minimal downtime"},{"key":"Safety","val":"Human-safe"}]'>
+        <div class="product-card__media">
+          <img class="product-card__img" src="images/cards/vss-640.webp?v=73" srcset="images/cards/vss-640.webp?v=73 640w, images/cards/vss-1280.webp?v=73 1280w" sizes="(max-width: 600px) 40vw, (max-width: 1023px) 46vw, 31vw" width="640" height="480" alt="" loading="lazy" decoding="async">
+        </div>
+        <div class="product-card__body">
+          <div class="product-card__index">06</div>
+          <h3 class="product-card__name" id="pc-06-name">Vehicle Fire Suppression System</h3>
+          <p class="product-card__desc" id="pc-06-desc">Auto engine-compartment suppression, linear heat detection.</p>
+          <div class="product-card__cta" aria-hidden="true">View Details →</div>
+        </div>
+      </div>
+
+      </div>
+    </div>
+
+    <div class="products-group">
+      <div class="products-group__header">
+        <div class="products-group__meta">
+          <div class="products-group__num">02</div>
+          <div class="products-group__titles">
+            <div class="products-group__label">Portable &amp; Wall Systems</div>
+            <div class="products-group__count">Three response units</div>
+          </div>
+        </div>
+        <p class="products-group__desc">Handheld extinguishers and wall-mounted rapid-response units for warehouses, storage facilities and industrial spaces.</p>
+      </div>
+      <div class="products-grid">
+
+      <div class="product-card" role="button" tabindex="0" aria-labelledby="pc-07-name" aria-describedby="pc-07-desc"
+        data-product-index="07"
+        data-product-name="Foam &amp; Water Mist Extinguishers"
+        data-product-logo="images/IA_WF_logo.png"
+        data-product-thumb="images/drawer-extinguishers.png"
+        data-product-desc="T-ROTOR® portable extinguishers using ultra-fine mist technology. Safe on live electrical equipment — no risk of electrocution to firefighters, no thermal shock to sensitive ceramics or electronics. Conventional water only applies ~5% of its volume to fire (95% floods the area causing post-fire damage); T-ROTOR® mist evaporates at ~100% in the fire. Creates a thermal-radiation screen letting people survive in close vicinity of a powerful fire. Reduces post-fire damage by ~80%."
+        data-product-specs='[{"key":"Product Code","val":"FS-CC-001 (FM) / FS-CC-014 (WM)"},{"key":"Technology","val":"T-ROTOR®"},{"key":"Mist Particle Size","val":"50–100 microns"},{"key":"Electrical Safety","val":"Safe on live equipment"},{"key":"Thermal Shock","val":"None"},{"key":"Mist Efficiency","val":"~100% evaporation (vs ~5% conventional water)"},{"key":"Post-Fire Damage","val":"~80% reduction"},{"key":"People Protection","val":"Thermal radiation screen"}]'>
+        <div class="product-card__media">
+          <img class="product-card__img" src="images/cards/extinguishers-640.webp" srcset="images/cards/extinguishers-640.webp 640w, images/cards/extinguishers-1280.webp 1280w" sizes="(max-width: 600px) 40vw, (max-width: 1023px) 46vw, 31vw" width="640" height="480" alt="" loading="lazy" decoding="async">
+        </div>
+        <div class="product-card__body">
+          <div class="product-card__index">07</div>
+          <h3 class="product-card__name" id="pc-07-name">Foam &amp; Water Mist Extinguishers</h3>
+          <p class="product-card__desc" id="pc-07-desc">T-ROTOR® mist, safe on live equipment, ~100% evaporation.</p>
+          <div class="product-card__cta" aria-hidden="true">View Details →</div>
+        </div>
+      </div>
+
+      <div class="product-card" role="button" tabindex="0" aria-labelledby="pc-08-name" aria-describedby="pc-08-desc"
+        data-product-index="08"
+        data-product-name="Wall Guard 130 L"
+        data-product-logo="images/Fire_Logos_IG_Wall.png"
+        data-product-thumb="images/drawer-wallguard.png"
+        data-product-desc="Fixed-mounted rapid response unit engineered for warehouses, storage facilities, and industrial environments where immediate deployment, reliability, and durability are essential. Heavy-duty vehicle-grade mounting bracket paired with a 5 mm thick wall plate for secure, vibration-resistant installation. Swivel hose reel allows smooth operation, controlled deployment, and fast rewind. Built to withstand demanding industrial conditions."
+        data-product-specs='[{"key":"Product Code","val":"FS-IGWU-130L"},{"key":"Capacity","val":"130 L"},{"key":"Spray Time","val":"±2 min 45 sec"},{"key":"Spray Length","val":"Up to 10 m"},{"key":"Hose Length","val":"15 m"},{"key":"Wall Plate","val":"5 mm thick"},{"key":"Mounting","val":"Heavy-duty vehicle-grade bracket"},{"key":"Hose Reel","val":"Swivel, fast rewind"},{"key":"Construction","val":"Vibration-resistant"}]'>
+        <div class="product-card__media">
+          <img class="product-card__img" src="images/cards/wall-guard-130l-640.webp" srcset="images/cards/wall-guard-130l-640.webp 640w, images/cards/wall-guard-130l-1280.webp 1280w" sizes="(max-width: 600px) 40vw, (max-width: 1023px) 46vw, 31vw" width="640" height="480" alt="" loading="lazy" decoding="async">
+        </div>
+        <div class="product-card__body">
+          <div class="product-card__index">08</div>
+          <h3 class="product-card__name" id="pc-08-name">Wall Guard 130 L</h3>
+          <p class="product-card__desc" id="pc-08-desc">Fixed wall unit, 130 L, ±2 min 45 sec spray, 10 m reach.</p>
+          <div class="product-card__cta" aria-hidden="true">View Details →</div>
+        </div>
+      </div>
+
+      <div class="product-card" role="button" tabindex="0" aria-labelledby="pc-09-name" aria-describedby="pc-09-desc"
+        data-product-index="09"
+        data-product-name="Wall Guard 50 L"
+        data-product-logo="images/Fire_Logos_IG_Mobile.png"
+        data-product-thumb="images/drawer-wallguard-mobile.png"
+        data-product-desc="Compact fixed-mounted rapid response system, engineered for warehouses, storage facilities, and industrial environments where immediate deployment and durability are critical. Same heavy-duty vehicle-grade mounting bracket and 5 mm wall-plate construction as the 130 L, with a swivel hose reel for smooth operation, controlled deployment, and fast rewind — in a smaller, more versatile form factor."
+        data-product-specs='[{"key":"Product Code","val":"FS-IGWU-50L"},{"key":"Capacity","val":"50 L"},{"key":"Spray Time","val":"1 min 40 sec"},{"key":"Spray Length","val":"Up to 10 m"},{"key":"Hose Length","val":"15 m"},{"key":"Wall Plate","val":"5 mm thick"},{"key":"Mounting","val":"Heavy-duty vehicle-grade bracket"},{"key":"Hose Reel","val":"Swivel, fast rewind"},{"key":"Construction","val":"Vibration-resistant"}]'>
+        <div class="product-card__media">
+          <img class="product-card__img" src="images/cards/wall-guard-50l-640.webp" srcset="images/cards/wall-guard-50l-640.webp 640w, images/cards/wall-guard-50l-1280.webp 1280w" sizes="(max-width: 600px) 40vw, (max-width: 1023px) 46vw, 31vw" width="640" height="480" alt="" loading="lazy" decoding="async">
+        </div>
+        <div class="product-card__body">
+          <div class="product-card__index">09</div>
+          <h3 class="product-card__name" id="pc-09-name">Wall Guard 50 L</h3>
+          <p class="product-card__desc" id="pc-09-desc">Compact wall unit, 50 L, 1 min 40 sec spray, 10 m reach.</p>
+          <div class="product-card__cta" aria-hidden="true">View Details →</div>
+        </div>
+      </div>
+
+      </div>
+    </div>
+
+    <div class="products-group">
+      <div class="products-group__header">
+        <div class="products-group__meta">
+          <div class="products-group__num">03</div>
+          <div class="products-group__titles">
+            <div class="products-group__label">Fixed Installations</div>
+            <div class="products-group__count">Two automated systems</div>
+          </div>
+        </div>
+        <p class="products-group__desc">Pipe-and-detection systems that stand guard around generators, transformers and high-voltage equipment — always on, no operator required.</p>
+      </div>
+      <div class="products-grid products-grid--two">
+
+      <div class="product-card" role="button" tabindex="0" aria-labelledby="pc-10-name" aria-describedby="pc-10-desc"
+        data-product-index="10"
+        data-product-name="Generator Fire Suppression"
+        data-product-logo="images/Fire_Logos_LSS-01.png"
+        data-product-thumb="images/drawer-lss-gen.png"
+        data-product-desc="Localised Fire Suppression (LSS) — an advanced fire protection solution for generator rooms. Specialised water/foam mist technology, deployed via a meticulously designed array of stationary cylinders, pipework, and detection tubes. Water droplets are transformed into ultra-fine mist (50–100 microns) which diverts oxygen away from the fire and rapidly dissipates fire-generated heat within seconds. Adaptable patented technology — also fits conveyor belts, fuel storage, and more."
+        data-product-specs='[{"key":"Technology","val":"Water/foam mist (LSS)"},{"key":"Droplet Size","val":"50–100 microns"},{"key":"Detection","val":"Pneumatic detection tubes"},{"key":"Activation","val":"Automatic"},{"key":"Applications","val":"Generators, fuel storage, conveyor belts, transformers"},{"key":"Thermal Shock","val":"None"},{"key":"Heat Transfer","val":"Rapid dissipation (seconds)"},{"key":"Patent","val":"Wireline proprietary"}]'>
+        <div class="product-card__media">
+          <img class="product-card__img" src="images/cards/generator-lss-640.webp" srcset="images/cards/generator-lss-640.webp 640w, images/cards/generator-lss-1280.webp 1280w" sizes="(max-width: 600px) 40vw, 46vw" width="640" height="480" alt="" loading="lazy" decoding="async">
+        </div>
+        <div class="product-card__body">
+          <div class="product-card__index">10</div>
+          <h3 class="product-card__name" id="pc-10-name">Generator Fire Suppression</h3>
+          <p class="product-card__desc" id="pc-10-desc">Fixed-pipe mist suppression for generator rooms.</p>
+          <div class="product-card__cta" aria-hidden="true">View Details →</div>
+        </div>
+      </div>
+
+      <div class="product-card" role="button" tabindex="0" aria-labelledby="pc-11-name" aria-describedby="pc-11-desc"
+        data-product-index="11"
+        data-product-name="Transformer Fire Suppression"
+        data-product-logo="images/Fire_Logos_LSS-03.png"
+        data-product-thumb="images/drawer-lss-trans.png"
+        data-product-desc="IBS-endorsed transformer fire suppression — effectively combats all types of transformer fires. Powered by patented T-Rotor® Technology, produces a fine mist with the energy to swiftly suppress fires and cool equipment, regardless of the transformer's design. Suppression remains robust even in the presence of convection currents. Since transformers operate at high voltages with flammable substances, the fire risk is elevated — a pneumatic linear detection tube ensures early detection and round-the-clock protection."
+        data-product-specs='[{"key":"Technology","val":"T-Rotor® fine mist (LSS)"},{"key":"Endorsement","val":"IBS certified"},{"key":"Detection","val":"Pneumatic linear detection tube"},{"key":"Protection","val":"24/7 automatic"},{"key":"Applications","val":"Transformers, switchgear, high-voltage equipment"},{"key":"Convection Currents","val":"Robust suppression"},{"key":"Thermal Shock","val":"None"},{"key":"Cooling","val":"Rapid equipment cooling"}]'>
+        <div class="product-card__media">
+          <img class="product-card__img" src="images/cards/transformer-lss-640.webp" srcset="images/cards/transformer-lss-640.webp 640w, images/cards/transformer-lss-1280.webp 1280w" sizes="(max-width: 600px) 40vw, 46vw" width="640" height="480" alt="" loading="lazy" decoding="async">
+        </div>
+        <div class="product-card__body">
+          <div class="product-card__index">11</div>
+          <h3 class="product-card__name" id="pc-11-name">Transformer Fire Suppression</h3>
+          <p class="product-card__desc" id="pc-11-desc">IBS-endorsed mist suppression for transformers.</p>
+          <div class="product-card__cta" aria-hidden="true">View Details →</div>
+        </div>
+      </div>
+
+      </div>
+    </div>
+
+    </div>
+  </section>
+
+  <!-- Contact section -->
+  <section class="contact-section" id="contact">
+    <div class="contact-grid">
+      <aside class="contact-info">
+        <div class="contact-info__header">
+          <h2 class="contact-info__title">Planning your<br>fire protection?</h2>
+          <p class="contact-info__copy">Tell us about your site and our team will come back with a suppression plan — across vehicle, industrial and fixed installations.</p>
+        </div>
+
+        <div class="contact-info__block">
+          <div class="contact-info__label">Contact</div>
+          <a href="mailto:info@ritestand.com" class="contact-info__link">info@ritestand.com</a>
+          <a href="tel:+27104492051" class="contact-info__link">+27 10 449 2051</a>
+        </div>
+        <div class="contact-info__block">
+          <div class="contact-info__label">Head office</div>
+          <div class="contact-info__line">Plot 84 Lonrho Drive</div>
+          <div class="contact-info__line">Elandsdrift, Mooinooi 0325</div>
+          <div class="contact-info__line">South Africa</div>
+        </div>
+        <div class="contact-info__block">
+          <div class="contact-info__label">Hours</div>
+          <div class="contact-info__line">Mon – Thu · 08:00 – 16:30</div>
+          <div class="contact-info__line">Friday · 08:00 – 15:00</div>
+        </div>
+
+        <a href="#" class="contact-info__download">
+          <span>Download Company Profile</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </a>
+      </aside>
+
+      <form class="contact-form" id="contact-form"
+            action="https://formsubmit.co/ajax/niel.v@ritestand.com"
+            method="POST">
+        <!-- FormSubmit config -->
+        <input type="hidden" name="_subject" value="Ritestand Fire — New enquiry from website">
+        <input type="hidden" name="_template" value="table">
+        <input type="hidden" name="_captcha" value="false">
+        <!-- Honeypot: bots fill it, humans never see it -->
+        <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
+
+        <div class="contact-form__row contact-form__row--two">
+          <label class="contact-form__field">
+            <span class="contact-form__label">First name</span>
+            <input type="text" name="first_name" required autocomplete="given-name" placeholder="Your name" />
+          </label>
+          <label class="contact-form__field">
+            <span class="contact-form__label">Last name</span>
+            <input type="text" name="last_name" autocomplete="family-name" placeholder="Surname" />
+          </label>
+        </div>
+        <div class="contact-form__row contact-form__row--two">
+          <label class="contact-form__field">
+            <span class="contact-form__label">Email</span>
+            <input type="email" name="email" required autocomplete="email" placeholder="you@company.com" />
+          </label>
+          <label class="contact-form__field">
+            <span class="contact-form__label">Contact number</span>
+            <input type="tel" name="phone" autocomplete="tel" placeholder="+27 …" />
+          </label>
+        </div>
+        <label class="contact-form__field">
+          <span class="contact-form__label">Service of interest</span>
+          <select name="service">
+            <option>Inferno Attac Bakkie (2CU / 4CU)</option>
+            <option>Inferno Attac Trailer</option>
+            <option>Inferno Attac Skiddy</option>
+            <option>Inferno Beast</option>
+            <option>Vehicle Protection Systems (VSS)</option>
+            <option>Wall Guard / Mobile Guard</option>
+            <option>Localised Fire Suppression (LSS)</option>
+            <option>Rite Transformer</option>
+            <option>Water Mist Extinguishers</option>
+            <option>Other / Not sure yet</option>
+          </select>
+        </label>
+        <label class="contact-form__field">
+          <span class="contact-form__label">Tell us more</span>
+          <textarea name="message" rows="4" required placeholder="Site type, scale, timeline…"></textarea>
+        </label>
+        <div class="contact-form__status" id="contact-form-status" role="status" aria-live="polite"></div>
+        <button type="submit" class="contact-form__submit" id="contact-form-submit">
+          <span class="contact-form__submit-label">Send Message</span>
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <a href="#top" class="footer-logo">RITESTAND <span>FIRE</span></a>
+      <p class="footer-note">Inferno Attac · T-Rotor Technology · A Ritestand Group brand</p>
+      <p class="footer-copy">© 2025 Ritestand Group of Companies. All rights reserved. · <a href="https://www.ritestand.com" target="_blank" rel="noreferrer">ritestand.com</a></p>
+    </div>
+  </footer>
+
+  <!-- GSAP via UMD (window.gsap, window.ScrollTrigger). -->
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+  <!-- Lenis momentum smooth-scroll (window.Lenis). -->
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.14/dist/lenis.min.js"></script>
+
+  <script type="module" src="drawer-viewer.js?v=site164"></script>
+  <script type="module" src="product-viewer-ui.js?v=12"></script>
+  <script type="module" src="product-interaction.js?v=15"></script>
+
+  <!-- Static hero boot — replaces cinematic.js: smooth-scroll, reveal, products cover. -->
+  <script>
+    (function () {
+      const Lenis = window.Lenis;
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (Lenis && !reduced) {
+        const lenis = new Lenis({ duration: 1.1, smoothWheel: true });
+        window.__lenis = lenis;
+        function raf(t) { lenis.raf(t); requestAnimationFrame(raf); }
+        requestAnimationFrame(raf);
+        if (window.ScrollTrigger) lenis.on('scroll', window.ScrollTrigger.update);
+      }
+      const cap = document.getElementById('cap');
+      const stats = document.getElementById('hero-stats');
+      const still = document.getElementById('scene-still');
+      const hint = document.getElementById('hint');
+      function reveal() {
+        document.body.classList.remove('is-loading');
+        document.body.classList.add('is-ready');
+        if (cap) cap.classList.add('is-in');
+        if (stats) stats.classList.add('is-in');
+      }
+      if (still && !still.complete) still.addEventListener('load', reveal, { once: true });
+      reveal();
+
+      // Fade the fixed hero overlays as #products rises over the still.
+      const productsEl = document.getElementById('products');
+      if (productsEl) {
+        const onScroll = () => {
+          const top = productsEl.getBoundingClientRect().top;
+          const rising = top <= window.innerHeight * 0.92;
+          if (cap) cap.classList.toggle('is-in', !rising);
+          if (stats) stats.classList.toggle('is-in', !rising);
+          if (hint) hint.classList.toggle('is-hidden', rising);
+          document.body.classList.toggle('covered', top <= 1);
+        };
+        window.addEventListener('scroll', onScroll, { passive: true });
+        onScroll();
+      }
+    })();
+  </script>
+
+  <!-- Route in-page anchor links through Lenis for smooth momentum jumps. -->
+  <script>
+    document.addEventListener('click', (e) => {
+      const a = e.target.closest('a[href^="#"]');
+      if (!a) return;
+      const id = a.getAttribute('href');
+      if (id.length < 2) return;
+      const target = document.querySelector(id);
+      if (!target) return;
+      e.preventDefault();
+      if (window.__lenis) window.__lenis.scrollTo(target, { offset: -10 });
+      else target.scrollIntoView({ behavior: 'smooth' });
+    });
+  </script>
+
+  <!-- Product detail drawer -->
+  <div class="product-drawer" id="product-drawer">
+    <div class="product-drawer__overlay" id="drawer-overlay"></div>
+    <div class="product-drawer__panel">
+      <button class="drawer__close" id="drawer-close" aria-label="Close">✕</button>
+
+      <div class="drawer__image" id="drawer-image-zone">
+        <span class="drawer__family" id="drawer-family"></span>
+
+        <!-- Interactive 3D viewer — shown for products flagged data-product-3d. -->
+        <div class="drawer__viewer" id="drawer-viewer" hidden>
+          <div class="drawer__stage-3d" id="drawer-stage-3d">
+            <canvas id="drawer-canvas"></canvas>
+            <div class="drawer__scan" aria-hidden="true"></div>
+            <div class="drawer__viewer-loading" id="drawer-viewer-loading">Loading model…</div>
+            <div class="drawer__viewer-hint" id="drawer-viewer-hint">Drag to rotate</div>
+
+            <div class="drawer__modes" id="drawer-modes" role="group" aria-label="View mode">
+              <button type="button" class="drawer__mode is-active" data-mode="full">Full</button>
+              <button type="button" class="drawer__mode" data-mode="system">System</button>
+              <button type="button" class="drawer__mode" data-mode="gun">Gun</button>
+              <button type="button" class="drawer__mode" data-mode="cutaway">Cutaway</button>
+            </div>
+
+            <!-- Foam spray toggle — only shown in Gun mode. -->
+            <button type="button" class="drawer__foam-toggle" id="drawer-foam-toggle" aria-pressed="false">
+              <span class="drawer__foam-dot" aria-hidden="true"></span>
+              <span class="drawer__foam-label">Foam spray</span>
+            </button>
+
+            <!-- Vehicle-system discharge — only shown in System mode, and only
+                 for a model that ships Nozzle_### anchors. -->
+            <button type="button" class="drawer__activate" id="drawer-activate" aria-pressed="false">
+              <span class="drawer__activate-dot" aria-hidden="true"></span>
+              <span class="drawer__activate-label">Activate system</span>
+            </button>
+
+            <!-- Zoom bar — vertical slider, two-way synced with wheel zoom. -->
+            <div class="drawer__zoom" aria-label="Zoom">
+              <button type="button" class="drawer__zoom-btn" id="drawer-zoom-in" aria-label="Zoom in">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              </button>
+              <input type="range" class="drawer__zoom-range" id="drawer-zoom" min="0" max="100" value="50" aria-label="Zoom level">
+              <button type="button" class="drawer__zoom-btn" id="drawer-zoom-out" aria-label="Zoom out">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg>
+              </button>
+              <!-- Desktop reset (Phase 58): the phone viewer has its own Reset button; this rail is hidden there. -->
+              <button type="button" class="drawer__zoom-btn" id="drawer-zoom-reset" aria-label="Reset view" title="Reset view">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4.5v4.2h4.2"/></svg>
+              </button>
+            </div>
+
+            <div class="drawer__hud" id="drawer-hud" aria-hidden="true">
+              <div class="drawer__hud-item drawer__hud-item--core">
+                <span class="drawer__hud-dot"></span>
+                <span class="drawer__hud-text">T-Rotor Core</span>
+              </div>
+              <div class="drawer__hud-item drawer__hud-item--foam">
+                <span class="drawer__hud-dot"></span>
+                <span class="drawer__hud-text">Foam charge · 85%</span>
+              </div>
+            </div>
+          </div>
+          <div class="drawer__photos" id="drawer-photos" aria-label="Product photos"></div>
+        </div>
+
+        <!-- Static product image — shown for non-3D products. -->
+        <div class="drawer__stage" id="drawer-stage">
+          <img id="drawer-img" src="" alt="">
+          <div class="drawer__spotlight" id="drawer-spotlight" aria-hidden="true"></div>
+        </div>
+
+        <!-- Fullscreen photo view (opened from the strip). -->
+        <div class="drawer__lightbox" id="drawer-lightbox">
+          <button type="button" class="drawer__lightbox-close" id="drawer-lightbox-close" aria-label="Close photo">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+          <img id="drawer-lightbox-img" src="" alt="">
+        </div>
+      </div>
+
+      <div class="drawer__info">
+        <div class="drawer__info-scroll" data-lenis-prevent>
+          <div class="drawer__index" id="drawer-index"></div>
+          <img class="drawer__logo" id="drawer-logo" src="" alt="" style="display:none">
+          <h2 class="drawer__name" id="drawer-name" style="display:none"></h2>
+
+          <div class="drawer__highlights" id="drawer-highlights"></div>
+
+          <p class="drawer__desc" id="drawer-desc"></p>
+
+          <details class="drawer__specs-details" id="drawer-specs-details" style="display:none">
+            <summary class="drawer__specs-summary">
+              <span class="drawer__specs-summary-label">
+                <span class="drawer__specs-summary-title">Full specifications</span>
+                <span class="drawer__specs-summary-count" id="drawer-specs-count"></span>
+              </span>
+              <span class="drawer__specs-caret" aria-hidden="true">
+                <span class="drawer__specs-caret-bar"></span>
+                <span class="drawer__specs-caret-bar"></span>
+              </span>
+            </summary>
+            <div class="drawer__specs" id="drawer-specs"></div>
+          </details>
+        </div>
+
+        <div class="drawer__cta-row">
+          <button type="button" class="drawer__cta drawer__cta--primary" id="drawer-enquire">
+            <span>Request a Quote</span>
+            <span class="drawer__cta-arrow">→</span>
+          </button>
+          <a href="tel:+27104492051" class="drawer__cta drawer__cta--secondary">
+            Talk to us
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const drawer      = document.getElementById('product-drawer');
+      const overlay     = document.getElementById('drawer-overlay');
+      const closeBtn    = document.getElementById('drawer-close');
+      const imgZone     = document.getElementById('drawer-image-zone');
+      const stage       = document.getElementById('drawer-stage');
+      const spotlight   = document.getElementById('drawer-spotlight');
+      const img         = document.getElementById('drawer-img');
+      const familyEl    = document.getElementById('drawer-family');
+      const viewer      = document.getElementById('drawer-viewer');
+      const photosEl    = document.getElementById('drawer-photos');
+      const modesEl     = document.getElementById('drawer-modes');
+      const lightbox    = document.getElementById('drawer-lightbox');
+      const lightboxImg = document.getElementById('drawer-lightbox-img');
+      const lightboxClose = document.getElementById('drawer-lightbox-close');
+      const idxEl       = document.getElementById('drawer-index');
+      const logoEl      = document.getElementById('drawer-logo');
+      const nameEl      = document.getElementById('drawer-name');
+      const highlights  = document.getElementById('drawer-highlights');
+      const descEl      = document.getElementById('drawer-desc');
+      const specsDet    = document.getElementById('drawer-specs-details');
+      const specsEl     = document.getElementById('drawer-specs');
+      const enquireBtn  = document.getElementById('drawer-enquire');
+      const serviceSel  = document.querySelector('.contact-form select[name="service"]');
+
+      // Product index → { family badge, contact-form option keyword to match }.
+      // Keyed on data-product-index (01..11) so it's robust to name changes.
+      const PRODUCT_MAP = {
+        '01': { family: 'Vehicle-mounted',     serviceKey: 'bakkie' },
+        '02': { family: 'Vehicle-mounted',     serviceKey: 'bakkie' },
+        '03': { family: 'Trailer-mounted',     serviceKey: 'trailer' },
+        '04': { family: 'Heavy-duty response', serviceKey: 'beast' },
+        '05': { family: 'Skid-mounted',        serviceKey: 'skiddy' },
+        '06': { family: 'Vehicle suppression', serviceKey: 'vss' },
+        '07': { family: 'Portable',            serviceKey: 'extinguisher' },
+        '08': { family: 'Wall-mounted',        serviceKey: 'guard' },
+        '09': { family: 'Portable · wall',     serviceKey: 'guard' },
+        '10': { family: 'Fixed · localised',   serviceKey: 'localised' },
+        '11': { family: 'Fixed · transformer', serviceKey: 'transformer' },
+      };
+
+      let currentName = '';
+      let currentIndex = '';
+      let currentGlb = '';
+      let openerCard = null;
+
+      // Desktop drawer as a modal dialog (Phase 38). The phone product-first viewer does
+      // its own dialog/inert/focus (product-viewer-ui.js); this covers every other open.
+      // While closed the drawer is only translated off-screen, so it leaves the tab order.
+      let pageInerted = null;
+      const isProductFirst = () => drawer.classList.contains('pv-mobile');
+      const setPageInert = (on) => {
+        if (!on) { if (pageInerted) for (const el of pageInerted) el.inert = false; pageInerted = null; return; }
+        pageInerted = pageInerted || [];
+        for (const sib of drawer.parentElement.children) {
+          if (sib === drawer || sib.inert || /^(SCRIPT|STYLE|LINK|TEMPLATE|NOSCRIPT|META)$/.test(sib.tagName)) continue;
+          sib.inert = true; pageInerted.push(sib);
+        }
+      };
+      const panelEl = drawer.querySelector('.product-drawer__panel');
+      const syncDialog = () => {
+        if (!drawer.classList.contains('is-open') || isProductFirst()) return;
+        panelEl.setAttribute('role', 'dialog');
+        panelEl.setAttribute('aria-modal', 'true');
+        panelEl.setAttribute('aria-label', currentName || 'Product details');
+        setPageInert(true);
+      };
+      drawer.inert = true;
+      // Crossing the product-first breakpoint while open hands the page back and forth.
+      window.addEventListener('resize', () => requestAnimationFrame(syncDialog));
+
+      // one probe per page: can this browser create a WebGL context at all (the 3D viewer needs one)
+      let webglOk;
+      function webglAvailable() {
+        if (webglOk === undefined) {
+          try { const c = document.createElement('canvas'), gl = c.getContext('webgl2') || c.getContext('webgl'); webglOk = !!gl;
+            const lose = gl && gl.getExtension('WEBGL_lose_context'); if (lose) lose.loseContext(); } catch (e) { webglOk = false; }
+        }
+        return webglOk;
+      }
+
+      function open(card) {
+        drawer.inert = false;
+        openerCard = card;
+        const thumb = card.dataset.productThumb;
+        const logo  = card.dataset.productLogo;
+        const name  = card.dataset.productName;
+        const index = card.dataset.productIndex;
+        currentName = name || '';
+        currentIndex = index || '';
+
+        const map = PRODUCT_MAP[index] || { family: 'Fire suppression' };
+        // Phones / portrait tablets: every product opens as the full-screen product-first viewer
+        // (product-viewer-ui.js, Phase 23; all products since Phase 42). Returns false everywhere else — the drawer below is unchanged.
+        const productFirst = window.ProductViewerUI ? window.ProductViewerUI.open(card, { category: map.family }) : false;
+        // Product configuration + selectable components (product-interaction.js, Phase 25); nothing for other products.
+        if (window.ProductInteraction) window.ProductInteraction.open(card, { category: map.family });
+        idxEl.textContent  = index;
+        descEl.textContent = card.dataset.productDesc;
+        familyEl.textContent = map.family;
+
+        // Image zone — interactive 3D viewer for flagged products, else static image.
+        // Phase 70: with no WebGL (disabled, blocklisted GPU) the product opens with its photo instead of throwing in the viewer.
+        const use3D = card.dataset.productModel === 'true' && window.DrawerViewer && webglAvailable();
+        imgZone.classList.remove('drawer__image--logo');
+        imgZone.style.display = '';
+        if (lightbox) lightbox.classList.remove("is-open");
+
+        if (use3D) {
+          viewer.hidden = false;
+          stage.style.display = 'none';
+          // Photo strip below the model (data-driven; add more per product later).
+          let photos = [];
+          try { photos = JSON.parse(card.dataset.productPhotos || '[]'); } catch (e) {}
+          if (!photos.length && thumb) photos = [thumb];
+          if (photosEl) {
+            photosEl.innerHTML = photos.map(src =>
+              `<button type="button" class="drawer__photo" data-src="${src}"><img src="${src}" alt="${name}" loading="lazy"></button>`
+            ).join('');
+            photosEl.style.display = photos.length ? '' : 'none';
+          }
+          if (modesEl) modesEl.querySelectorAll('.drawer__mode').forEach(b => b.classList.toggle('is-active', b.dataset.mode === 'full'));
+          viewer.classList.remove('is-cut', 'is-system', 'is-gun');
+          const ft = document.getElementById('drawer-foam-toggle');
+          if (ft) { ft.setAttribute('aria-pressed', 'false'); ft.classList.remove('is-on'); }
+          const vh = document.getElementById('drawer-viewer-hint');
+          if (vh) vh.textContent = productFirst ? 'Drag to explore' : 'Drag to rotate';
+          // Mode buttons (full / system / cutaway / gun). Every product has a
+          // rig, but not every one has a cannon — the viewer reports what it
+          // found in the GLB and we show only those tabs.
+          const hasRig = card.dataset.productRig === 'true';
+          if (modesEl) modesEl.style.display = hasRig ? '' : 'none';
+          // Held back until the viewer reports this model's capabilities (dv:ready) — before
+          // that it would show the previous product's tabs, or all four on a first open.
+          if (modesEl) modesEl.classList.add('is-pending');
+          viewer.classList.remove('is-model-error');
+          const ftw = document.getElementById('drawer-foam-toggle');
+          if (ftw) ftw.style.display = hasRig ? '' : 'none';   // the button, never its parent (that is the 3D stage)
+          currentGlb = card.dataset.productGlb;
+          window.DrawerViewer.open(card.dataset.productGlb);
+        } else {
+          viewer.hidden = true;
+          currentGlb = '';
+          // a 3D product without WebGL: tell the product-first view its model is unavailable (its own "product information is
+          // still available below" state), the same event the viewer sends when a model fails to load
+          if (card.dataset.productModel === 'true' && window.DrawerViewer) document.dispatchEvent(new CustomEvent('dv:error', { detail: { url: card.dataset.productGlb, reason: 'no-webgl' } }));
+          stage.style.display = '';
+          if (window.DrawerViewer) window.DrawerViewer.close();
+          if (thumb) {
+            img.src = thumb; img.alt = name;
+          } else if (logo) {
+            img.src = logo; img.alt = name;
+            imgZone.classList.add('drawer__image--logo');
+          } else {
+            imgZone.style.display = 'none';
+          }
+        }
+
+        // Logo or text name in info panel
+        if (logo) {
+          logoEl.src = logo; logoEl.alt = name;
+          logoEl.style.display = 'block';
+          nameEl.style.display = 'none';
+        } else {
+          logoEl.style.display = 'none';
+          nameEl.textContent = name;
+          nameEl.style.display = 'block';
+        }
+
+        // Specs → highlights (first 3) + collapsible full list (rest)
+        const rawSpecs = card.dataset.productSpecs;
+        if (rawSpecs) {
+          const specs = JSON.parse(rawSpecs);
+          const featured = specs.slice(0, 3);
+          const rest = specs.slice(3);
+
+          highlights.innerHTML = featured.map(s => `
+            <div class="drawer__highlight">
+              <div class="drawer__highlight-key">${s.key}</div>
+              <div class="drawer__highlight-val">${s.val}</div>
+            </div>
+          `).join('');
+          highlights.style.display = featured.length ? '' : 'none';
+
+          if (rest.length) {
+            specsEl.innerHTML = rest.map(s => `
+              <div class="drawer__spec-row">
+                <span class="drawer__spec-key">${s.key}</span>
+                <span class="drawer__spec-val">${s.val}</span>
+              </div>
+            `).join('');
+            const countEl = document.getElementById('drawer-specs-count');
+            if (countEl) countEl.textContent = rest.length + ' more detail' + (rest.length === 1 ? '' : 's');
+            specsDet.style.display = '';
+            specsDet.open = false;
+          } else {
+            specsDet.style.display = 'none';
+          }
+        } else {
+          highlights.innerHTML = ''; highlights.style.display = 'none';
+          specsDet.style.display = 'none';
+        }
+
+        drawer.classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+        if (window.__lenis) window.__lenis.stop();   // freeze page scroll behind the drawer
+        // Reset info scroll position on new open.
+        const scroller = drawer.querySelector('.drawer__info-scroll');
+        if (scroller) scroller.scrollTop = 0;
+        syncDialog();
+        // A visitor's click / tap / Enter has focused the card, so focus follows into the dialog. An open the page
+        // makes itself (a ?product= deep link) leaves focus alone: nothing else is focusable, so Tab still lands here.
+        const a = document.activeElement;
+        if (!isProductFirst() && a && a !== document.body && !drawer.contains(a)) closeBtn.focus({ preventScroll: true });
+      }
+
+      function close({ restoreFocus = true } = {}) {
+        const wasOpen = drawer.classList.contains('is-open');
+        if (window.ProductInteraction) window.ProductInteraction.close();
+        if (window.ProductViewerUI) window.ProductViewerUI.close();
+        setPageInert(false);
+        if (wasOpen && restoreFocus && openerCard && (drawer.contains(document.activeElement) || document.activeElement === document.body)) openerCard.focus({ preventScroll: true });
+        drawer.inert = true;
+        drawer.classList.remove('is-open');
+        document.body.style.overflow = '';
+        if (window.__lenis) window.__lenis.start();
+        if (lightbox) lightbox.classList.remove("is-open");
+        if (window.DrawerViewer) window.DrawerViewer.close();
+      }
+
+      // View-mode segmented control — Full / System / Gun / Cutaway.
+      const viewerHint = document.getElementById('drawer-viewer-hint');
+      const foamToggle = document.getElementById('drawer-foam-toggle');
+      const activateBtn = document.getElementById('drawer-activate');
+      // Phase 82: on a production cannon the same toggle is the system's activation ("Activate system" -> foam stream).
+      const foamLabel = () => {
+        if (!foamToggle) return;
+        const act = foamToggle.classList.contains('is-activate'), on = foamToggle.classList.contains('is-on');
+        foamToggle.querySelector('.drawer__foam-label').textContent = act ? (on ? 'System discharging' : 'Activate system') : 'Foam spray';
+      };
+      const resetFoamBtn = () => {
+        if (foamToggle) {
+          foamToggle.setAttribute('aria-pressed', 'false');
+          foamToggle.classList.remove('is-on');
+          foamLabel();
+        }
+        if (activateBtn) {
+          activateBtn.setAttribute('aria-pressed', 'false');
+          activateBtn.classList.remove('is-on');
+          activateBtn.querySelector('.drawer__activate-label').textContent = 'Activate system';
+        }
+      };
+      // The viewer reports what each GLB actually contains once it has loaded.
+      // A product with no cannon (the Skiddy) loses the Gun tab instead of
+      // offering a mode that would zoom in on nothing.
+      document.addEventListener('dv:ready', (e) => {
+        const caps = e.detail || {};
+        viewer.classList.remove('is-model-error');
+        if (!modesEl) return;
+        modesEl.classList.remove('is-pending');
+        modesEl.querySelectorAll('.drawer__mode').forEach(b => {
+          const m = b.dataset.mode;
+          const on = (m === 'full') || caps[m] !== false;
+          b.hidden = !on;
+          if (!on && b.classList.contains('is-active')) {
+            modesEl.querySelector('[data-mode="full"]').classList.add('is-active');
+            b.classList.remove('is-active');
+          }
+        });
+        const ftw = document.getElementById('drawer-foam-toggle');
+        if (ftw) ftw.style.display = caps.gun && caps.foam !== false ? '' : 'none';   // Phase 80: no dead spray toggle on production assets
+        if (ftw) { ftw.classList.toggle('is-activate', !!caps.gunActivate); foamLabel(); }
+        const abw = document.getElementById('drawer-activate');
+        if (abw) abw.style.display = caps.nozzles ? '' : 'none';
+      });
+      // No model → no model controls beside "Model unavailable" (cleared on the next open).
+      document.addEventListener('dv:error', (e) => {
+        if (!e.detail || e.detail.url !== currentGlb) return;   // a load this drawer already moved on from
+        viewer.classList.add('is-model-error');
+        if (modesEl) modesEl.classList.remove('is-pending');
+      });
+      // A product photo that fails to load drops out of the strip / gallery instead of
+      // showing a broken image ('error' does not bubble, hence the capture phase).
+      document.addEventListener('error', (e) => {
+        const t = e.target;
+        if (!t || t.tagName !== 'IMG') return;
+        const item = t.closest('.drawer__photo, .pv-gallery__item, .pc-media__item');
+        if (!item) return;
+        item.hidden = true;
+        if (photosEl && item.parentElement === photosEl && ![...photosEl.children].some(c => !c.hidden)) photosEl.style.display = 'none';
+      }, true);
+      if (modesEl) {
+        modesEl.addEventListener('click', (e) => {
+          const btn = e.target.closest('.drawer__mode');
+          if (!btn || !window.DrawerViewer) return;
+          const m = btn.dataset.mode;
+          modesEl.querySelectorAll('.drawer__mode').forEach(b => b.classList.toggle('is-active', b === btn));
+          window.DrawerViewer.setMode(m);
+          // Phase 67: the hologram scan and HUD pills are the legacy GLBs' cutaway styling; a production asset's Cutaway is its
+          // real section and is shown without them (they carry illustrative text, not product data).
+          viewer.classList.toggle('is-cut', m === 'cutaway' && !(window.DrawerViewer.production && window.DrawerViewer.production()));
+          viewer.classList.toggle('is-system', m === 'system');
+          viewer.classList.toggle('is-gun', m === 'gun');
+          resetFoamBtn();
+          if (viewerHint) viewerHint.textContent = (m === 'gun') ? (foamToggle && foamToggle.classList.contains('is-activate') ? (drawer.classList.contains('pv-mobile') ? 'Tap where to spray · drag to orbit' : 'Point where to spray · drag to orbit') : 'Drag to orbit') : (drawer.classList.contains('pv-mobile') ? 'Drag to explore' : 'Drag to rotate');
+        });
+      }
+
+      // Vehicle-system discharge on/off (system mode) — fires every nozzle.
+      if (activateBtn) {
+        activateBtn.addEventListener('click', () => {
+          if (!window.DrawerViewer || !window.DrawerViewer.setSystem) return;
+          const on = window.DrawerViewer.setSystem(!window.DrawerViewer.getSystem());
+          activateBtn.setAttribute('aria-pressed', String(on));
+          activateBtn.classList.toggle('is-on', on);
+          activateBtn.querySelector('.drawer__activate-label').textContent =
+            on ? 'System discharging' : 'Activate system';
+        });
+      }
+
+      // Foam-spray on/off (gun mode).
+      if (foamToggle) {
+        foamToggle.addEventListener('click', () => {
+          if (!window.DrawerViewer) return;
+          const on = window.DrawerViewer.setFoam(!window.DrawerViewer.getFoam());
+          foamToggle.setAttribute('aria-pressed', String(on));
+          foamToggle.classList.toggle('is-on', on);
+          foamLabel();
+        });
+      }
+
+      // Photo strip → open the tapped photo full-view; tap again to dismiss.
+      if (photosEl) {
+        photosEl.addEventListener('click', (e) => {
+          const btn = e.target.closest('.drawer__photo');
+          if (!btn || !lightbox) return;
+          lightboxImg.src = btn.dataset.src;
+          lightbox.classList.add("is-open");
+        });
+      }
+      const closeLightbox = () => { if (lightbox) lightbox.classList.remove('is-open'); };
+      if (lightbox) lightbox.addEventListener('click', closeLightbox);        // click backdrop
+      if (lightboxImg) lightboxImg.addEventListener('click', (e) => e.stopPropagation()); // not the photo itself
+      if (lightboxClose) lightboxClose.addEventListener('click', (e) => { e.stopPropagation(); closeLightbox(); });
+
+      // Cursor spotlight + parallax removed — kept static image feel.
+      if (spotlight) spotlight.style.display = 'none';
+
+      // Enquire → prefill service dropdown, close drawer, scroll to contact, flash select.
+      if (enquireBtn) {
+        enquireBtn.addEventListener('click', () => {
+          const map = PRODUCT_MAP[currentIndex];
+          if (serviceSel && map && map.serviceKey) {
+            const opts = Array.from(serviceSel.options);
+            const match = opts.find(o => o.text.toLowerCase().includes(map.serviceKey));
+            if (match) {
+              match.selected = true;
+              serviceSel.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+          }
+          close({ restoreFocus: false });   // focus follows the visitor to the form, not back to the card
+          setTimeout(() => {
+            const target = document.getElementById('contact');
+            if (target) {
+              if (window.__lenis) window.__lenis.scrollTo(target, { offset: -20 });
+              else target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            if (serviceSel) {
+              if (!matchMedia('(pointer: coarse)').matches) serviceSel.focus({ preventScroll: true });   // no programmatic form focus on touch
+              serviceSel.classList.add('is-prefilled');
+              setTimeout(() => serviceSel.classList.remove('is-prefilled'), 2400);
+            }
+          }, 260);
+        });
+      }
+
+      document.querySelectorAll('.product-card').forEach(card => {
+        card.addEventListener('click', () => open(card));
+        card.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(card); }
+        });
+      });
+
+      // Phase 82i: a direct product link (?product=trailer / vss / 2cu / 4cu / skiddy) opens that product's drawer on arrival,
+      // for test links. Unknown values do nothing.
+      {
+        const want = new URLSearchParams(location.search).get('product');
+        const map = { trailer: '4cu-trailer', vss: 'vss-830e', '2cu': 'attac-2cu', '4cu': 'attac-4cu', skiddy: 'skiddy' };
+        const card = want && map[want.toLowerCase()] && document.querySelector(`.product-card[data-product-glb^="models/${map[want.toLowerCase()]}."]`);
+        if (card) {
+          const go = () => { card.scrollIntoView({ block: 'center' }); setTimeout(() => open(card), 350); };
+          if (document.readyState === 'complete') go(); else window.addEventListener('load', go, { once: true });
+        }
+      }
+
+      overlay.addEventListener('click', close);
+      closeBtn.addEventListener('click', close);
+      document.addEventListener('keydown', e => {
+        if (e.key !== 'Escape') return;
+        // Escape closes the photo view first if it's open, else the drawer.
+        if (lightbox && lightbox.classList.contains('is-open')) closeLightbox();
+        else close();
+      });
+    })();
+
+    // Retire hero shimmer + flare once entrance animation completes.
+    // Keeping them in the DOM after fade-out costs continuous GPU
+    // compositing (mask-image + blur filters) → scroll lag on Retina.
+    setTimeout(() => {
+      const shimmer = document.querySelector('.site-nav__shimmer');
+      const flare   = document.querySelector('.site-nav__flare');
+      if (shimmer) shimmer.remove();
+      if (flare)   flare.remove();
+    }, 3000);
+
+    // Solidify navbar once the user has scrolled off the poster shot.
+    (function () {
+      const nav = document.getElementById('site-nav');
+      if (!nav) return;
+      let scrolled = false;
+      const tick = () => {
+        const s = window.scrollY > 40;
+        if (s !== scrolled) {
+          scrolled = s;
+          nav.classList.toggle('is-scrolled', s);
+        }
+      };
+      tick();
+      window.addEventListener('scroll', tick, { passive: true });
+    })();
+
+    // Scroll panels — entrance fade + differential parallax so headings feel
+    // planted while the eye moves through them. Index moves fastest (depth),
+    // title slower, body copy is anchored (the read target).
+    (function () {
+      const panels = document.querySelectorAll('.panel');
+      if (!panels.length) return;
+
+      // Intersection-driven visibility class → CSS transitions do the entrance.
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting) e.target.classList.add('is-inview');
+        });
+      }, { threshold: 0.35, rootMargin: '0px 0px -10% 0px' });
+      panels.forEach(p => io.observe(p));
+
+      // GSAP differential parallax — ScrollTrigger is already loaded above.
+      if (!window.gsap || !window.ScrollTrigger) return;
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reducedMotion) return;
+
+      panels.forEach(panel => {
+        const idx   = panel.querySelector('.panel__index');
+        const title = panel.querySelector('.panel__title');
+        const copy  = panel.querySelector('.panel__copy');
+        const trig  = {
+          trigger: panel,
+          start: 'top bottom',
+          end: 'bottom top',
+          scrub: 0.6,
+        };
+        if (idx)   gsap.fromTo(idx,   { y: 80 },  { y: -100, ease: 'none', scrollTrigger: trig });
+        if (title) gsap.fromTo(title, { y: 50 },  { y: -60,  ease: 'none', scrollTrigger: trig });
+        if (copy)  gsap.fromTo(copy,  { y: 20 },  { y: -20,  ease: 'none', scrollTrigger: trig });
+      });
+    })();
+
+    // Contact form — real send via FormSubmit (no signup, one-time email
+    // confirmation on first submission). Falls back to mailto: if the send
+    // fails so users are never left with a dead button.
+    // Only a confirmed delivery counts as sent (Phase 47): HTTP OK *and* FormSubmit's
+    // JSON flag success true / "true". FormSubmit answers HTTP 200 with
+    // {"success":"false", message} when it rejects a submission (e.g. before the
+    // one-time activation, which is per domain), so HTTP OK alone proves nothing.
+    // HTTP errors, success false, an unreadable body and network failures are all
+    // failures: the visitor is never told the message is on its way.
+    (function () {
+      const form   = document.getElementById('contact-form');
+      const status = document.getElementById('contact-form-status');
+      const btn    = document.getElementById('contact-form-submit');
+      if (!form || !status || !btn) return;
+
+      const labelEl = btn.querySelector('.contact-form__submit-label');
+      const idleLabel = labelEl ? labelEl.textContent : '';
+      // The mailto fallback writes to the form's own recipient — the address in the
+      // FormSubmit action URL — so the recipient is configured in one place only.
+      const recipient = ((form.getAttribute('action') || '').match(/\/ajax\/([^/?#]+@[^/?#]+)$/) || [])[1] || '';
+      const delivered = (res, reply) => res.ok && !!reply && (reply.success === true || reply.success === 'true');
+      const setBtn = (text, disabled) => {
+        if (labelEl) labelEl.textContent = text;
+        btn.disabled = !!disabled;
+      };
+      const setStatus = (type, message) => {
+        status.className = 'contact-form__status is-' + type;
+        status.textContent = message;
+      };
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        setStatus('sending', 'Sending your message…');
+        setBtn('Sending…', true);
+
+        const data = new FormData(form);
+        // FormSubmit AJAX prefers JSON. Skip empty values.
+        const payload = {};
+        data.forEach((v, k) => { if (v) payload[k] = v; });
+
+        try {
+          const res = await fetch(form.action, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          const reply = await res.json().catch(() => null);   // no / non-JSON body → null → not delivered
+          if (!delivered(res, reply)) throw new Error('not delivered (HTTP ' + res.status + (reply && reply.message ? ': ' + reply.message : '') + ')');
+          setStatus('ok', 'Thanks — your message is on its way. We\'ll be in touch shortly.');
+          setBtn('Message sent ✓', true);
+          form.reset();
+        } catch (err) {
+          console.warn('[contact] send failed, falling back to mailto:', err);
+          if (!recipient) {   // no address in the action URL (e.g. a FormSubmit alias): nothing to fall back to
+            setStatus('error', 'Your message could not be sent. Please try again in a moment.');
+            setBtn(idleLabel, false);
+            return;
+          }
+          // Fallback — build a mailto: with formatted body so the message still gets out.
+          const body = Object.entries(payload)
+            .filter(([k]) => !k.startsWith('_') && k !== '_honey')
+            .map(([k, v]) => `${k}: ${v}`)
+            .join('\n');
+          const subject = 'Ritestand Fire — Website enquiry';
+          window.location.href = 'mailto:' + recipient + '?subject=' +
+            encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+          setStatus('warn', 'Your mail app is opening — hit send there to complete.');
+          setBtn(idleLabel, false);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

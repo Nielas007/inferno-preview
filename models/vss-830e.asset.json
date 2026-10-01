@@ -1,0 +1,97 @@
+{
+ "schema": "inferno.asset/1",
+ "asset": "VSS_830E",
+ "base": "vss-830e/",
+ "rig": "VSS830E_rig.gltf",
+ "lods": [
+  "VSS830E_LOD0.gltf",
+  "VSS830E_LOD1.gltf",
+  "VSS830E_LOD2.gltf",
+  "VSS830E_LOD3.gltf"
+ ],
+ "defaultLOD": 0,
+ "lodRangesM": [
+  [
+   0,
+   15
+  ],
+  [
+   15,
+   30
+  ],
+  [
+   30,
+   60
+  ],
+  [
+   60,
+   null
+  ]
+ ],
+ "sprayAxisLocal": "+Y",
+ "lampLevels": {
+  "off": 0,
+  "low": 0.25,
+  "on": 1
+ },
+ "viewerYaw": 3.141592653589793,
+ "units": "metres",
+ "worldSizeM": [
+  8.428,
+  15.635,
+  8.0
+ ],
+ "featureIdAttribute": "_FEATURE_ID_0",
+ "lamps": {
+  "materialPattern": "^WEB_(LED_EMISSIVE|LENS_)"
+ },
+ "metrics": {
+  "tris": {
+   "LOD0": 900354,
+   "LOD1": 291627,
+   "LOD2": 131892,
+   "LOD3": 60398
+  },
+  "texturesKTX2MB": 42.199,
+  "textureFiles": 50,
+  "textureSets": {
+   "ACCESS": "1K",
+   "CAB": "2K",
+   "CHASSIS": "2K",
+   "DUMP_BODY": "2K",
+   "FS_CYLINDERS": "512",
+   "FS_FITTINGS": "1K",
+   "FS_NOZZLES": "512",
+   "FS_PIPEWORK": "2K",
+   "LATTICE": "512",
+   "LIGHTS": "512",
+   "MECHANICAL": "2K",
+   "MECH_SMALL": "1K",
+   "RUNNING_GEAR": "1K",
+   "WHEELS": "1K"
+  },
+  "textureTiers": {
+   "LOD2": {
+    "CAB": "1K",
+    "LATTICE": "256"
+   },
+   "LOD3": {
+    "FS_FITTINGS": "512",
+    "CAB": "512",
+    "LATTICE": "128"
+   }
+  },
+  "firstOpenMB": {
+   "LOD0": 53.993,
+   "LOD1": 45.122,
+   "LOD2": 39.234,
+   "LOD3": 35.494
+  },
+  "gpuTexturesMB": {
+   "LOD0": 100.67,
+   "LOD1": 100.67,
+   "LOD2": 88.17,
+   "LOD3": 83.04
+  }
+ }
+}

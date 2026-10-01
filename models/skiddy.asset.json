@@ -1,0 +1,127 @@
+{
+ "schema": "inferno.asset/1",
+ "asset": "SKIDDY",
+ "product": "skiddy",
+ "assetVersion": 2,
+ "base": "skiddy/",
+ "rig": "SKIDDY_rig.gltf",
+ "lods": [
+  "SKIDDY_LOD0.gltf",
+  "SKIDDY_LOD1.gltf",
+  "SKIDDY_LOD2.gltf"
+ ],
+ "defaultLOD": 0,
+ "sprayAxisLocal": "+Y",
+ "viewerYaw": -2.591465,
+ "units": "metres",
+ "worldSizeM": [
+  0.6897,
+  1.4594,
+  1.4458
+ ],
+ "boundsM": {
+  "min": [
+   -0.3448,
+   -0.7297,
+   0.0
+  ],
+  "max": [
+   0.3448,
+   0.7297,
+   1.4458
+  ],
+  "axes": "Blender X, Y, Z (Z up); wheels on z = 0, footprint centred"
+ },
+ "scale": {
+  "factorFromSource": 0.1106578,
+  "source": "cad-derived",
+  "status": "verify",
+  "published": false
+ },
+ "featureIdAttribute": "_FEATURE_ID_0",
+ "features": {
+  "SKIDDY_CYLINDER": "cylinder",
+  "SKIDDY_LABEL": "cylinder",
+  "SKIDDY_VALVE_HEAD": "valve-gauge",
+  "SKIDDY_GAUGE": "valve-gauge",
+  "SKIDDY_SUPPLY_HOSE": "supply-hose",
+  "SKIDDY_HOSE_FERRULES": "supply-hose",
+  "SKIDDY_REEL": "hose-reel",
+  "SKIDDY_REEL_SWIVEL": "hose-reel",
+  "SKIDDY_REEL_HOSE": "hose-nozzle",
+  "SKIDDY_NOZZLE": "hose-nozzle",
+  "SKIDDY_TROLLEY_FRAME": "trolley",
+  "SKIDDY_CASTOR_REEL_END_L": "trolley",
+  "SKIDDY_CASTOR_REEL_END_R": "trolley",
+  "SKIDDY_CASTOR_HANDLE_END_L": "trolley",
+  "SKIDDY_CASTOR_HANDLE_END_R": "trolley"
+ },
+ "anchors": [],
+ "views": {
+  "full": true,
+  "system": "the trolley (LODn_Vehicle) fades out",
+  "cutaway": "the host cylinder (LODn_Cylinder) is replaced by its pre-cut version (cutaway), fetched on first use"
+ },
+ "cutaway": {
+  "gltf": "SKIDDY_CUTAWAY.gltf?v=82",
+  "hostGroups": [
+   "Cylinder"
+  ],
+  "focusFeatures": [
+   "SKIDDY_CYLINDER",
+   "SKIDDY_LABEL"
+  ],
+  "view": {
+   "direction": [
+    0.3481,
+    0.0,
+    0.9374
+   ],
+   "elevation": 25,
+   "fill": 0.9
+  },
+  "metrics": {
+   "tris": 25480,
+   "brotliMB": 0.119,
+   "materials": 12,
+   "texturesShared": [
+    "SKIDDY_LABEL_BaseColor_2K",
+    "SKIDDY_CYL_ORM_512",
+    "SKIDDY_CYL_BaseColor_512"
+   ],
+   "texturesOwn": [
+    "SKIDDY_FOAM_Normal_1K",
+    "SKIDDY_FOAM_ORM_2K",
+    "SKIDDY_FOAM_BaseColor_2K"
+   ],
+   "texturesOwnKTX2MB": 2.672,
+   "gpuTexturesOwnMB": 12.0
+  }
+ },
+ "metrics": {
+  "tris": {
+   "LOD0": 103492,
+   "LOD1": 47070,
+   "LOD2": 24443
+  },
+  "brotliMB": {
+   "LOD0": 0.577,
+   "LOD1": 0.417,
+   "LOD2": 0.289
+  },
+  "texturesKTX2MB": 6.668,
+  "gpuTexturesMB": 30.8,
+  "textureSets": {
+   "CYL": 512,
+   "FIT": 2048,
+   "REEL": 2048,
+   "TRL": 1024
+  },
+  "materials": 8,
+  "normalMaps": {
+   "FIT": "1K",
+   "REEL": "512",
+   "TRL": "512"
+  }
+ }
+}

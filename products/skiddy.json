@@ -1,0 +1,352 @@
+{
+ "schema": "inferno.product/2",
+ "id": "skiddy",
+ "identity": {
+  "name": {
+   "value": "Skiddy Mobile Response Unit",
+   "status": "published"
+  },
+  "code": {
+   "value": "FS-SKIDDY-001",
+   "status": "published"
+  },
+  "shortDescription": {
+   "value": "230 L forklift-ready warehouse response unit.",
+   "status": "published"
+  },
+  "category": {
+   "value": "Skid-mounted",
+   "status": "published"
+  },
+  "tagline": {
+   "value": null,
+   "status": "required"
+  },
+  "status": {
+   "value": null,
+   "status": "required"
+  },
+  "alternateName": {
+   "value": "Inferno Attac Skiddy",
+   "status": "verify"
+  },
+  "logo": {
+   "value": "images/IA_Skiddy.png",
+   "status": "published"
+  }
+ },
+ "overview": {
+  "title": {
+   "value": "Overview",
+   "status": "derived"
+  },
+  "body": {
+   "value": "The ultimate mobile rapid response unit, custom-built for storage facilities and warehouses. 230 L cylinder with a unique forklift-locking system, allowing it to be securely lifted and transported with ease. Perfect for urgent tasks and streamlining operations — unmatched mobility and convenience in any warehouse environment.",
+   "status": "published"
+  },
+  "media": {
+   "value": null,
+   "status": "required"
+  }
+ },
+ "keyFeatures": [
+  {
+   "id": "forklift-locking",
+   "title": "Forklift-locking system",
+   "description": "230 L cylinder with a unique forklift-locking system, allowing it to be securely lifted and transported with ease.",
+   "componentId": null,
+   "status": "derived"
+  },
+  {
+   "id": "warehouse-built",
+   "title": "Built for storage facilities and warehouses",
+   "description": "Custom-built for storage facilities and warehouses.",
+   "componentId": null,
+   "status": "derived"
+  },
+  {
+   "id": "rapid-response",
+   "title": "Mobile rapid response",
+   "description": "Perfect for urgent tasks and streamlining operations.",
+   "componentId": null,
+   "status": "derived"
+  }
+ ],
+ "applications": [
+  {
+   "id": "warehouses",
+   "title": "Warehouses & storage facilities",
+   "description": null,
+   "status": "published"
+  },
+  {
+   "id": "urgent-response",
+   "title": "Urgent response, streamlined operations",
+   "description": null,
+   "status": "published"
+  }
+ ],
+ "specificationGroups": [],
+ "specifications": [
+  {
+   "id": "product-code",
+   "label": "Product Code",
+   "value": "FS-SKIDDY-001",
+   "unit": null,
+   "group": null,
+   "key": true,
+   "status": "published"
+  },
+  {
+   "id": "cylinder-capacity",
+   "label": "Cylinder Capacity",
+   "value": 230,
+   "unit": "L",
+   "group": null,
+   "key": true,
+   "status": "published"
+  },
+  {
+   "id": "transport",
+   "label": "Transport",
+   "value": "Custom forklift-locking system",
+   "unit": null,
+   "group": null,
+   "key": true,
+   "status": "published"
+  },
+  {
+   "id": "form-factor",
+   "label": "Form Factor",
+   "value": "Compact & mobile",
+   "unit": null,
+   "group": null,
+   "key": false,
+   "status": "published"
+  }
+ ],
+ "media": {
+  "hero": {
+   "src": "images/drawer-skiddy.png",
+   "alt": "Skiddy Mobile Response Unit",
+   "status": "published"
+  },
+  "gallery": [
+   {
+    "src": "images/skiddy-photo-front.jpg",
+    "alt": "Skiddy — the unit from the front, from above",
+    "status": "published"
+   },
+   {
+    "src": "images/skiddy-photo-cylinder-valve.jpg",
+    "alt": "Skiddy — cylinder valve with pressure gauge",
+    "status": "published"
+   },
+   {
+    "src": "images/skiddy-photo-ball-valve.jpg",
+    "alt": "Skiddy — valve with lever",
+    "status": "published"
+   },
+   {
+    "src": "images/skiddy-photo-label-hose-reel.jpg",
+    "alt": "Skiddy — cylinder label and hose reel",
+    "status": "published"
+   },
+   {
+    "src": "images/skiddy-photo-nameplate.jpg",
+    "alt": "Skiddy — nameplate",
+    "status": "published"
+   }
+  ]
+ },
+ "seo": {
+  "title": {
+   "value": "Skiddy Mobile Response Unit | Ritestand Fire",
+   "status": "derived"
+  },
+  "description": {
+   "value": "230 L forklift-ready mobile response unit for warehouses and storage facilities.",
+   "status": "derived"
+  }
+ },
+ "viewer": {
+  "presentation": {
+   "modes": {
+    "full": true,
+    "system": true,
+    "gun": false,
+    "cutaway": true
+   },
+   "systemContext": "ghost"
+  },
+  "asset": "models/skiddy.asset.json?v=5",
+  "assetClass": {
+   "value": "production",
+   "status": "derived"
+  },
+  "scale": {
+   "value": "cad-derived",
+   "status": "verify"
+  }
+ },
+ "componentCategories": [
+  {
+   "id": "fire-suppression",
+   "name": "Fire suppression",
+   "description": "The Skiddy's suppression parts in this 3D model.",
+   "components": [
+    "cylinder",
+    "valve-gauge",
+    "supply-hose",
+    "hose-reel",
+    "hose-nozzle"
+   ]
+  },
+  {
+   "id": "trolley",
+   "name": "Trolley",
+   "description": "The carrier the unit is mounted on in this 3D model.",
+   "components": [
+    "trolley"
+   ]
+  }
+ ],
+ "components": [
+  {
+   "id": "cylinder",
+   "name": "Cylinder",
+   "shortDescription": "The unit's cylinder with its product label, as modelled.",
+   "features": {
+    "ids": [
+     "SKIDDY_CYLINDER",
+     "SKIDDY_LABEL"
+    ]
+   },
+   "information": [
+    {
+     "key": "System",
+     "val": "Fire suppression"
+    },
+    {
+     "key": "Parts in this 3D model",
+     "val": "Cylinder, label"
+    },
+    {
+     "key": "Capacity",
+     "val": "230 L"
+    }
+   ]
+  },
+  {
+   "id": "valve-gauge",
+   "name": "Cylinder valve & gauge",
+   "shortDescription": "The lever valve and pressure gauge on top of the cylinder, as modelled.",
+   "features": {
+    "ids": [
+     "SKIDDY_VALVE_HEAD",
+     "SKIDDY_GAUGE"
+    ]
+   },
+   "information": [
+    {
+     "key": "System",
+     "val": "Fire suppression"
+    },
+    {
+     "key": "Parts in this 3D model",
+     "val": "Valve head, gauge"
+    }
+   ]
+  },
+  {
+   "id": "supply-hose",
+   "name": "Supply hose",
+   "shortDescription": "The hose from the cylinder valve to the hose reel, as modelled.",
+   "features": {
+    "ids": [
+     "SKIDDY_SUPPLY_HOSE",
+     "SKIDDY_HOSE_FERRULES"
+    ]
+   },
+   "information": [
+    {
+     "key": "System",
+     "val": "Fire suppression"
+    },
+    {
+     "key": "Parts in this 3D model",
+     "val": "Hose, ferrules, nipple"
+    }
+   ]
+  },
+  {
+   "id": "hose-reel",
+   "name": "Hose reel",
+   "shortDescription": "The hose reel with its swivel inlet and crank, as modelled.",
+   "features": {
+    "ids": [
+     "SKIDDY_REEL",
+     "SKIDDY_REEL_SWIVEL"
+    ]
+   },
+   "information": [
+    {
+     "key": "System",
+     "val": "Fire suppression"
+    },
+    {
+     "key": "Parts in this 3D model",
+     "val": "Reel, swivel"
+    }
+   ]
+  },
+  {
+   "id": "hose-nozzle",
+   "name": "Hose & nozzle",
+   "shortDescription": "The hose wound on the reel and its discharge nozzle, as modelled.",
+   "features": {
+    "ids": [
+     "SKIDDY_REEL_HOSE",
+     "SKIDDY_NOZZLE"
+    ]
+   },
+   "information": [
+    {
+     "key": "System",
+     "val": "Fire suppression"
+    },
+    {
+     "key": "Parts in this 3D model",
+     "val": "Hose, nozzle"
+    }
+   ]
+  },
+  {
+   "id": "trolley",
+   "name": "Trolley",
+   "shortDescription": "The trolley with its forklift pockets, handle and four castors, as modelled.",
+   "features": {
+    "ids": [
+     "SKIDDY_TROLLEY_FRAME",
+     "SKIDDY_CASTOR_REEL_END_L",
+     "SKIDDY_CASTOR_REEL_END_R",
+     "SKIDDY_CASTOR_HANDLE_END_L",
+     "SKIDDY_CASTOR_HANDLE_END_R"
+    ]
+   },
+   "information": [
+    {
+     "key": "System",
+     "val": "Trolley"
+    },
+    {
+     "key": "Parts in this 3D model",
+     "val": "Frame, 4 castors"
+    }
+   ],
+   "camera": {
+    "view": "full"
+   }
+  }
+ ]
+}

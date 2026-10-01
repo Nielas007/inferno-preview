@@ -1,0 +1,43 @@
+{
+  "asset": {
+    "generator": "glTF-Transform v4.5.0",
+    "version": "2.0"
+  },
+  "nodes": [
+    {
+      "name": "NozzleAnchors",
+      "extras": {
+        "note": "no spray rig (Phase 30 decision 2): the Skiddy shows no discharge effect"
+      }
+    },
+    {
+      "name": "SKIDDY",
+      "extras": {
+        "asset": "Skiddy Mobile Response Unit (web production asset)",
+        "units": "metres",
+        "source": "SKIDDY_WEB_v01.blend <- Cylinder.blend (Skiddy_Unit + Trolley); Phase 67 asset upgrade + cutaway",
+        "scale_source": "cad-derived: Body32 trolley frame = Ritestand Fusion assembly 'RITESTAND FIRE SKIDDY UNIT' (mm)",
+        "feature_id_attribute": "_FEATURE_ID_0 (float per vertex, index into node extras 'features')"
+      },
+      "children": [
+        0
+      ]
+    }
+  ],
+  "scenes": [
+    {
+      "name": "SKIDDY_EXPORT",
+      "nodes": [
+        1
+      ]
+    }
+  ],
+  "scene": 0,
+  "extensionsUsed": [
+    "KHR_materials_clearcoat",
+    "KHR_texture_basisu"
+  ],
+  "extensionsRequired": [
+    "KHR_texture_basisu"
+  ]
+}

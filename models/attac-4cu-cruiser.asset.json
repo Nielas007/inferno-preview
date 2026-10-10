@@ -1,0 +1,580 @@
+{
+ "schema": "inferno.asset/1",
+ "asset": "ATTAC_4CU",
+ "product": "attac-4cu-cruiser",
+ "assetVersion": 1,
+ "base": "attac-4cu-cruiser/",
+ "rig": "A4CU_rig.gltf",
+ "lods": [
+  "A4CU_LOD0.gltf",
+  "A4CU_LOD1.gltf",
+  "A4CU_LOD2.gltf"
+ ],
+ "defaultLOD": 0,
+ "sprayAxisLocal": "+Y",
+ "viewerYaw": 0.0,
+ "units": "metres",
+ "worldSizeM": [
+  2.2743,
+  5.5894,
+  2.7722
+ ],
+ "boundsM": {
+  "min": [
+   -1.1372,
+   -2.7947,
+   0.0
+  ],
+  "max": [
+   1.1372,
+   2.7947,
+   2.7722
+  ],
+  "axes": "Blender X, Y, Z (Z up); tyres on z = 0, footprint centred"
+ },
+ "scale": {
+  "factorFromSource": 0.1,
+  "source": "vehicle-model",
+  "status": "verify",
+  "published": false
+ },
+ "featureIdAttribute": "_FEATURE_ID_0",
+ "features": {
+  "A4CU_BODY": "vehicle",
+  "A4CU_CANNON": "foam-cannon",
+  "A4CU_CHASSIS": "vehicle",
+  "A4CU_CYLINDER_1": "cylinders",
+  "A4CU_CYLINDER_2": "cylinders",
+  "A4CU_CYLINDER_3": "cylinders",
+  "A4CU_CYLINDER_4": "cylinders",
+  "A4CU_FRAME": "unit-frame",
+  "A4CU_GLAZING": "vehicle",
+  "A4CU_LABEL_1": "cylinders",
+  "A4CU_LABEL_2": "cylinders",
+  "A4CU_LABEL_3": "cylinders",
+  "A4CU_LABEL_4": "cylinders",
+  "A4CU_MANIFOLD_BODY": "manifold",
+  "A4CU_MANIFOLD_HOSES": "manifold",
+  "A4CU_NOZZLE": "hose-nozzle",
+  "A4CU_PLATES": "vehicle",
+  "A4CU_REEL": "hose-reel",
+  "A4CU_REEL_HOSE": "hose-nozzle",
+  "A4CU_SUPPLY_HOSE": "supply-hose",
+  "A4CU_TRIM": "vehicle",
+  "A4CU_VALVE_1": "valve-gauge",
+  "A4CU_VALVE_2": "valve-gauge",
+  "A4CU_VALVE_3": "valve-gauge",
+  "A4CU_VALVE_4": "valve-gauge",
+  "A4CU_WHEELS": "vehicle"
+ },
+ "anchors": [],
+ "views": {
+  "full": true,
+  "system": "the vehicle (LODn_Vehicle) stays as a ghost",
+  "gun": "the foam cannon (LODn_Cannon) framed where it is mounted; the product stays whole",
+  "cutaway": "the host cylinder (LODn_CylinderCut) is replaced by its pre-cut version (cutaway), fetched on first use; the vehicle eases to the ghost"
+ },
+ "gun": {
+  "groups": [
+   "Cannon"
+  ],
+  "focusFeatures": [
+   "A4CU_CANNON"
+  ],
+  "view": {
+   "direction": [
+    -0.6,
+    0.0,
+    -0.8
+   ],
+   "elevation": 22,
+   "fill": 0.55,
+   "note": "direction = the vehicle's front three-quarter on the default view's side (asset frame, glTF Y up)"
+  },
+  "rig": {
+   "joint": [
+    -0.00203,
+    2.16019,
+    0.76085
+   ],
+   "headPivot": [
+    -0.07914,
+    2.58319,
+    0.76105
+   ],
+   "muzzle": [
+    0.05813,
+    2.58319,
+    0.36769
+   ],
+   "direction": [
+    0.0441,
+    -0.0019,
+    -0.999
+   ],
+   "head": {
+    "0": [
+     [
+      0,
+      6629
+     ],
+     [
+      9453,
+      64
+     ]
+    ],
+    "1": [
+     [
+      0,
+      1752
+     ],
+     [
+      2540,
+      50
+     ]
+    ],
+    "2": [
+     [
+      0,
+      902
+     ],
+     [
+      1226,
+      4
+     ]
+    ]
+   }
+  }
+ },
+ "cutaway": {
+  "gltf": "A4CU_CUTAWAY.gltf",
+  "hostGroups": [
+   "CylinderCut"
+  ],
+  "focusFeatures": [
+   "A4CU_CYLINDER_3",
+   "A4CU_LABEL_3"
+  ],
+  "view": {
+   "direction": [
+    -0.7957,
+    0.0,
+    -0.6057
+   ],
+   "elevation": 25,
+   "fill": 0.85
+  }
+ },
+ "presentation": {
+  "default": "derived by the locked ProductCamera from the asset hull; the product's turn is viewerYaw",
+  "components": "products/attac-4cu-cruiser.json components[].camera (view, azimuth, elevation, fill)"
+ },
+ "textures": [
+  {
+   "file": "textures/A4CU_BODY_BaseColor_2K.ktx2",
+   "set": "BODY",
+   "map": "BaseColor",
+   "size": [
+    2048,
+    2048
+   ],
+   "kb": 1166.7
+  },
+  {
+   "file": "textures/A4CU_BODY_ORM_2K.ktx2",
+   "set": "BODY",
+   "map": "ORM",
+   "size": [
+    2048,
+    2048
+   ],
+   "kb": 2103.0
+  },
+  {
+   "file": "textures/A4CU_BODY_Normal_512.ktx2",
+   "set": "BODY",
+   "map": "Normal",
+   "size": [
+    512,
+    512
+   ],
+   "kb": 168.1
+  },
+  {
+   "file": "textures/A4CU_CHS_BaseColor_1K.ktx2",
+   "set": "CHS",
+   "map": "BaseColor",
+   "size": [
+    1024,
+    1024
+   ],
+   "kb": 519.1
+  },
+  {
+   "file": "textures/A4CU_CHS_ORM_1K.ktx2",
+   "set": "CHS",
+   "map": "ORM",
+   "size": [
+    1024,
+    1024
+   ],
+   "kb": 817.5
+  },
+  {
+   "file": "textures/A4CU_CHS_Normal_1K.ktx2",
+   "set": "CHS",
+   "map": "Normal",
+   "size": [
+    1024,
+    1024
+   ],
+   "kb": 666.6
+  },
+  {
+   "file": "textures/A4CU_CYL_BaseColor_2K.ktx2",
+   "set": "CYL",
+   "map": "BaseColor",
+   "size": [
+    2048,
+    2048
+   ],
+   "kb": 259.6
+  },
+  {
+   "file": "textures/A4CU_CYL_ORM_2K.ktx2",
+   "set": "CYL",
+   "map": "ORM",
+   "size": [
+    2048,
+    2048
+   ],
+   "kb": 1566.1
+  },
+  {
+   "file": "textures/A4CU_FRM_BaseColor_2K.ktx2",
+   "set": "FRM",
+   "map": "BaseColor",
+   "size": [
+    2048,
+    2048
+   ],
+   "kb": 394.9
+  },
+  {
+   "file": "textures/A4CU_FRM_ORM_2K.ktx2",
+   "set": "FRM",
+   "map": "ORM",
+   "size": [
+    2048,
+    2048
+   ],
+   "kb": 2218.3
+  },
+  {
+   "file": "textures/A4CU_FRM_Normal_512.ktx2",
+   "set": "FRM",
+   "map": "Normal",
+   "size": [
+    512,
+    512
+   ],
+   "kb": 135.8
+  },
+  {
+   "file": "textures/A4CU_VEH_BaseColor_2K.ktx2",
+   "set": "VEH",
+   "map": "BaseColor",
+   "size": [
+    2048,
+    2048
+   ],
+   "kb": 1940.8
+  },
+  {
+   "file": "textures/A4CU_VEH_ORM_2K.ktx2",
+   "set": "VEH",
+   "map": "ORM",
+   "size": [
+    2048,
+    2048
+   ],
+   "kb": 2843.8
+  },
+  {
+   "file": "textures/A4CU_VEH_Normal_512.ktx2",
+   "set": "VEH",
+   "map": "Normal",
+   "size": [
+    512,
+    512
+   ],
+   "kb": 198.0
+  },
+  {
+   "file": "textures/A4CU_WHEEL_BaseColor_2K.ktx2",
+   "set": "WHEEL",
+   "map": "BaseColor",
+   "size": [
+    2048,
+    2048
+   ],
+   "kb": 1389.0
+  },
+  {
+   "file": "textures/A4CU_WHEEL_ORM_2K.ktx2",
+   "set": "WHEEL",
+   "map": "ORM",
+   "size": [
+    2048,
+    2048
+   ],
+   "kb": 2440.5
+  },
+  {
+   "file": "textures/A4CU_LABEL_BaseColor_2048x1448.ktx2",
+   "set": "LABEL",
+   "map": "BaseColor",
+   "size": [
+    2048,
+    1448
+   ],
+   "kb": 1144.1
+  },
+  {
+   "file": "../4cu-trailer/textures/4CU_CAN_BaseColor_1K.ktx2",
+   "set": "CAN",
+   "map": "BaseColor",
+   "size": [
+    1024,
+    1024
+   ],
+   "kb": 159.2
+  },
+  {
+   "file": "../4cu-trailer/textures/4CU_CAN_Normal_1K.ktx2",
+   "set": "CAN",
+   "map": "Normal",
+   "size": [
+    1024,
+    1024
+   ],
+   "kb": 569.3
+  },
+  {
+   "file": "../4cu-trailer/textures/4CU_CAN_ORM_1K.ktx2",
+   "set": "CAN",
+   "map": "ORM",
+   "size": [
+    1024,
+    1024
+   ],
+   "kb": 585.7
+  },
+  {
+   "file": "../4cu-trailer/textures/4CU_CYL_BaseColor_2K.ktx2",
+   "set": "CYL",
+   "map": "BaseColor",
+   "size": [
+    2048,
+    2048
+   ],
+   "kb": 259.6
+  },
+  {
+   "file": "../4cu-trailer/textures/4CU_CYL_ORM_2K.ktx2",
+   "set": "CYL",
+   "map": "ORM",
+   "size": [
+    2048,
+    2048
+   ],
+   "kb": 1618.4
+  },
+  {
+   "file": "../4cu-trailer/textures/4CU_FOAM_BaseColor_2K.ktx2",
+   "set": "FOAM",
+   "map": "BaseColor",
+   "size": [
+    2048,
+    2048
+   ],
+   "kb": 1096.3
+  },
+  {
+   "file": "../4cu-trailer/textures/4CU_FOAM_Normal_1K.ktx2",
+   "set": "FOAM",
+   "map": "Normal",
+   "size": [
+    1024,
+    1024
+   ],
+   "kb": 768.9
+  },
+  {
+   "file": "../4cu-trailer/textures/4CU_FOAM_ORM_2K.ktx2",
+   "set": "FOAM",
+   "map": "ORM",
+   "size": [
+    2048,
+    2048
+   ],
+   "kb": 744.3
+  },
+  {
+   "file": "../4cu-trailer/textures/4CU_GAUGE_BaseColor_256x256.ktx2",
+   "set": "GAUGE",
+   "map": "BaseColor",
+   "size": [
+    256,
+    256
+   ],
+   "kb": 51.8
+  },
+  {
+   "file": "../4cu-trailer/textures/4CU_PLATE_BaseColor_512x144.ktx2",
+   "set": "PLATE",
+   "map": "BaseColor",
+   "size": [
+    512,
+    144
+   ],
+   "kb": 46.6
+  },
+  {
+   "file": "../4cu-trailer/textures/4CU_REEL_BaseColor_2K.ktx2",
+   "set": "REEL",
+   "map": "BaseColor",
+   "size": [
+    2048,
+    2048
+   ],
+   "kb": 501.7
+  },
+  {
+   "file": "../4cu-trailer/textures/4CU_REEL_Normal_1K.ktx2",
+   "set": "REEL",
+   "map": "Normal",
+   "size": [
+    1024,
+    1024
+   ],
+   "kb": 593.5
+  },
+  {
+   "file": "../4cu-trailer/textures/4CU_REEL_ORM_2K.ktx2",
+   "set": "REEL",
+   "map": "ORM",
+   "size": [
+    2048,
+    2048
+   ],
+   "kb": 2399.6
+  },
+  {
+   "file": "../4cu-trailer/textures/4CU_VAL_BaseColor_1K.ktx2",
+   "set": "VAL",
+   "map": "BaseColor",
+   "size": [
+    1024,
+    1024
+   ],
+   "kb": 99.0
+  },
+  {
+   "file": "../4cu-trailer/textures/4CU_VAL_Normal_1K.ktx2",
+   "set": "VAL",
+   "map": "Normal",
+   "size": [
+    1024,
+    1024
+   ],
+   "kb": 590.6
+  },
+  {
+   "file": "../4cu-trailer/textures/4CU_VAL_ORM_1K.ktx2",
+   "set": "VAL",
+   "map": "ORM",
+   "size": [
+    1024,
+    1024
+   ],
+   "kb": 571.0
+  }
+ ],
+ "materials": [
+  "BAKED_BODY",
+  "BAKED_BODY_COAT100",
+  "BAKED_CAN",
+  "BAKED_CHS",
+  "BAKED_CYL_PAINT",
+  "BAKED_CYL_PAINT_CUTHOST",
+  "BAKED_FRM",
+  "BAKED_FRM_PAINT_BLACK",
+  "BAKED_GAUGE_DIAL",
+  "BAKED_LABEL",
+  "BAKED_LABEL_CUTHOST",
+  "BAKED_PLATE",
+  "BAKED_REEL",
+  "BAKED_REEL_PAINT",
+  "BAKED_VAL",
+  "BAKED_VEH",
+  "BAKED_VEH_COAT100",
+  "BAKED_WHEEL",
+  "CUT_BOTTOM",
+  "CUT_FOAM",
+  "CUT_INNER",
+  "CUT_LABEL",
+  "CUT_PAINT",
+  "CUT_PIPE",
+  "CUT_ROTO",
+  "CUT_RUBBER",
+  "CUT_SECTION",
+  "CUT_SMALL_PIPE",
+  "CUT_SQUARE",
+  "GLASS_CLEARGLASS",
+  "GLASS_ORANGEGLASS",
+  "GLASS_REDGLASS"
+ ],
+ "materialTable": {
+  "id": "attac-4cu-cruiser/phase80",
+  "sha256": "1bc8e2e5647a65dabb46717a58e05df521d8afef78e80ee5806c927a63410a8e",
+  "materials": 32
+ },
+ "metrics": {
+  "tris": {
+   "LOD0": 490200,
+   "LOD1": 267318,
+   "LOD2": 173948
+  },
+  "brotliMB": {
+   "LOD0": 3.207,
+   "LOD1": 2.115,
+   "LOD2": 1.781
+  },
+  "texturesKTX2MB_own": 20.451,
+  "gpuTexturesMB_own": 62.1,
+  "texturesShared": "the Inferno unit's CAN / VAL / REEL / GAUGE / PLATE (+ cutaway CYL / FOAM) sets of models/4cu-trailer/textures - one cached copy for both products",
+  "textureSets": {
+   "BODY": "2K",
+   "CHS": "1K",
+   "CYL": "2K",
+   "FRM": "2K",
+   "VEH": "2K",
+   "WHEEL": "2K",
+   "CAN": "shared",
+   "VAL": "shared",
+   "REEL": "shared",
+   "GAUGE": "shared",
+   "PLATE": "shared"
+  },
+  "normalMaps": {
+   "BODY": "512",
+   "CHS": "1K",
+   "FRM": "512",
+   "VEH": "512"
+  },
+  "materials": 32,
+  "primitivesPerLOD": 23,
+  "phase80": "Bakkie production parity: vehicle baked PBR sets (BaseColor / ORM, normal where it carries detail), the Trailer's production unit, own skid frame, error-driven LODs (1 px at 3750 / 2000 / 850 px), Meshopt + KTX2 UASTC, production Cutaway / System / Gun"
+ }
+}

@@ -173,15 +173,21 @@ export function createStageFloor(legacyFloor, { horizonDeg = ENVIRONMENT_CONFIG.
   const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, map: stagePoolTexture(), roughness: L.roughness, metalness: L.metalness,
     envMapIntensity: L.envMapIntensity, alphaMap: L.alphaMap, transparent: true });
   mat.name = 'ProductStageFloor';
-  const U = { uHorizonSin: { value: Math.sin(horizonDeg * Math.PI / 180) } };
+  const U = { uHorizonSin: { value: Math.sin(horizonDeg * Math.PI / 180) },
+    // Phase 94: see-through stage (showcase): the floor fades out in screen space, an ellipse around the product, so it melts
+    // into the page instead of ending at the canvas rectangle. uSee.x = on, uSee.zw = ellipse radii (share of the canvas).
+    uSee: { value: new THREE.Vector4(0, 0, 0.5, 0.5) }, uSeeVP: { value: new THREE.Vector4(0, 0, 1, 1) } };
   mat.onBeforeCompile = (sh) => {
-    sh.uniforms.uHorizonSin = U.uHorizonSin;
+    sh.uniforms.uHorizonSin = U.uHorizonSin; sh.uniforms.uSee = U.uSee; sh.uniforms.uSeeVP = U.uSeeVP;
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vStageW;')
       .replace('#include <project_vertex>', '#include <project_vertex>\n  vStageW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vStageW;\nuniform float uHorizonSin;')
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vStageW;\nuniform float uHorizonSin;\nuniform vec4 uSee;\nuniform vec4 uSeeVP;')
       .replace('#include <alphamap_fragment>', `#include <alphamap_fragment>
   { vec3 toEye = cameraPosition - vStageW;                                   // sine of the depression angle of this floor point
-    diffuseColor.a *= smoothstep(0.0, uHorizonSin, toEye.y / max(length(toEye), 1e-5)); }`);
+    diffuseColor.a *= smoothstep(0.0, uHorizonSin, toEye.y / max(length(toEye), 1e-5));
+    if (uSee.x > 0.5) { vec2 q = (gl_FragCoord.xy - uSeeVP.xy) / uSeeVP.zw - vec2(0.5, uSee.y); float d = length(q / uSee.zw);
+      vec2 e = (gl_FragCoord.xy - uSeeVP.xy) / uSeeVP.zw;                           // and never reaches the canvas edges
+      diffuseColor.a *= (1.0 - smoothstep(0.35, 1.0, d)) * smoothstep(0.0, 0.2, e.y) * smoothstep(0.0, 0.12, e.x) * smoothstep(0.0, 0.12, 1.0 - e.x); } }`);
   };
   mat.customProgramCacheKey = () => 'productStageFloor';
   const mesh = new THREE.Mesh(legacyFloor.geometry, mat);

@@ -72,7 +72,8 @@ const OUTPUT_FRAG = /* glsl */`
   vec3 p18sRGBEOTF( vec3 c ) { c = max( c, vec3( 0.0 ) ); return mix( pow( ( c + 0.055 ) / 1.055, vec3( 2.4 ) ), c / 12.92, vec3( lessThanEqual( c, vec3( 0.04045 ) ) ) ); }
   #endif
   void main() {
-    vec3 radiance = texture2D( tHDR, vUv ).rgb;
+    vec4 hdrS = texture2D( tHDR, vUv );
+    vec3 radiance = hdrS.rgb;
     #ifdef USE_AO
       float occ = 1.0 - texture2D( tAO, vUv ).r;
       occ = max( 0.0, occ - aoBias ) / max( 1e-3, 1.0 - aoBias );
@@ -100,7 +101,22 @@ const OUTPUT_FRAG = /* glsl */`
         radiance *= a;                                           // plain scene-linear attenuation
       #endif
     #endif
-    gl_FragColor = linearToOutputTexel( vec4( p18AgX( radiance, exposure, saturation ), 1.0 ) );
+    #ifdef OUT_ALPHA
+      // Phase 90: a see-through canvas (the showcase stage): the scene's own coverage becomes the canvas alpha, so the page shows
+      // where nothing was drawn. HDR radiance is premultiplied by coverage (MSAA resolve against a transparent clear): un-premultiply,
+      // tone map, encode, then premultiply again for the (premultiplied-alpha) canvas.
+      // additive effects can push the target's alpha past half-float range (inf / NaN): any such pixel is fully covered
+      float oa = hdrS.a; oa = ( isnan( oa ) || isinf( oa ) ) ? 1.0 : clamp( oa, 0.0, 1.0 );
+      // NaN / inf radiance (a few degenerate-normal pixels): checked on the bits, which no compiler can optimise away
+      uvec3 eb = floatBitsToUint( radiance ) & uvec3( 0x7f800000u );
+      vec3 r0 = vec3( eb.x == 0x7f800000u ? 0.0 : radiance.x, eb.y == 0x7f800000u ? 0.0 : radiance.y, eb.z == 0x7f800000u ? 0.0 : radiance.z );
+      vec3 rad = clamp( r0, vec3( 0.0 ), vec3( 6.0e4 ) );   // kept premultiplied: additive light (spray, mist, fire) adds to the page at full strength
+      vec4 enc = linearToOutputTexel( vec4( p18AgX( rad, exposure, saturation ), 1.0 ) );
+      float lit = max( oa, clamp( dot( r0, vec3( 0.2126, 0.7152, 0.0722 ) ) * 40.0, 0.0, 1.0 ) );   // empty, unlit pixels add exactly nothing (AgX lifts black a hair)
+      gl_FragColor = vec4( clamp( enc.rgb, 0.0, 1.0 ) * lit, oa );   // valid premultiplied, no negative channel (AgX dips below 0 in deep reds; a negative value composites as green)
+    #else
+      gl_FragColor = linearToOutputTexel( vec4( p18AgX( radiance, exposure, saturation ), 1.0 ) );
+    #endif
   }`;
 
 // ── the same AgX on the CPU (to pre-invert display-referred backdrop values) ──
@@ -141,6 +157,7 @@ export class ProductPost {
     this._built = false;
     this._dome = { key: null, texture: null, material: null };
     this.lastStats = null;
+    this.transparent = false;   // Phase 90: see-through output (set by DrawerViewer.setTransparent)
   }
 
   _build() {
@@ -206,9 +223,10 @@ export class ProductPost {
     // 3. AO buffer (scene-linear attenuation is applied in the output pass)
     let a = null; if (ao && aoArgs) a = ao.compute(scene, camera, ...aoArgs);
     // 4. output: × AO → [look] → AgX → sRGB, onto the canvas
-    const u = this.output.uniforms, useAO = !!a, useLook = this.look.saturation !== 1, p15 = useAO && aoResponse === 'phase15';
+    const u = this.output.uniforms, useAO = !!a, useLook = this.look.saturation !== 1, p15 = useAO && aoResponse === 'phase15', alpha = !!this.transparent;
     const d = this.output.defines;
-    if (('USE_AO' in d) !== useAO || ('LOOK' in d) !== useLook || ('AO_P15_RESPONSE' in d) !== p15) {
+    if (('USE_AO' in d) !== useAO || ('LOOK' in d) !== useLook || ('AO_P15_RESPONSE' in d) !== p15 || ('OUT_ALPHA' in d) !== alpha) {
+      if (alpha) d.OUT_ALPHA = ''; else delete d.OUT_ALPHA;
       if (useAO) d.USE_AO = ''; else delete d.USE_AO;
       if (useLook) d.LOOK = ''; else delete d.LOOK;
       if (p15) d.AO_P15_RESPONSE = ''; else delete d.AO_P15_RESPONSE;
@@ -217,7 +235,14 @@ export class ProductPost {
     u.tHDR.value = src.texture; u.exposure.value = R.toneMappingExposure; u.saturation.value = this.look.saturation;
     if (a) { u.tAO.value = a.ao; u.tMask.value = a.mask; u.aoIntensity.value = a.params.intensity; u.aoBias.value = a.params.bias; }
     R.setRenderTarget(null);
+    // Phase 102: over a room already drawn on the canvas, the product is composited (premultiplied over), not drawn in place
+    const ov = !!this.overlay, ac = R.autoClear;
+    if (ov !== this._ov) { this._ov = ov; this.output.blending = ov ? THREE.CustomBlending : THREE.NoBlending;
+      if (ov) { this.output.blendSrc = THREE.OneFactor; this.output.blendDst = THREE.OneMinusSrcAlphaFactor; this.output.blendSrcAlpha = THREE.OneFactor; this.output.blendDstAlpha = THREE.OneMinusSrcAlphaFactor; }
+      this.output.needsUpdate = true; }
+    if (ov) R.autoClear = false;
     this.quad.render(R);
+    R.autoClear = ac;
   }
 
   memory() {

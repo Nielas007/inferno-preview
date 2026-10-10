@@ -17,8 +17,9 @@
 // WebGL canvas is never resized and the camera is never touched.
 
 export const PRODUCT_VIEWER_CONFIG = {
-  // Phones, portrait tablets and landscape phones. Desktop and landscape tablets keep the drawer as it is.
-  media: '(max-width: 820px), (pointer: coarse) and (orientation: portrait) and (max-width: 1024px), (pointer: coarse) and (max-height: 540px)',
+  // Phase 86 (owner: "the 3D full-screen on desktop too"): every screen gets the product-first viewer — full-screen model, floating
+  // controls, details on demand. (Before: phones, portrait tablets and landscape phones only; desktop kept the split drawer.)
+  media: 'all',
   sideMaxHeight: 540,                      // landscape at or below this height: the sheet comes in from the right
   peek: { share: 0.46, min: 260, max: 480 },   // PEEK height, share of the viewer height
   productRoom: 140,                        // PEEK always leaves at least this much of the model above the sheet
@@ -267,8 +268,11 @@ export class ProductViewerControls {
     this.eyebrow = h('span', { class: 'pv-header__eyebrow' });
     this.name = h('span', { class: 'pv-header__name', id: 'pv-header-name' });
     this.infoTop = h('button', { type: 'button', class: 'pv-btn pv-btn--icon pv-infotop', 'aria-label': 'All product information', 'aria-controls': 'pv-sheet', 'aria-expanded': 'false', 'aria-haspopup': 'dialog', html: SVG.info });
+    // Phase 86: a quote action in the header (wide screens) — the drawer's own enquire button does the prefill + scroll
+    this.quote = h('button', { type: 'button', class: 'pv-quote', html: 'Request a Quote' });
+    this.quote.addEventListener('click', () => { const b = document.querySelector('.drawer__cta--primary'); if (b) b.click(); });
     this.header = h('header', { class: 'pv-header pv-ui' }, this.back,
-      h('div', { class: 'pv-header__title' }, this.eyebrow, this.name), this.infoTop);
+      h('div', { class: 'pv-header__title' }, this.eyebrow, this.name), this.quote, this.infoTop);
     // Phase 40: the product strip (a collapsed information panel) replaces the "Product info" pill; same button, same job.
     this.stripName = h('span', { class: 'pv-info__name' });
     this.stripMeta = h('span', { class: 'pv-info__meta' });
@@ -811,7 +815,7 @@ export class ProductViewer {
   layoutNow() {
     const W = this.panel.clientWidth, H = this.panel.clientHeight;
     if (!W || !H) return;
-    const side = W > H && H <= this.cfg.sideMaxHeight, c = this.cfg;
+    const side = W > H && (H <= this.cfg.sideMaxHeight || W >= 1024), c = this.cfg;   // desktop: the details come in from the right
     this.drawer.classList.toggle('pv-landscape', side);
     const m = { W, H, side, top: this.controls.header.offsetHeight };
     if (side) {

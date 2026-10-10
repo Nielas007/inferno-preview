@@ -27,14 +27,15 @@ export const CAMERA_CONFIG = {
   spinSafeFill: 0.98,                    // the default distance also keeps the product inside the frame through a full idle spin (§6)
   // Narrow canvases (§14): the view turns toward the front (narrower silhouette) and the product fills more,
   // blended by aspect from `fromAspect` (landscape look) to `toAspect` (full portrait look).
-  portrait: { fromAspect: 0.85, toAspect: 0.5, view: { azimuthDeg: 60, polarDeg: 66 }, fill: 0.86, spinSafeFill: 1.05 },
+  portrait: { fromAspect: 0.85, toAspect: 0.5, view: { azimuthDeg: 60, polarDeg: 66 }, fill: 0.9, spinSafeFill: 1.28 },   // Phase 84e (owner: "enough room to explore on mobile"): the opening view sits closer; a broadside idle turn may brush the frame edge
   orbit: { minPolarDeg: 44, maxPolarDeg: 100 },  // §6: above 46° elevation the dump body is > 2/3 of the silhouette
   minEyeHeight: 0.035,                   // × product height: the eye never goes under ≈ 0.28 m real (§6, §9)
   clearanceR: 0.52,                      // × hull radius beyond the farthest hull exit: near-field depth ratio ≤ 3 at min zoom (§7)
   maxFillFactor: 1.6,                    // max distance = default distance × this: silhouette still ≥ 0.5 of the frame (§7)
+  pan: true,                             // Phase 82l: right-drag / shift-drag / two fingers move the view (the viewer keeps the target near the product)
   pivotSamples: 36,                      // azimuth samples for the orbit-balanced pivot (§8)
   damping: 0.08,                         // OrbitControls damping per 60 Hz frame, applied frame-rate independently (§13)
-  zoomTau: 0.11,                         // s — time constant of the damped zoom (wheel / pinch / slider), no overshoot
+  zoomTau: 0.06,                         // s — time constant of the damped zoom (wheel / pinch / slider), no overshoot (Phase 82m: 0.11 -> 0.06, faster)
   transitionS: 1.15,                     // s — mode change (the Phase 18 GSAP duration and power3.inOut curve)
   envRadius: 26,                         // backdrop dome radius: the far plane must contain it
 };
@@ -261,7 +262,7 @@ export class ProductCamera {
     this.limits = lim;
     k.minDistance = lim.minDistance; k.maxDistance = lim.maxDistance;
     k.minPolarAngle = lim.minPolar; k.maxPolarAngle = lim.maxPolar;
-    k.enableDamping = true; k.enablePan = false;
+    k.enableDamping = true; k.enablePan = !!this.cfg.pan;   // Phase 82l: panning is a config choice (on: the owner asked to move the view)
     if (cam.near !== lim.near || cam.far !== lim.far) { cam.near = lim.near; cam.far = lim.far; cam.updateProjectionMatrix(); }
   }
 
@@ -319,6 +320,7 @@ export class ProductCamera {
     // ground: the polar limit that keeps the eye above minEyeY at the current distance
     const r = Math.max(1e-6, this.zoomShown), ground = Math.acos(THREE.MathUtils.clamp((L.minEyeY - k.target.y) / r, -1, 1));
     k.maxPolarAngle = Math.min(L.maxPolar, ground);
+    if (this.polarLock != null) { k.minPolarAngle = k.maxPolarAngle = this.polarLock; }   // Phase 103: a turntable on the showcase page
     k.update(dt);
 
     // ease the shown distance towards the desired one (critically damped first order: no overshoot)

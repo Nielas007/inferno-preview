@@ -6,12 +6,15 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { FullScreenQuad } from 'three/addons/postprocessing/Pass.js';   // Phase 82r: focus blur passes
 import { ProductionAsset, resetTextureLoader } from './production-asset.js?v=8';
 import { ProductRenderer, RENDER_CONFIG } from './product-renderer.js?v=11';
 import { ProductAO } from './product-ao.js?v=4';
-import { ProductPost } from './product-post.js?v=4';
-import { ProductCamera, CAMERA_CONFIG, buildHull, dirFromAngles } from './product-camera.js?v=7';
-import { STAGE_CONFIG, floorY, bakeGroundOcclusion, applyGroundOcclusion, applyBackground, createStageFloor } from './product-stage.js?v=5';
+import { ProductPost } from './product-post.js?v=12';
+import { GroundProjectedSkybox } from 'three/addons/objects/GroundProjectedSkybox.js';   // Phase 102
+import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+import { ProductCamera, CAMERA_CONFIG, buildHull, dirFromAngles } from './product-camera.js?v=11';
+import { STAGE_CONFIG, floorY, bakeGroundOcclusion, applyGroundOcclusion, applyBackground, createStageFloor } from './product-stage.js?v=10';
 
 const lerp = THREE.MathUtils.lerp;
 const smoothstep = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
@@ -71,7 +74,8 @@ export const LOD_CONFIG = {
   horizon: 0.5,                       // s; measured against margin / displayed-velocity / 1-s variants (PHASE_22_PERFORMANCE_REPORT §5)
   prepareBytes: 2e6,                  // GPU upload per frame while a loaded LOD is prepared behind the visible one
 };
-const ZOOM_STEP = -Math.log(0.95);   // one OrbitControls wheel step (zoomSpeed 1) in ln distance
+const ZOOM_SPEED = 1.8;               // Phase 82m (owner: "zoom in en uit vinniger"): wheel / pinch step (OrbitControls default 1)
+const ZOOM_STEP = -Math.log(0.95) * ZOOM_SPEED;   // one OrbitControls wheel step in ln distance
 const geometryBytes = (g) => { const seen = new Set(); let b = 0; for (const k in g.attributes) { const a = g.attributes[k], arr = a.isInterleavedBufferAttribute ? a.data.array : a.array; if (!seen.has(arr)) { seen.add(arr); b += arr.byteLength; } } return b + (g.index ? g.index.array.byteLength : 0); };
 const _lodC = new THREE.Vector3(), _lodS = new THREE.Vector3();
 function lodPx(r) {
@@ -217,6 +221,7 @@ function updateCallouts(showWanted) {
 }
 
 let V = null;          // viewer singleton state
+const _panV = new THREE.Vector3(), _panT = new THREE.Vector3(), _panA = new THREE.Vector3(), _panB = new THREE.Vector3();
 // Power (Phase 82h, owner: "phone warm raak as ek rukkie op dit is"): the viewer drew the full HDR + AO frame 60 times a second
 // even with nothing moving and with the canvas scrolled out of view. Now a frame is drawn only when something changed (camera,
 // an easing mode amount, an active effect, a model / mode / LOD change, recent input) plus a short tail for the post to settle
@@ -252,6 +257,7 @@ let gunYaw = 0, gunPitch = 0;            // current eased angles
 let gunYawT = 0, gunPitchT = 0;          // mouse-driven targets
 let foamOn = false;                      // spray on/off
 let systemOn = false;                    // VSS discharge on/off (system mode)
+let keepView = false;                    // Phase 114: the current mode was entered with { keepView } — the discharge moves no camera
 let spray = null;                        // { points, geom, vel, life, max, count }
 const _prevTs = { t: 0 };                // last frame timestamp for spray dt
 let zoomEl = null, zoomDragging = false; // zoom slider + drag guard
@@ -304,7 +310,9 @@ function build() {
   const controls = new OrbitControls(camera, canvas);
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
-  controls.enablePan = false;
+  controls.zoomSpeed = ZOOM_SPEED;
+  controls.enablePan = true;              // Phase 82l (owner: "click en drag om die model te skuif"): right-drag / shift-drag / two fingers move the view
+  controls.screenSpacePanning = true; controls.panSpeed = 0.8;
   controls.minDistance = 1.8 * ZOOM_K;   // allow the closer system / cutaway framings
   controls.maxDistance = 9.0 * ZOOM_K;   // (scaled with the longer product lens)
   controls.maxPolarAngle = Math.PI * 0.52;   // don't dip under the floor
@@ -327,6 +335,11 @@ function build() {
   // aims (a drag still orbits).
   { let tap = null;
     canvas.addEventListener('pointermove', (e) => { if (e.pointerType === 'mouse' && e.buttons === 0) aimProdGun(e.clientX, e.clientY); });
+    canvas.addEventListener('pointermove', (e) => {   // Phase 119: in POV a mouse drag looks around, a finger aims as it moves
+      if (!POV.on) return;
+      if (e.pointerType === 'mouse') { if (e.buttons) POV.yawOff = THREE.MathUtils.clamp(POV.yawOff - e.movementX * 0.0035, -1.3, 1.3); }
+      else aimProdGun(e.clientX, e.clientY);
+    });
     canvas.addEventListener('pointerdown', (e) => { tap = { x: e.clientX, y: e.clientY, t: performance.now() }; });
     canvas.addEventListener('pointerup', (e) => {
       if (tap && e.pointerType !== 'mouse' && Math.hypot(e.clientX - tap.x, e.clientY - tap.y) < 10 && performance.now() - tap.t < 450) aimProdGun(e.clientX, e.clientY);
@@ -350,8 +363,8 @@ function build() {
   }
   const zin = document.getElementById('drawer-zoom-in');
   const zout = document.getElementById('drawer-zoom-out');
-  if (zin) zin.addEventListener('click', () => setZoom(getZoom() + 0.12));
-  if (zout) zout.addEventListener('click', () => setZoom(getZoom() - 0.12));
+  if (zin) zin.addEventListener('click', () => setZoom(getZoom() + 0.2));
+  if (zout) zout.addEventListener('click', () => setZoom(getZoom() - 0.2));
   // Desktop Reset (Phase 58): the same reset + event as the phone viewer's Reset button
   // (a presented component stays selected and the whole product comes back into view).
   const zreset = document.getElementById('drawer-zoom-reset');
@@ -761,7 +774,8 @@ function build() {
       const frames = { rig: sysBox.getCenter(new THREE.Vector3()), gun: null,
         sysRadius: sysBox.getSize(new THREE.Vector3()).length() * 0.5, gunRadius: 0.45, cutRadius: 1, sysBox: sysBox.clone() };
       const nozzles = [...asset.nozzles.values()].map(z => z.anchor);
-      const mist = buildMist(nozzles, Math.max(0.001, fp.getSize(new THREE.Vector3()).length() * 0.55));
+      const disc = asset.manifest.discharge;                                   // Phase 82j
+      const mist = buildMist(nozzles, Math.max(0.001, fp.getSize(new THREE.Vector3()).length() * 0.55), disc && disc.hits, asset.lods.get(L).scene.matrixWorld);
       V.models[url] = { group: model, aoBlob, cylGlow: null, cylFocal: null, bbox: fp.clone(),
                         truckMeshes: truck, allRig: rig, anchors: [], gunRig: null, frames,
                         nozzles, mist, hasNozzles: nozzles.length > 0,
@@ -1402,8 +1416,8 @@ function poseProdGun(P, yaw, pitch) {
   }
 }
 const PSTREAM = [   // per layer: particles, cone spread (rad), speed (m/s), life (s), point size (m), opacity - core jet / foam body / mist
-  { n: COARSE ? 2000 : 5200, spread: 0.022, speed: 14.0, speedVar: 0.4, life: 1.25, size: 0.13, opacity: 0.42 },   // dense droplets on the rope
-  { n: COARSE ? 1200 : 3200, spread: 0.055, speed: 13.6, speedVar: 1.0, life: 1.2,  size: 0.06, opacity: 0.55, drop: true },   // distinct droplets peeling off
+  { n: COARSE ? 2000 : 5200, spread: 0.022, speed: 14.0, speedVar: 0.4, life: 1.25, size: 0.13, opacity: 0.42, wet: 0.05 },   // dense droplets on the rope
+  { n: COARSE ? 1200 : 3200, spread: 0.055, speed: 13.6, speedVar: 1.0, life: 1.2,  size: 0.06, opacity: 0.55, drop: true, wet: 0.04 },   // distinct droplets peeling off
   { n: COARSE ? 500 : 1400, spread: 0.035, speed: 13.6, speedVar: 0.7, life: 1.2,  size: 0.34, opacity: 0.05 },   // foam body haze
   { n: COARSE ? 350 : 1000, spread: 0.06,  speed: 13.0, speedVar: 1.2, life: 1.0,  size: 0.30, opacity: 0.035 },  // fine mist haze
 ];
@@ -1463,8 +1477,46 @@ function buildProdStream() {
   return { layers };
 }
 const gauss = () => (Math.random() + Math.random() + Math.random() - 1.5) * 1.15;
+// Phase 122 (owner: "you must not be able to spray through the bakkies"): a height map of the vehicle and its unit, seen from
+// above (every triangle except the cannon's own raises the cells under it to its highest point). The foam jet ends, and its
+// droplets stop, where they come down on the vehicle instead of passing through it.
+const VH = { key: null, N: 128, h: null, x0: 0, z0: 0, sx: 1, sz: 1 };
+function vehicleHeights() {
+  const P = prodGunRig(); if (!P) return null;
+  const L = [...P.a.lods.values()].sort((a, b) => a.n - b.n).pop();   // the coarsest loaded LOD is plenty for this
+  if (!L) return null;
+  const key = V.url + '|' + L.n; if (VH.key === key) return VH.h ? VH : null;
+  VH.key = key; VH.h = null;
+  L.scene.updateMatrixWorld(true);
+  const box = new THREE.Box3(), meshes = [], isGun = o => [...P.nodes].some(n => o.name.includes(n));
+  L.scene.traverse(o => { if (!o.isMesh || !o.geometry || !o.geometry.attributes.position) return; for (let q = o; q; q = q.parent) if (isGun(q)) return; meshes.push(o); box.expandByObject(o); });
+  if (!meshes.length || box.isEmpty()) return null;
+  const N = VH.N, h = new Float32Array(N * N).fill(-Infinity);
+  VH.x0 = box.min.x; VH.z0 = box.min.z; VH.sx = (N - 1) / Math.max(1e-6, box.max.x - box.min.x); VH.sz = (N - 1) / Math.max(1e-6, box.max.z - box.min.z);
+  const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
+  for (const o of meshes) {
+    const pos = o.geometry.attributes.position, idx = o.geometry.index, n = idx ? idx.count : pos.count, M = o.matrixWorld;
+    for (let t = 0; t < n; t += 3) {
+      const i0 = idx ? idx.getX(t) : t, i1 = idx ? idx.getX(t + 1) : t + 1, i2 = idx ? idx.getX(t + 2) : t + 2;
+      a.fromBufferAttribute(pos, i0).applyMatrix4(M); b.fromBufferAttribute(pos, i1).applyMatrix4(M); c.fromBufferAttribute(pos, i2).applyMatrix4(M);
+      const y = Math.max(a.y, b.y, c.y);
+      const u0 = Math.max(0, Math.floor((Math.min(a.x, b.x, c.x) - VH.x0) * VH.sx)), u1 = Math.min(N - 1, Math.ceil((Math.max(a.x, b.x, c.x) - VH.x0) * VH.sx));
+      const v0 = Math.max(0, Math.floor((Math.min(a.z, b.z, c.z) - VH.z0) * VH.sz)), v1 = Math.min(N - 1, Math.ceil((Math.max(a.z, b.z, c.z) - VH.z0) * VH.sz));
+      if ((u1 - u0) * (v1 - v0) > 400) continue;            // a huge flat triangle (a ground plane): not the vehicle
+      for (let v = v0; v <= v1; v++) for (let u = u0; u <= u1; u++) { const k = v * N + u; if (y > h[k]) h[k] = y; }
+    }
+  }
+  VH.h = h; return VH;
+}
+function vehicleHit(x, y, z) {               // is this point inside the vehicle (below its surface, over its footprint)?
+  const H = VH.h; if (!H) return false;
+  const u = Math.round((x - VH.x0) * VH.sx), v = Math.round((z - VH.z0) * VH.sz);
+  if (u < 0 || v < 0 || u >= VH.N || v >= VH.N) return false;
+  return y < H[v * VH.N + u];
+}
 function stepProdStream(dt, emit, mz, dir, s, fy) {
   if (!PGUN.stream) { if (!emit) return; PGUN.stream = buildProdStream(); }
+  const veh = vehicleHeights();
   _pg.u.crossVectors(dir, Math.abs(dir.y) < 0.95 ? PGUN_UP : _pg.w.set(1, 0, 0)).normalize(); _pg.w.crossVectors(dir, _pg.u).normalize();
   const g = 9.81 * s;
   for (const Lr of PGUN.stream.layers) {
@@ -1472,9 +1524,15 @@ function stepProdStream(dt, emit, mz, dir, s, fy) {
     for (let i = 0; i < o.n; i++) {
       if (life[i] >= max[i]) continue;
       life[i] += dt;
-      if (life[i] >= max[i] || pos[i * 3 + 1] < fy) { life[i] = max[i]; pos[i * 3 + 1] = -1e4; continue; }   // ends on the floor
+      if (life[i] >= max[i] || pos[i * 3 + 1] < fy) { if (pos[i * 3 + 1] < fy && pos[i * 3 + 1] > fy - 1e3 && o.wet) wetStamp(pos[i * 3], pos[i * 3 + 2], o.wet, s); life[i] = max[i]; pos[i * 3 + 1] = -1e4; continue; }   // ends on the floor (Phase 119: and wets it)
       vel[i * 3 + 1] -= g * dt;
       pos[i * 3] += vel[i * 3] * dt; pos[i * 3 + 1] += vel[i * 3 + 1] * dt; pos[i * 3 + 2] += vel[i * 3 + 2] * dt;
+      if (veh && life[i] > 0.06 && vehicleHit(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2])) {   // Phase 122: it hits the vehicle — splashes off it
+        const H = VH.h[Math.round((pos[i * 3 + 2] - VH.z0) * VH.sz) * VH.N + Math.round((pos[i * 3] - VH.x0) * VH.sx)];
+        pos[i * 3 + 1] = H + 0.01 * s; vel[i * 3 + 1] = Math.abs(vel[i * 3 + 1]) * (0.12 + Math.random() * 0.18);
+        vel[i * 3] = vel[i * 3] * 0.3 + (Math.random() - 0.5) * 1.6 * s; vel[i * 3 + 2] = vel[i * 3 + 2] * 0.3 + (Math.random() - 0.5) * 1.6 * s;
+        max[i] = Math.min(max[i], life[i] + 0.22 + Math.random() * 0.25);
+      }
       alive++;
     }
     if (emit) {
@@ -1551,7 +1609,8 @@ function stepStreamTube(dt, emit, mz, dir, s, fy) {
   const S = TUBE.seg, R = TUBE.rad, P = T.g.attributes.position.array, N = T.g.attributes.normal.array, UV = T.g.attributes.uv.array;
   const pts = []; let end = tau1;
   for (let i = 0; i <= S; i++) { const tau = tau0 + (tau1 - tau0) * i / S, q = parcel(tau, new THREE.Vector3());
-    if (q.y < fy) { end = Math.min(end, tau); q.y = fy; } pts.push([tau, q]); }
+    if (q.y < fy) { end = Math.min(end, tau); q.y = fy; } else if (tau > 0.06 && tau < end && VH.h && vehicleHit(q.x, q.y, q.z)) end = tau;   // Phase 122: the jet ends on the vehicle
+    pts.push([tau, q]); }
   const tan = _pg.u, side = _pg.w, up = _pg.a;
   for (let i = 0; i <= S; i++) {
     const [tau, c] = pts[i], q0 = pts[Math.max(0, i - 1)][1], q1 = pts[Math.min(S, i + 1)][1];
@@ -1607,7 +1666,8 @@ const _fray = new THREE.Raycaster();
 function randomFireSpot(P, S, s, fy, box, others) {
   const hb = box.clone().expandByScalar(2.3 * s), mid = (hb.min.y + hb.max.y) / 2, jW = P.j.clone().applyMatrix4(S);
   for (let k = 0; k < 80; k++) {
-    _fray.setFromCamera(new THREE.Vector2(Math.random() * 1.7 - 0.85, Math.random() * 1.2 - 0.88), V.camera);
+    const xr = TRANSP ? 0.34 : 0.85;   // Phase 104: on the showcase page the canvas spans the section; fires stay in the open middle, clear of the text
+    _fray.setFromCamera(new THREE.Vector2((Math.random() * 2 - 1) * xr, Math.random() * 1.2 - 0.88), V.camera);
     const d = _fray.ray.direction, o = _fray.ray.origin; if (d.y > -1e-3) continue;
     const q = _fray.ray.at((fy - o.y) / d.y, new THREE.Vector3());
     if (hb.containsPoint(q.clone().setY(mid)) || Math.hypot(q.x - jW.x, q.z - jW.z) > 16 * s) continue;
@@ -1703,7 +1763,7 @@ function updateProdGun(dt) {
     if (FIRE.list) for (const f of FIRE.list) { f.grp.visible = false; f.smoke.visible = false; } fireCounter(null, false); return; }
   const inGun = mode === 'gun';
   if (!inGun) { PGUN.yawT = Math.round(PGUN.yaw / (2 * Math.PI)) * 2 * Math.PI; PGUN.pitchT = 0; if (PGUN.reticle) PGUN.reticle.visible = false; }
-  const d = Math.min(dt, 0.05), k = 1 - Math.pow(0.86, d * 60);
+  const d = Math.min(dt, 0.05), k = 1 - Math.pow(POV.on ? 0.95 : 0.86, d * 60);   // Phase 121: in POV the cannon turns slower, like a real monitor
   const y0 = PGUN.yaw, p0 = PGUN.pitch;
   PGUN.yaw += (PGUN.yawT - PGUN.yaw) * k; PGUN.pitch += (PGUN.pitchT - PGUN.pitch) * k; PGUN.speed += (PGUN.speedT - PGUN.speed) * k;
   if (Math.abs(PGUN.yawT - PGUN.yaw) < 1e-4) PGUN.yaw = PGUN.yawT;
@@ -1753,7 +1813,10 @@ function collectNozzles(model) {
 // `span` is the model's longest side in VIEWER units (every GLB is normalised
 // to the same 3.4-unit box). Sizing off that instead of group.scale keeps the
 // mist right whatever unit mess the CAD export arrived in.
-function buildMist(nozzles, span) {
+// Phase 82j: `hits` (manifest.discharge.hits, asset frame: per nozzle name the first vehicle surface along its spray axis) and
+// `AF` (asset frame -> world) make the spray strike that surface - it splashes off (reflected, slowed, spread) and drips.
+const MIST_SPLASH = [];                  // world points where droplets struck a surface / the ground this frame (wet ground)
+function buildMist(nozzles, span, hits = null, AF = null) {
   if (!nozzles.length) return null;
   const per = Math.max(6, Math.floor(MIST_BUDGET / nozzles.length));
   const count = per * nozzles.length;
@@ -1763,6 +1826,12 @@ function buildMist(nozzles, span) {
     n.updateWorldMatrix(true, false);
     org.push(n.getWorldPosition(new THREE.Vector3()));
     dir.push(sprayAxis(n).applyQuaternion(n.getWorldQuaternion(q)).normalize());
+  }
+  const hitD = new Float32Array(nozzles.length), hitN = new Float32Array(nozzles.length * 3);
+  if (hits && AF) {
+    const sc = new THREE.Vector3().setFromMatrixScale(AF).x, nv = new THREE.Vector3();
+    nozzles.forEach((n, k) => { const h = hits[n.name]; if (!h) return;
+      hitD[k] = h[0] * sc; nv.set(h[1], h[2], h[3]).transformDirection(AF); hitN[k * 3] = nv.x; hitN[k * 3 + 1] = nv.y; hitN[k * 3 + 2] = nv.z; });
   }
   // The Blender render throws 2.7 m on a 16 m machine — 17% of its length —
   // in a 27° full cone. Expressed against `span` that holds for any model.
@@ -1786,8 +1855,11 @@ function buildMist(nozzles, span) {
     vel[i * 3] = tmp.x; vel[i * 3 + 1] = tmp.y; vel[i * 3 + 2] = tmp.z;
     max[i] = LIFE * (0.7 + Math.random() * 0.6);
     life[i] = stagger ? Math.random() * max[i] : 0;
+    if (splashed) splashed[i] = 0;
   };
+  let splashed = null;
   for (let i = 0; i < count; i++) spawn(i, true);
+  splashed = new Uint8Array(count);
   const age = new Float32Array(count);
   const geom = new THREE.BufferGeometry();
   geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -1827,7 +1899,7 @@ function buildMist(nozzles, span) {
   points.frustumCulled = false;
   points.visible = false;
   V.scene.add(points);
-  return { points, geom, positions, vel, life, max, age, count, spawn, grav: 0.16 * span };
+  return { points, geom, positions, vel, life, max, age, count, spawn, grav: 0.16 * span, org, dir, hitD, hitN, splashed, nz: nozzles.length };
 }
 
 function updateMist(dt) {
@@ -1843,17 +1915,34 @@ function updateMist(dt) {
     return;
   }
   if (!m.points.visible) m.points.visible = true;
+  { const want = FOCUS.want ? 0.3 : 0.85, u = m.points.material.uniforms.uOpacity; u.value += (want - u.value) * Math.min(1, dt * 4); }   // Phase 82s: quieter close-ups
   // Point sizes are in world units, so they need the projection scale for the
   // live canvas height — refreshed here so a resize cannot desync them.
   const h = V.renderer.domElement.height || 720;
   m.points.material.uniforms.uScale.value =
     h * 0.5 / Math.tan(THREE.MathUtils.degToRad(V.camera.fov * 0.5));
   const d = Math.min(dt, 0.05);
-  const { positions, vel, life, max, age, count, spawn, grav } = m;
+  const { positions, vel, life, max, age, count, spawn, grav, org, dir, hitD, hitN, splashed, nz } = m;
+  const fy = V.stageState && Number.isFinite(V.stageState.floorY) ? V.stageState.floorY : -1e9;
+  MIST_SPLASH.length = 0;
   for (let i = 0; i < count; i++) {
     life[i] += d;
     if (life[i] >= max[i]) { spawn(i, false); age[i] = 0; continue; }
-    vel[i * 3 + 1] -= grav * d;          // fine droplets droop as they slow
+    const k = i % nz, x = positions[i * 3], y = positions[i * 3 + 1], z = positions[i * 3 + 2];
+    if (!splashed[i] && hitD[k] > 0) {                    // Phase 82j: the droplet reaches the surface in front of its nozzle
+      const o = org[k], dv = dir[k];
+      if ((x - o.x) * dv.x + (y - o.y) * dv.y + (z - o.z) * dv.z >= hitD[k]) {
+        const nx = hitN[k * 3], ny = hitN[k * 3 + 1], nzz = hitN[k * 3 + 2];
+        const vx = vel[i * 3], vy = vel[i * 3 + 1], vz = vel[i * 3 + 2], vn = vx * nx + vy * ny + vz * nzz, sp = Math.hypot(vx, vy, vz);
+        vel[i * 3]     = (vx - 1.3 * vn * nx) * 0.45 + (Math.random() - 0.5) * 0.5 * sp;
+        vel[i * 3 + 1] = (vy - 1.3 * vn * ny) * 0.45 + (Math.random() - 0.5) * 0.3 * sp;
+        vel[i * 3 + 2] = (vz - 1.3 * vn * nzz) * 0.45 + (Math.random() - 0.5) * 0.5 * sp;
+        splashed[i] = 1; max[i] = Math.min(max[i], life[i] + 0.18 + Math.random() * 0.25);
+        if (MIST_SPLASH.length < 90 && Math.random() < 0.25) MIST_SPLASH.push(x, y, z);
+      }
+    }
+    if (y < fy) { if (MIST_SPLASH.length < 120) MIST_SPLASH.push(x, fy, z); life[i] = max[i]; continue; }
+    vel[i * 3 + 1] -= grav * d * (splashed[i] ? 2.6 : 1);   // fine droplets droop as they slow; splashed ones drip
     positions[i * 3]     += vel[i * 3] * d;
     positions[i * 3 + 1] += vel[i * 3 + 1] * d;
     positions[i * 3 + 2] += vel[i * 3 + 2] * d;
@@ -1861,6 +1950,429 @@ function updateMist(dt) {
   }
   m.geom.attributes.position.needsUpdate = true;
   m.geom.attributes.aT.needsUpdate = true;
+}
+
+// ── VSS discharge presentation (Phase 82j) ───────────────────────
+// Owner 2026-10-05: in-cab protection, an escape route at the front of the truck that only shows when the system goes off, the
+// camera pulling back so truck + system are seen, spray striking the surfaces (buildMist hits), the ground getting wet.
+// Data: manifest.discharge (asset frame, glTF Y up). Everything lives in one group carrying the asset frame, so it follows the
+// product's placement. Active while the system discharges in System mode; the wet ground dries over ~15 s afterwards.
+const DIS = { key: null, g: null, cab: null, route: null, wet: null, labels: null, on: 0, t: 0, was: false, wetUntil: 0, inv: new THREE.Matrix4(), v: new THREE.Vector3() };
+function disAssetFrame(r) { const a = r && r.production; if (!a) return null; for (const L of a.lods.values()) { L.scene.updateMatrixWorld(); return L.scene.matrixWorld; } return null; }
+function mistShader(color, opacity) {
+  return new THREE.ShaderMaterial({
+    uniforms: { uSize: { value: 0.1 }, uScale: { value: 600 }, uColor: { value: new THREE.Color(color) }, uOpacity: { value: opacity } },
+    vertexShader: `attribute float aT; uniform float uSize; uniform float uScale; varying float vT;
+      void main() { vT = aT; vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        gl_PointSize = uSize * (0.35 + 2.0 * aT) * (uScale / max(0.0001, -mv.z)); gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: `uniform vec3 uColor; uniform float uOpacity; varying float vT;
+      void main() { float r = length(gl_PointCoord - 0.5) * 2.0; float a = smoothstep(1.0, 0.0, r); a *= a;
+        gl_FragColor = vec4(uColor, a * pow(1.0 - vT, 1.1) * uOpacity); }`,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+}
+function buildCabMist(c) {                       // fine mist from the cab ceiling, contained by the cab (bounces off walls / glass)
+  const n = COARSE ? 320 : 900, pos = new Float32Array(n * 3).fill(-1e4), vel = new Float32Array(n * 3), life = new Float32Array(n).fill(9), max = new Float32Array(n).fill(1), age = new Float32Array(n);
+  const geom = new THREE.BufferGeometry(); geom.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geom.setAttribute('aT', new THREE.BufferAttribute(age, 1));
+  const pts = new THREE.Points(geom, mistShader(0xeaf4ff, 0.32)); pts.frustumCulled = false; pts.renderOrder = 5;
+  return { pts, geom, pos, vel, life, max, age, n, box: c.box, noz: c.nozzles, acc: 0, next: 0 };
+}
+function stepCabMist(C, dt, emit) {
+  const { pos, vel, life, max, age, n, box } = C; let alive = 0;
+  if (emit) { C.acc += n / 1.4 * dt; let k = Math.floor(C.acc); C.acc -= k;
+    while (k-- > 0) { const i = C.next, o = C.noz[(Math.random() * C.noz.length) | 0]; C.next = (C.next + 1) % n;
+      pos[i * 3] = o[0] + (Math.random() - 0.5) * 0.06; pos[i * 3 + 1] = o[1]; pos[i * 3 + 2] = o[2] + (Math.random() - 0.5) * 0.06;
+      const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * 0.75, sp = 1.5 + Math.random() * 0.9;
+      vel[i * 3] = Math.cos(a) * r * sp; vel[i * 3 + 1] = -sp; vel[i * 3 + 2] = Math.sin(a) * r * sp; life[i] = 0; max[i] = 1.1 + Math.random() * 0.6; } }
+  for (let i = 0; i < n; i++) {
+    if (life[i] >= max[i]) { pos[i * 3 + 1] = -1e4; continue; }
+    life[i] += dt; vel[i * 3 + 1] -= 0.5 * dt;
+    for (let c = 0; c < 3; c++) {
+      vel[i * 3 + c] *= 1 - 0.9 * dt; let p = pos[i * 3 + c] + vel[i * 3 + c] * dt;
+      if (p < box[c]) { p = box[c]; vel[i * 3 + c] = Math.abs(vel[i * 3 + c]) * 0.3; } else if (p > box[c + 3]) { p = box[c + 3]; vel[i * 3 + c] = -Math.abs(vel[i * 3 + c]) * 0.3; }
+      pos[i * 3 + c] = p;
+    }
+    age[i] = Math.min(1, life[i] / max[i]); alive++;
+  }
+  C.pts.visible = alive > 0;
+  if (alive) { C.geom.attributes.position.needsUpdate = true; C.geom.attributes.aT.needsUpdate = true; }
+}
+function buildRoute(e) {                         // Phase 82l: a flowing light ribbon on the walking line + sleek chevrons + safe-point beacon
+  const curve = new THREE.CatmullRomCurve3(e.points.map(p => new THREE.Vector3(...p)), false, 'centripetal', 0.5), L = curve.getLength();
+  const col = new THREE.Color(0x35ffa0);
+  // ribbon: flat strip laid along the path (side = tangent x up), lifted 3 cm; light pulses run along it toward the exit
+  const S = Math.max(80, Math.round(L * 14)), W = 0.16, pos = new Float32Array((S + 1) * 2 * 3), uv = new Float32Array((S + 1) * 2 * 2), ix = [];
+  const p = new THREE.Vector3(), tn = new THREE.Vector3(), sd = new THREE.Vector3(), UP = new THREE.Vector3(0, 1, 0);
+  for (let i = 0; i <= S; i++) {
+    const u = i / S; curve.getPointAt(u, p); curve.getTangentAt(u, tn); sd.crossVectors(tn, UP); if (sd.lengthSq() < 1e-6) sd.set(1, 0, 0); sd.normalize();
+    for (let j = 0; j < 2; j++) { const k = i * 2 + j, sg = j ? 1 : -1; pos[k * 3] = p.x + sd.x * W * sg; pos[k * 3 + 1] = p.y + 0.03 + sd.y * W * sg; pos[k * 3 + 2] = p.z + sd.z * W * sg; uv[k * 2] = u * L; uv[k * 2 + 1] = j; }
+    if (i < S) { const a = i * 2; ix.push(a, a + 2, a + 1, a + 1, a + 2, a + 3); }
+  }
+  const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.BufferAttribute(pos, 3)); rg.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); rg.setIndex(ix);
+  const rm = new THREE.ShaderMaterial({ uniforms: { uTime: { value: 0 }, uShow: { value: 0 }, uLen: { value: L }, uCol: { value: col } },
+    vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: `uniform float uTime, uShow, uLen; uniform vec3 uCol; varying vec2 vUv;
+      void main() {
+        float edge = 1.0 - abs(vUv.y * 2.0 - 1.0);                       // soft-edged strip, bright core line
+        float core = smoothstep(0.55, 1.0, edge), body = smoothstep(0.0, 0.9, edge);
+        float s = vUv.x - uTime * 2.2;                                     // pulses travel toward the exit (2.2 m/s)
+        float pulse = pow(0.5 + 0.5 * cos(6.2832 * s / 1.6), 6.0);
+        float ends = smoothstep(0.0, 0.6, vUv.x) * smoothstep(0.0, 1.2, uLen - vUv.x);
+        float reveal = smoothstep(uShow * (uLen + 2.0) - 2.0, uShow * (uLen + 2.0) - 0.5, vUv.x);   // draws itself from the cab out
+        float a = (0.16 * body + 0.55 * core + 0.75 * pulse * body) * ends * (1.0 - reveal) * min(1.0, uShow * 2.0);
+        gl_FragColor = vec4(uCol * (1.0 + 1.4 * pulse * core), a);
+      }`, transparent: true, depthTest: false, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, toneMapped: false });
+  const ribbon = new THREE.Mesh(rg, rm); ribbon.frustumCulled = false; ribbon.renderOrder = 7;
+  // chevrons: thin, sharp, flat on the walking line (tip toward -Z for Matrix4.lookAt)
+  const sh = new THREE.Shape(); [[0, 0.13], [0.15, -0.02], [0.15, -0.075], [0, 0.075], [-0.15, -0.075], [-0.15, -0.02]].forEach(([x, y], i) => i ? sh.lineTo(x, y) : sh.moveTo(x, y));
+  const cg = new THREE.ShapeGeometry(sh); cg.rotateX(-Math.PI / 2);
+  const mat = new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0, depthTest: false, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, toneMapped: false });
+  const N = Math.max(8, Math.round(L / 1.1)), inst = new THREE.InstancedMesh(cg, mat, N); inst.frustumCulled = false; inst.renderOrder = 8;
+  // safe point: two expanding rings + a soft disc
+  const end = curve.getPointAt(1), beacon = new THREE.Group(); beacon.position.set(end.x, end.y + 0.03, end.z);
+  const ringM = () => new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0, depthTest: false, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, toneMapped: false });
+  const rings = [0, 1].map(() => { const m = new THREE.Mesh(new THREE.RingGeometry(0.92, 1, 64), ringM()); m.rotation.x = -Math.PI / 2; m.renderOrder = 7; beacon.add(m); return m; });
+  const disc = new THREE.Mesh(new THREE.CircleGeometry(0.55, 48), ringM()); disc.rotation.x = -Math.PI / 2; disc.renderOrder = 7; beacon.add(disc);
+  return { curve, L, N, inst, ribbon, beacon, rings, disc, line: ribbon, ring: beacon, phase: 0, m: new THREE.Matrix4(), p: new THREE.Vector3(), tn: new THREE.Vector3(), tg: new THREE.Vector3(), up: new THREE.Vector3(0, 1, 0), sv: new THREE.Vector3() };
+}
+function stepRoute(R, dt, show) {
+  R.phase = (R.phase + dt * 1.1 / R.L) % 1;
+  const vis = show > 0.01; R.inst.visible = R.ribbon.visible = R.beacon.visible = vis; if (!vis) return;
+  R.ribbon.material.uniforms.uTime.value = DIS.t; R.ribbon.material.uniforms.uShow.value = show;
+  R.inst.material.opacity = 0.9 * show;
+  R.rings.forEach((m, i) => { const k = (DIS.t * 0.6 + i * 0.5) % 1; m.scale.setScalar(0.4 + 0.9 * k); m.material.opacity = (1 - k) * 0.8 * show; });
+  R.disc.material.opacity = (0.16 + 0.08 * Math.sin(DIS.t * 3)) * show;
+  for (let j = 0; j < R.N; j++) {
+    const u = (j / R.N + R.phase) % 1; R.curve.getPointAt(u, R.p); R.curve.getTangentAt(u, R.tn);
+    const sc = Math.min(1, u * 12, (1 - u) * 12) * Math.min(1, show * 1.5);
+    R.p.y += 0.05; R.tg.copy(R.p).add(R.tn);
+    R.m.lookAt(R.p, R.tg, R.up); R.m.scale(R.sv.setScalar(Math.max(0.001, sc))); R.m.setPosition(R.p);
+    R.inst.setMatrixAt(j, R.m);
+  }
+  R.inst.instanceMatrix.needsUpdate = true;
+}
+function buildWet() {                            // Phase 82n: damp ground = darkening only (no reflection), organic edges
+  const W = 512, H = 896, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const ctx = cv.getContext('2d');
+  const tex = new THREE.CanvasTexture(cv); tex.minFilter = THREE.LinearFilter; tex.generateMipmaps = false;
+  const ext = { x0: -8, x1: 8, z0: -12, z1: 16 }, w = ext.x1 - ext.x0, h = ext.z1 - ext.z0;
+  const geo = new THREE.PlaneGeometry(w, h); geo.rotateX(-Math.PI / 2);   // +Y of the plane -> -Z: v = 1 at z0
+  const mat = new THREE.ShaderMaterial({
+    uniforms: { uMask: { value: tex } },
+    vertexShader: `varying vec2 vUv; varying vec2 vW; void main() { vUv = uv; vW = position.xz; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: `uniform sampler2D uMask; varying vec2 vUv; varying vec2 vW;
+      float h(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+      float n2(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+        return mix(mix(h(i), h(i + vec2(1.0, 0.0)), f.x), mix(h(i + vec2(0.0, 1.0)), h(i + vec2(1.0, 1.0)), f.x), f.y); }
+      void main() {
+        float m = texture2D(uMask, vUv).g;
+        float n = n2(vW * 1.3) * 0.55 + n2(vW * 3.7) * 0.3 + n2(vW * 11.0) * 0.15;      // ground-scale breakup
+        float wet = smoothstep(0.12, 0.55, m + (n - 0.5) * 0.45);                       // irregular, soft-edged damp areas
+        float pud = smoothstep(0.6, 0.95, m + (n - 0.5) * 0.3);                          // a little darker where it pooled
+        gl_FragColor = vec4(0.0, 0.0, 0.0, wet * 0.32 + pud * 0.12);                     // darkening only - no reflection
+      }`,
+    transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  const mesh = new THREE.Mesh(geo, mat); mesh.position.set((ext.x0 + ext.x1) / 2, 0, (ext.z0 + ext.z1) / 2); mesh.renderOrder = 1; mesh.receiveShadow = false;
+  return { cv, ctx, tex, mesh, ext, W, H, dirty: false, lastUp: 0, lastDry: 0 };
+}
+function wetPaint(Wt, x, z, r, a) {
+  const { ext, W, H, ctx } = Wt, px = (x - ext.x0) / (ext.x1 - ext.x0) * W, py = (z - ext.z0) / (ext.z1 - ext.z0) * H, pr = r / (ext.x1 - ext.x0) * W;
+  if (px < -pr || py < -pr || px > W + pr || py > H + pr) return;
+  const g = ctx.createRadialGradient(px, py, 0, px, py, pr); g.addColorStop(0, `rgba(255,255,255,${a})`); g.addColorStop(0.6, `rgba(255,255,255,${a * 0.5})`); g.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = g; ctx.fillRect(px - pr, py - pr, pr * 2, pr * 2); Wt.dirty = true;
+}
+function disLabel(text, cls) { const st = document.getElementById('drawer-stage-3d'); if (!st) return null; const el = document.createElement('div'); el.className = 'drawer__dlabel ' + (cls || ''); el.textContent = text; st.appendChild(el); return el; }
+function buildDischarge(r, D) {
+  const g = new THREE.Group(); g.matrixAutoUpdate = false; V.scene.add(g);
+  // the cab glazing (transmissive, drawn after the opaque parts) stops writing depth, so the in-cab mist shows through the windows;
+  // the walls and roof still hide it
+  r.production.root.traverse(o => { if (!o.isMesh || !/_Cab_/.test(o.name)) return;
+    for (const m of (Array.isArray(o.material) ? o.material : [o.material])) if (/^WEB_GLASS/.test(m.name || '')) m.depthWrite = false; });
+  const o = { g, cab: D.cab ? buildCabMist(D.cab) : null, route: D.escape ? buildRoute(D.escape) : null, wet: buildWet(), labels: [] };
+  if (o.cab) g.add(o.cab.pts);
+  if (o.route) { g.add(o.route.ribbon); g.add(o.route.inst); g.add(o.route.beacon); o.route.ribbon.layers.enable(FOCUS_LAYER); o.route.inst.layers.enable(FOCUS_LAYER); }
+  g.add(o.wet.mesh);
+  if (D.cab && D.cab.label) { const b = D.cab.box; o.labels.push({ el: disLabel(D.cab.label, 'is-cab'), p: new THREE.Vector3((b[0] + b[3]) / 2, b[4] + 0.75, (b[2] + b[5]) / 2), cab: true }); }
+  if (D.escape && D.escape.label) { const P = D.escape.points, q = P[Math.max(0, P.length - 3)]; o.labels.push({ el: disLabel(D.escape.label, 'is-escape'), p: new THREE.Vector3(q[0], q[1] + 1.1, q[2]), route: true }); }
+  return o;
+}
+// Shot chips (Phase 82k): while it discharges, a row of tags - Vehicle / Whole system / In-cab protection / Escape route - each
+// flying the camera to its shot (manifest.discharge.shots). Activation lands on the first ("Vehicle", pulled back).
+function disShot(sh, AF) {
+  if (!sh || !V.pcam || !V.pcam.active) return;
+  DIS.shot = sh.id; DIS.solid = !!sh.solid;
+  if (DIS.chips) { let on = null; for (const b of DIS.chips.querySelectorAll('button')) { const a = b.dataset.shot === sh.id; b.setAttribute('aria-pressed', String(a)); if (a) on = b; }
+    const cap = DIS.chips.querySelector('.drawer__shot-cap');
+    if (cap) { cap.textContent = sh.caption || ''; cap.classList.add('is-on'); clearTimeout(DIS.capT); DIS.capT = setTimeout(() => cap.classList.remove('is-on'), 3200); }   // Phase 82s: brief
+    const ind = DIS.chips.querySelector('.drawer__shot-ind'); if (ind) { ind.style.opacity = on ? 1 : 0; if (on) { ind.style.width = on.offsetWidth + 'px'; ind.style.transform = `translateX(${on.offsetLeft}px)`; ind.dataset.shot = sh.id; } } }
+  const dir = V.camera.position.clone().sub(V.controls.target);
+  if (sh.framing) {
+    const fr = V.pcam.framing(sh.framing, { direction: dir.lengthSq() > 1e-8 ? dir : null });
+    if (sh.framing === 'full') {                  // well back: the whole truck, the route and its safe point ahead in frame
+      const d = Math.max(fr.distance * 1.35, 1e-3), u = dir.normalize();
+      fr.distance = d; fr.position = fr.target.clone().addScaledVector(u, d); fr.limits = { ...fr.limits, maxDistance: Math.max(fr.limits.maxDistance, d * 1.05) };
+    }
+    V.pcam.moveTo(fr); V.controls.autoRotate = false; lastInteract = performance.now(); return;
+  }
+  const sc = new THREE.Vector3().setFromMatrixScale(AF).x, t = new THREE.Vector3().fromArray(sh.target).applyMatrix4(AF);
+  const d = new THREE.Vector3().fromArray(sh.direction).transformDirection(AF), dist = sh.distance * sc * Math.max(1, 1.1 / Math.max(0.3, V.camera.aspect));   // tuned at a 1.1 aspect: portrait steps back
+  DIS.lastT = t.toArray().map(v => +v.toFixed(3));
+  focusFeatures([], { target: t.toArray(), radius: 0.5 * sc, azimuth: Math.atan2(d.z, d.x) * 180 / Math.PI, elevation: sh.elevation, distance: dist, minDistance: dist * 0.6, maxDistance: dist * 1.2 });
+}
+const SHOT_ICON = {                             // 18 px line icons (stroke = currentColor)
+  vehicle: '<path d="M2 14h13l2-5h4l1 5v3H2z"/><circle cx="6.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/><path d="M4 14V9h7v5"/>',
+  system: '<circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><path d="M7 6h10M6 8l5 8M18 8l-5 8"/>',
+  cab: '<path d="M4 20V6l3-3h10l3 3v14z"/><path d="M7 9h10v5H7z"/><path d="M9 3v2M12 3v2M15 3v2"/>',
+  escape: '<path d="M13 4a2 2 0 1 0 0 .01"/><path d="M10 21l2-6 3 2v4M7 12l3-4 4 1 2 3 3 1M12 15l-1-5"/><path d="M3 21h4"/>' };
+function buildChips(D) {
+  const st = document.getElementById('drawer-stage-3d'); if (!st || !D.shots || !D.shots.length) return null;
+  const el = document.createElement('div'); el.className = 'drawer__shots'; el.setAttribute('role', 'group'); el.setAttribute('aria-label', 'Discharge views');
+  const ind = document.createElement('span'); ind.className = 'drawer__shot-ind'; ind.setAttribute('aria-hidden', 'true'); el.appendChild(ind);
+  for (const sh of D.shots) { const b = document.createElement('button'); b.type = 'button'; b.className = 'drawer__shot'; b.dataset.shot = sh.id; b.setAttribute('aria-pressed', 'false');
+    b.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${SHOT_ICON[sh.id] || SHOT_ICON.system}</svg><span>${sh.label}</span>`;
+    b.addEventListener('click', (e) => { e.stopPropagation(); const r = V.models[V.url]; disShot(sh, disAssetFrame(r)); }); el.appendChild(b); }
+  const cap = document.createElement('div'); cap.className = 'drawer__shot-cap'; cap.setAttribute('aria-live', 'polite'); el.appendChild(cap);
+  st.appendChild(el); return el;
+}
+// Hidden parts (Phase 82m, manifest.hide): per LOD as it appears, triangles inside a box (asset frame) that run along x (span > minSpanX)
+// and stay level (rise < maxRiseY) are dropped from the index - the stair head gate rails of the VSS. The source model is untouched.
+const HIDDEN = new WeakSet();
+function applyHides(r) {
+  const a = r && r.production, H = a && a.manifest.hide; if (!H || !H.length) return;
+  const v = new THREE.Vector3(), inv = new THREE.Matrix4(), M = new THREE.Matrix4();
+  for (const L of a.lods.values()) {
+    if (HIDDEN.has(L.scene)) continue; HIDDEN.add(L.scene);
+    L.scene.updateMatrixWorld(true); inv.copy(L.scene.matrixWorld).invert();
+    L.scene.traverse(o => {
+      if (!o.isMesh || !o.geometry.index) return;
+      const hs = H.filter(h => !h.meshes || o.name.includes(h.meshes)); if (!hs.length) return;
+      M.multiplyMatrices(inv, o.matrixWorld); const pos = o.geometry.attributes.position, idx = o.geometry.index.array, nT = idx.length / 3;
+      const P = new Float32Array(pos.count * 3); for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i).applyMatrix4(M); P[i * 3] = v.x; P[i * 3 + 1] = v.y; P[i * 3 + 2] = v.z; }
+      const inB = (b, i) => P[i * 3] >= b[0] && P[i * 3 + 1] >= b[1] && P[i * 3 + 2] >= b[2] && P[i * 3] <= b[3] && P[i * 3 + 1] <= b[4] && P[i * 3 + 2] <= b[5];
+      const drop = new Uint8Array(nT);
+      for (const h of hs) {
+        const b = h.box;
+        if (h.whole) {                            // connected pieces (welded by position) lying entirely inside the box
+          const key = i => `${Math.round(P[i * 3] / 2e-4)},${Math.round(P[i * 3 + 1] / 2e-4)},${Math.round(P[i * 3 + 2] / 2e-4)}`;
+          const par = new Map(), find = k => { while (par.get(k) !== k) { par.set(k, par.get(par.get(k))); k = par.get(k); } return k; };
+          const touch = [], out = new Set();
+          for (let t = 0; t < nT; t++) { const i0 = idx[t * 3], i1 = idx[t * 3 + 1], i2 = idx[t * 3 + 2]; if (!(inB(b, i0) || inB(b, i1) || inB(b, i2))) continue;
+            const ks = [key(i0), key(i1), key(i2)]; for (const k of ks) if (!par.has(k)) par.set(k, k);
+            par.set(find(ks[1]), find(ks[0])); par.set(find(ks[2]), find(ks[0])); touch.push(t);
+            if (!(inB(b, i0) && inB(b, i1) && inB(b, i2))) out.add(ks[0]); }
+          const outRoots = new Set([...out].map(find));
+          for (const t of touch) if (!outRoots.has(find(key(idx[t * 3])))) drop[t] = 1;
+          continue;
+        }
+        for (let t = 0; t < nT; t++) {
+          if (drop[t]) continue; const i0 = idx[t * 3], i1 = idx[t * 3 + 1], i2 = idx[t * 3 + 2];
+          if (!(inB(b, i0) && inB(b, i1) && inB(b, i2))) continue;
+          const xs = [P[i0 * 3], P[i1 * 3], P[i2 * 3]], ys = [P[i0 * 3 + 1], P[i1 * 3 + 1], P[i2 * 3 + 1]];
+          if (Math.max(...xs) - Math.min(...xs) > (h.minSpanX ?? 0) && Math.max(...ys) - Math.min(...ys) < (h.maxRiseY ?? 1e9)) drop[t] = 1;
+        }
+      }
+      let cut = 0; const keep = []; for (let t = 0; t < nT; t++) { if (drop[t]) { cut++; continue; } keep.push(idx[t * 3], idx[t * 3 + 1], idx[t * 3 + 2]); }
+      if (cut) o.geometry.setIndex(new THREE.BufferAttribute(new idx.constructor(keep), 1));
+    });
+  }
+}
+// Isolated close-ups (Phase 82k/o, owner: "as jy incab click moet die res van vehicle wireframe wees behalwe die incab, selfde met escape
+// route"): the vehicle stays the System ghost, and only the part the shot is about is drawn solid - an overlay per vehicle mesh with
+// just the selected triangles (shared vertex buffers, an opaque clone of the source material; the source is faded in System mode).
+// cab = triangles inside the cab box; escape = triangles within 0.9 m of the escape route (deck, rails, stairs it passes).
+const ISO = new Map(), _isoC = new THREE.Vector3();                            // `${mesh.uuid}|${kind}` -> overlay mesh (null when nothing selected)
+function isoSelector(kind, D) {
+  if (kind === 'cab' && D.cab) { const B = [1.38, 4.46, 2.10, 3.22, 6.16, 4.70];   // above the deck plate
+    const inB = c => c.x >= B[0] && c.y >= B[1] && c.z >= B[2] && c.x <= B[3] && c.y <= B[4] && c.z <= B[5];
+    return (c, a, b, d) => inB(a) && inB(b) && inB(d); }
+  if (kind === 'escape' && D.escape) {                // Phase 82q (owner: "doen stairs alleen"): the two stairs only - the route from the
+    // stair head landing (the first point below deck height) down to the ground, its centreline lifted 0.45 m so one radius takes the
+    // treads below and the handrails above
+    const P0 = D.escape.points, i0 = Math.max(0, P0.findIndex(p => p[1] < 4.3) - 1), i1 = P0.findIndex((p, i) => i > i0 && p[1] < 0.1);
+    const pts = P0.slice(i0, i1 + 1).map(p => new THREE.Vector3(p[0], p[1] + 0.45, p[2])), R = 0.75, lo = new THREE.Vector3(1e9, 1e9, 1e9), hi = new THREE.Vector3(-1e9, -1e9, -1e9);
+    for (const p of pts) { lo.min(p); hi.max(p); } lo.subScalar(R); hi.addScalar(R);
+    const ab = new THREE.Vector3(), ap = new THREE.Vector3();
+    // per segment: the offset from the centreline split into sideways (horizontal, across the stair) and up/down - the stair is
+    // narrow (stringers 0.30 m off the line) but tall (treads below, handrails above), and the radiator grille behind it is > 0.4 m aside
+    const segs = []; for (let i = 0; i + 1 < pts.length; i++) { const u = new THREE.Vector3().subVectors(pts[i + 1], pts[i]), L = u.length(); if (L < 1e-6) continue; u.divideScalar(L);
+      const sd = new THREE.Vector3().crossVectors(u, new THREE.Vector3(0, 1, 0)); if (sd.lengthSq() < 1e-6) sd.set(1, 0, 0); sd.normalize(); const vu = new THREE.Vector3().crossVectors(sd, u).normalize();
+      segs.push({ p: pts[i], u, L, sd, vu }); }
+    const dv = new THREE.Vector3();
+    const near = (c, side, up) => { if (c.x < lo.x || c.y < lo.y || c.z < lo.z || c.x > hi.x || c.y > hi.y || c.z > hi.z) return false;
+      for (const g of segs) { dv.subVectors(c, g.p); const t = dv.dot(g.u); if (t < -0.05 || t > g.L + 0.05) continue;
+        dv.addScaledVector(g.u, -t); if (Math.abs(dv.dot(g.sd)) <= side && Math.abs(dv.dot(g.vu)) <= up) return true; }
+      return false; };
+    return (c, a, b, d) => near(c, 0.38, 0.75) && near(a, 0.45, 0.85) && near(b, 0.45, 0.85) && near(d, 0.45, 0.85);   // treads, stringers, handrails; no grille, no shards
+  }
+  return null;
+}
+// The outline: the System ghost's fresnel shell, brighter and tinted (cab blue, escape green) - edges glow, faces stay clear.
+const ISO_MAT = {}, ISO_LINE = {};
+function isoLineMaterial(kind) {
+  return ISO_LINE[kind] || (ISO_LINE[kind] = new THREE.LineBasicMaterial({ color: kind === 'escape' ? 0x6dffb0 : 0x9cc8ff, transparent: true, opacity: 0.95,
+    depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
+}
+function isoMaterial(kind) {
+  if (ISO_MAT[kind]) return ISO_MAT[kind];
+  const col = kind === 'escape' ? [0.25, 1.0, 0.62] : [0.48, 0.72, 1.0];
+  return (ISO_MAT[kind] = new THREE.ShaderMaterial({
+    uniforms: { uColor: { value: new THREE.Color(...col) }, uTime: { value: 0 } },
+    vertexShader: 'varying vec3 vN; varying vec3 vV; void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); vV = -mv.xyz; vN = normalMatrix * normal; gl_Position = projectionMatrix * mv; }',
+    fragmentShader: 'uniform vec3 uColor; uniform float uTime; varying vec3 vN; varying vec3 vV; void main() { float f = 1.0 - abs(dot(normalize(vN), normalize(vV))); float rim = pow(f, 2.2); float a = 0.03 + 0.38 * rim; a *= 0.85 + 0.15 * sin(uTime * 2.4); gl_FragColor = vec4(uColor * (0.7 + 0.9 * rim), a); }',
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, toneMapped: false }));
+}
+const ISO_EXCLUDE = { escape: /FRONT_MODULE|_CHASSIS|GLAZING|_CAB_/ };   // the radiator grille / front module behind the stair is not the stair
+function featureTableOf(o) { for (let p = o; p; p = p.parent) if (p.userData && p.userData.featureTable) return p.userData.featureTable; return null; }
+function buildIso(rec, kind, sel, inv, names) {
+  const m = rec.mesh, g = m.geometry; if (!g.index || !m.parent) return null;
+  const fa = g.attributes._feature_id_0, tbl = featureTableOf(m);
+  // Phase 82q: named parts (manifest.discharge.isolate[kind]) - exact, no spatial guessing
+  if (names) {
+    if (!tbl || !fa) return null; const want = new Set(); tbl.forEach((f, i) => { if (names.has(f.name)) want.add(f.id ?? i); }); if (!want.size) return null;
+    sel = null; var wantIds = want;
+  }
+  const ex = !names && ISO_EXCLUDE[kind], exIds = new Set(); if (ex && tbl && fa) tbl.forEach((f, i) => { if (ex.test(f.name || '')) exIds.add(f.id ?? i); });
+  const M = new THREE.Matrix4().multiplyMatrices(inv, m.matrixWorld), pos = g.attributes.position, idx = g.index.array, a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3(), keep = [];
+  for (let t = 0; t < idx.length; t += 3) {
+    a.fromBufferAttribute(pos, idx[t]).applyMatrix4(M); b.fromBufferAttribute(pos, idx[t + 1]).applyMatrix4(M); c.fromBufferAttribute(pos, idx[t + 2]).applyMatrix4(M);
+    if (wantIds) { if (wantIds.has(Math.round(fa.getX(idx[t])))) keep.push(idx[t], idx[t + 1], idx[t + 2]); continue; }
+    if (exIds.size && exIds.has(Math.round(fa.getX(idx[t])))) continue;
+    if (sel(_isoC.copy(a).add(b).add(c).multiplyScalar(1 / 3), a, b, c)) keep.push(idx[t], idx[t + 1], idx[t + 2]);
+  }
+  if (!keep.length) return null;
+  const sg = new THREE.BufferGeometry(); for (const k in g.attributes) sg.setAttribute(k, g.attributes[k]);
+  sg.setIndex(new THREE.BufferAttribute(new idx.constructor(keep), 1)); sg.computeBoundingSphere();
+  // Phase 82p/q (owner: "net 'n wireframe outline" -> "gee die wireframe 'n nice outline"): crisp edge lines (feature edges > 28 deg)
+  // over a dim tinted glow
+  const o = new THREE.Group(), fill = new THREE.Mesh(sg, isoMaterial(kind)); fill.renderOrder = 5; fill.layers.enable(FOCUS_LAYER); o.add(fill);
+  const lines = new THREE.LineSegments(new THREE.EdgesGeometry(sg, 28), isoLineMaterial(kind)); lines.renderOrder = 6; o.add(lines); o.name = 'pv_iso'; o.userData.pvOverlay = true; o.raycast = () => {};
+  o.position.copy(m.position); o.quaternion.copy(m.quaternion); o.scale.copy(m.scale); o.visible = false;
+  m.parent.add(o); return o;
+}
+function updateIso(r, D, active) {
+  const sh = active && DIS.shot && D.shots && D.shots.find(x => x.id === DIS.shot), kind = sh && sh.isolate;
+  for (const [k, o] of ISO) if (o) o.visible = !!kind && k.endsWith('|' + kind) && !!o.parent;
+  for (const k in ISO_MAT) ISO_MAT[k].uniforms.uTime.value = DIS.t;
+  if (!kind) return;
+  const names = D.isolate && D.isolate[kind] ? new Set(D.isolate[kind]) : null;
+  const sel = names ? (() => true) : isoSelector(kind, D), L = r.production && r.production.lods.get(r.production.activeLOD); if (!sel || !L) return;
+  L.scene.updateMatrixWorld(true); const inv = new THREE.Matrix4().copy(L.scene.matrixWorld).invert();
+  for (const rec of r.truckMeshes || []) { const k = rec.mesh.uuid + '|' + kind; if (ISO.has(k)) continue; const o = buildIso(rec, kind, sel, inv, names); ISO.set(k, o); if (o) o.visible = true; }
+}
+// Focus blur (Phase 82r, owner: "blur dalk uit die agtergrond by in-cab en stairs sodat dit meer uitstaan"): an HDR stage of the
+// product post pipeline, on only in the isolated close-ups. The subject (objects on layer FOCUS_LAYER: the outlined parts, the
+// route) is rendered as a white silhouette into a quarter-res mask and feathered; the frame is downsampled and gaussian-blurred
+// (two separable passes); the composite keeps the subject sharp and blurs + slightly dims the rest. Cheap: quarter-res passes.
+const FOCUS_LAYER = 5;
+const FOCUS = { amt: 0, want: 0, built: false, scene: null, camera: null };
+const FQ_VS = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }';
+function focusBuild() {
+  const rt = () => new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, depthBuffer: false, stencilBuffer: false });
+  FOCUS.a = rt(); FOCUS.b = rt(); FOCUS.mA = rt(); FOCUS.mB = rt();
+  FOCUS.mask = new THREE.WebGLRenderTarget(1, 1, { depthBuffer: true, stencilBuffer: false });
+  FOCUS.out = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, depthBuffer: false, stencilBuffer: false });
+  FOCUS.copy = new FullScreenQuad(new THREE.ShaderMaterial({ uniforms: { t: { value: null } }, vertexShader: FQ_VS,
+    fragmentShader: 'uniform sampler2D t; varying vec2 vUv; void main(){ gl_FragColor = texture2D(t, vUv); }', depthTest: false, depthWrite: false }));
+  FOCUS.blur = new FullScreenQuad(new THREE.ShaderMaterial({ uniforms: { t: { value: null }, dir: { value: new THREE.Vector2() } }, vertexShader: FQ_VS,
+    fragmentShader: `uniform sampler2D t; uniform vec2 dir; varying vec2 vUv;
+      void main(){ vec4 c = texture2D(t, vUv) * 0.2270270;
+        c += (texture2D(t, vUv + dir * 1.3846154) + texture2D(t, vUv - dir * 1.3846154)) * 0.3162162;
+        c += (texture2D(t, vUv + dir * 3.2307692) + texture2D(t, vUv - dir * 3.2307692)) * 0.0702703; gl_FragColor = c; }`, depthTest: false, depthWrite: false }));
+  FOCUS.comp = new FullScreenQuad(new THREE.ShaderMaterial({ uniforms: { tS: { value: null }, tB: { value: null }, tM: { value: null }, tR: { value: null }, amt: { value: 0 } }, vertexShader: FQ_VS,
+    fragmentShader: `uniform sampler2D tS, tB, tM, tR; uniform float amt; varying vec2 vUv;
+      void main(){ vec4 s = texture2D(tS, vUv), b = texture2D(tB, vUv); float m = max(smoothstep(0.05, 0.6, texture2D(tM, vUv).r), texture2D(tR, vUv).r);   // Phase 120: the subject itself always fully sharp
+        float k = min(1.0, (1.0 - m) * amt * 0.5); gl_FragColor = vec4(mix(s.rgb, b.rgb * 0.9, k), mix(s.a, b.a, k)); }`, depthTest: false, depthWrite: false }));
+  FOCUS.white = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+  FOCUS.built = true;
+}
+function focusPass(R, src, dst, dir) { FOCUS.blur.material.uniforms.t.value = src.texture; FOCUS.blur.material.uniforms.dir.value.copy(dir); R.setRenderTarget(dst); FOCUS.blur.render(R); }
+const FOCUS_STAGE = {
+  enabled: false,
+  render(R, src) {
+    if (!FOCUS.built) focusBuild();
+    const sh = COARSE ? 2 : 1, w = Math.max(1, src.width >> sh), h = Math.max(1, src.height >> sh);   // half res (quarter on phones)
+    for (const t of [FOCUS.a, FOCUS.b, FOCUS.mA, FOCUS.mB, FOCUS.mask]) if (t.width !== w || t.height !== h) t.setSize(w, h);
+    if (FOCUS.out.width !== src.width || FOCUS.out.height !== src.height) FOCUS.out.setSize(src.width, src.height);
+    // 1. blurred frame: downsample, 2 x (H + V) gaussian
+    FOCUS.copy.material.uniforms.t.value = src.texture; R.setRenderTarget(FOCUS.a); FOCUS.copy.render(R);
+    for (const t of [FOCUS.a, FOCUS.b, FOCUS.mA, FOCUS.mB]) t.texture.minFilter = t.texture.magFilter = THREE.LinearFilter;
+    const px = new THREE.Vector2(1 / w, 1 / h);
+    const steps = COARSE ? [1] : [1, 1.6];   // Phase 82s (owner: "blur voel too much"): a gentle softening
+    for (const k of steps) { focusPass(R, FOCUS.a, FOCUS.b, new THREE.Vector2(px.x * k, 0)); focusPass(R, FOCUS.b, FOCUS.a, new THREE.Vector2(0, px.y * k)); }
+    // 2. subject mask: white silhouette of the layer-5 objects, feathered
+    const cam = FOCUS.camera, sc = FOCUS.scene, L0 = cam.layers.mask, ov = sc.overrideMaterial, bg = sc.background, cc = R.getClearColor(new THREE.Color()), ca = R.getClearAlpha();
+    cam.layers.set(FOCUS_LAYER); sc.overrideMaterial = FOCUS.white; sc.background = null; R.setClearColor(0x000000, 1);
+    R.setRenderTarget(FOCUS.mask); R.clear(true, true, false); R.render(sc, cam);
+    cam.layers.mask = L0; sc.overrideMaterial = ov; sc.background = bg; R.setClearColor(cc, ca);
+    focusPass(R, FOCUS.mask, FOCUS.mB, new THREE.Vector2(px.x * 2.5, 0)); focusPass(R, FOCUS.mB, FOCUS.mA, new THREE.Vector2(0, px.y * 2.5));
+    // 3. composite at full resolution
+    const u = FOCUS.comp.material.uniforms; u.tS.value = src.texture; u.tB.value = FOCUS.a.texture; u.tM.value = FOCUS.mA.texture; u.tR.value = FOCUS.mask.texture; u.amt.value = FOCUS.amt;
+    R.setRenderTarget(FOCUS.out); FOCUS.comp.render(R);
+    return FOCUS.out;
+  },
+};
+function focusUpdate(dt, want) {
+  FOCUS.want = want ? 1 : 0; FOCUS.amt += (FOCUS.want - FOCUS.amt) * Math.min(1, dt * 4); if (Math.abs(FOCUS.want - FOCUS.amt) < 0.005) FOCUS.amt = FOCUS.want;
+  FOCUS_STAGE.enabled = FOCUS.amt > 0.01; FOCUS.scene = V.scene; FOCUS.camera = V.camera;
+  if (V.post && !V.post.stages.includes(FOCUS_STAGE)) V.post.stages.push(FOCUS_STAGE);
+}
+
+function disposeDischarge() {
+  FOCUS.amt = 0; FOCUS_STAGE.enabled = false;     // Phase 82r: never carry the focus blur to another product
+  if (!DIS.g) return;
+  DIS.g.traverse(m => { if (m.geometry) m.geometry.dispose(); if (m.material) m.material.dispose(); });
+  if (DIS.wet) DIS.wet.tex.dispose();
+  V.scene.remove(DIS.g); for (const l of DIS.labels || []) if (l.el) l.el.remove(); if (DIS.chips) DIS.chips.remove();
+  Object.assign(DIS, { g: null, cab: null, route: null, wet: null, labels: null, chips: null, shot: null, solid: false, on: 0, t: 0, was: false, wetUntil: 0 });
+}
+function updateDischarge(dt) {
+  const r = V.models && V.models[V.url], D = r && r.production && r.production.manifest.discharge;
+  if (DIS.key !== V.url) { disposeDischarge(); DIS.key = V.url; }
+  if (!D) { if (FOCUS_STAGE.enabled) { FOCUS.amt = 0; FOCUS_STAGE.enabled = false; } return; }
+  const active = systemOn && mode === 'system', now = performance.now();
+  if (!DIS.g) { if (!active) return; Object.assign(DIS, buildDischarge(r, D)); DIS.chips = buildChips(D); }
+  const AF = disAssetFrame(r); if (!AF) return;
+  DIS.g.matrix.copy(AF); DIS.g.matrixWorldNeedsUpdate = true; DIS.inv.copy(AF).invert();
+  const sc = DIS.v.setFromMatrixScale(AF).x, fy = V.stageState && Number.isFinite(V.stageState.floorY) ? V.stageState.floorY : 0;
+  // camera: pull back to the whole truck when it goes off, back to the system view when it stops
+  if (active !== DIS.was && V.pcam && V.pcam.active && D.view === 'full' && !keepView) {   // on: the first shot (the whole vehicle); off: the System view
+    if (active) disShot((D.shots && D.shots[0]) || { id: 'vehicle', framing: 'full' }, AF);
+    else { DIS.solid = false; DIS.shot = null; if (mode === 'system') disShot({ id: '', framing: 'system' }, AF); DIS.shot = null; }
+  }
+  if (DIS.chips) DIS.chips.classList.toggle('is-on', active);
+  { const st = document.getElementById('drawer-stage-3d'); if (st) st.classList.toggle('is-discharging', active); }   // Phase 82s: quieter chrome
+  updateIso(r, D, active);                        // Phase 82o: the solid part of an isolated close-up
+  { const sh = active && DIS.shot && D.shots && D.shots.find(x => x.id === DIS.shot); focusUpdate(dt, !!(sh && sh.isolate)); }   // Phase 82r
+  if (active && !DIS.was) DIS.t = 0;
+  DIS.was = active; DIS.t += dt;
+  DIS.on += ((active ? 1 : 0) - DIS.on) * Math.min(1, dt * 3);
+  const h = V.renderer.domElement.height || 720, pxs = h * 0.5 / Math.tan(THREE.MathUtils.degToRad(V.camera.fov * 0.5));
+  if (DIS.cab) {                                  // the glazing is transmissive (its pass never sees this mist): in the cab close-up
+    const m = DIS.cab.pts.material;               // the mist draws over the cab, from other views the truck hides it
+    m.uniforms.uScale.value = pxs; m.uniforms.uSize.value = 0.26 * sc; m.depthTest = DIS.shot !== 'cab';
+    stepCabMist(DIS.cab, Math.min(dt, 0.05), active);
+  }
+  const showRoute = active ? THREE.MathUtils.smoothstep(DIS.t, 0.5, 2.2) : DIS.on * 0.999;
+  if (DIS.route) stepRoute(DIS.route, Math.min(dt, 0.05), showRoute);
+  // wet ground: paint where droplets struck (runoff falls straight down) / landed; dry slowly
+  const Wt = DIS.wet; Wt.mesh.position.y = DIS.v.set(0, fy, 0).applyMatrix4(DIS.inv).y + 0.006;
+  if (active) {
+    for (let i = 0; i + 2 < MIST_SPLASH.length; i += 3) { const q = DIS.v.set(MIST_SPLASH[i], MIST_SPLASH[i + 1], MIST_SPLASH[i + 2]).applyMatrix4(DIS.inv);
+      wetPaint(Wt, q.x + (Math.random() - 0.5) * 0.7, q.z + (Math.random() - 0.5) * 0.7, 0.18 + Math.random() * 0.32, 0.035); }
+    if (D.cab && Math.random() < dt * 3) { const b = D.cab.box; wetPaint(Wt, b[0] - 0.2 + Math.random() * 0.4, (b[2] + b[5]) / 2 + (Math.random() - 0.5), 0.5, 0.04); }   // drain from the cab deck
+    DIS.wetUntil = now + 16000;
+  }
+  if (now - Wt.lastDry > 250) {                   // drying: fast once it stops, a trickle while it runs
+    Wt.lastDry = now; Wt.ctx.globalCompositeOperation = 'destination-out'; Wt.ctx.fillStyle = `rgba(0,0,0,${active ? 0.006 : 0.03})`; Wt.ctx.fillRect(0, 0, Wt.W, Wt.H); Wt.dirty = true;
+  }
+  if (Wt.dirty && now - Wt.lastUp > 120) { Wt.tex.needsUpdate = true; Wt.dirty = false; Wt.lastUp = now; }
+  Wt.mesh.visible = now < DIS.wetUntil;
+  // labels
+  const rc = V.renderer.domElement.getBoundingClientRect(), st = document.getElementById('drawer-stage-3d'), sr = st ? st.getBoundingClientRect() : rc;
+  for (const l of DIS.labels) {
+    if (!l.el) continue; const vis = (l.route ? showRoute : DIS.on) > 0.3 && (!DIS.shot || DIS.shot === 'vehicle');   // Phase 82s: the bar names the close-ups
+    const q = DIS.v.copy(l.p).applyMatrix4(AF).project(V.camera), behind = q.z > 1;
+    l.el.classList.toggle('is-on', vis && !behind);
+    if (vis && !behind) l.el.style.transform = `translate(${(rc.left - sr.left + (q.x + 1) / 2 * rc.width).toFixed(1)}px, ${(rc.top - sr.top + (1 - q.y) / 2 * rc.height).toFixed(1)}px) translate(-50%, -100%)`;
+  }
 }
 
 function fadeRec(r, amt, floorOp) {
@@ -1939,7 +2451,7 @@ function frame() {
   // Production products: when returning to Full from a close System view, the truck fades back in
   // only once the camera has left its hull, so it never materialises around (or through) the lens.
   const holdTruck = mode === 'full' && V.pcam && V.pcam.active && V.pcam.transition && !V.pcam.clearOf('full');
-  truckAmt += ((holdTruck ? 1 : truckTarget) - truckAmt) * 0.12;
+  truckAmt += ((holdTruck ? 1 : (DIS.solid ? 0 : truckTarget)) - truckAmt) * 0.12;   // Phase 82k: close-up shots show the vehicle solid
   dimAmt   += (dimTarget   - dimAmt)   * 0.12;
   gunDimAmt += (gunDimTarget - gunDimAmt) * 0.12;
 
@@ -1956,7 +2468,7 @@ function frame() {
   { const r = V.models && V.models[V.url];
     if (r && r.production) {
       const ghostMode = mode === 'system' || (mode === 'cutaway' && cutawayContextOf(V.url) === 'ghost');   // Phase 80
-      const want = ghostMode && systemContextOf(V.url) === 'ghost' && (!V.pcam.active || V.pcam.clearOf('full'));
+      const want = ghostMode && !DIS.solid && systemContextOf(V.url) === 'ghost' && (!V.pcam.active || V.pcam.clearOf('full'));
       GHOST.amt += ((want ? 1 : 0) - GHOST.amt) * 0.12;
       if (GHOST.amt > 0.004) syncGhosts(r);
       showGhosts(r, GHOST.amt > 0.004);
@@ -1989,11 +2501,12 @@ function frame() {
 
   // Resume the gentle auto-rotate after 10s of no interaction (all orbit
   // modes — full, system, gun). The gun itself never rotates; the VIEW does.
-  if ((mode === 'full' || mode === 'system' || mode === 'gun') && !userInteracting && !V.controls.autoRotate &&
+  if (SPIN.on) { if (!userInteracting) { V.controls.autoRotate = true; V.controls.autoRotateSpeed = SPIN.speed; } }   // Phase 104
+  else if ((mode === 'full' || mode === 'system' || mode === 'gun') && !userInteracting && !V.controls.autoRotate &&   // Phase 101/102: in the Blender room the idle turn is natural again
       lastInteract && (performance.now() - lastInteract > IDLE_RESUME_MS) && !(COARSE && performance.now() - lastInteract > 45000)) {
     V.controls.autoRotate = true;
   }
-  if (COARSE && V.controls.autoRotate && performance.now() - lastInteract > 45000) V.controls.autoRotate = false;   // Phase 82h: phones rest
+  if (!SPIN.on && COARSE && V.controls.autoRotate && performance.now() - lastInteract > 45000) V.controls.autoRotate = false;   // Phase 82h: phones rest
 
   // (Gun stays static — the model can't articulate without breaking, so the
   // cannon is shown in its correct connected position; only the spray moves.)
@@ -2001,11 +2514,19 @@ function frame() {
   const _dt = (now - (_prevTs.t || now)) / 1000;
   updateSpray(_dt);
   updateProdGun(_dt);                  // Phase 82: production cannon aim + foam stream
+  wetUpdate(Math.min(_dt, 0.1));       // Phase 119: the sprayed floor dries
   updateMist(_dt);
+  updateDischarge(_dt);                // Phase 82j: VSS in-cab mist, escape route, wet ground, camera pull-back
+  { const rH = V.models && V.models[V.url]; if (rH && rH.production && rH.production.manifest.hide) applyHides(rH); }   // Phase 82m
   _prevTs.t = now;
 
 
-  if (V.pcam && V.pcam.active) V.pcam.update(_dt); else V.controls.update();
+  if (POV.save) updatePOV(Math.min(_dt, 0.1));   // Phase 119: the operator's view owns the camera
+  else if (V.pcam && V.pcam.active) V.pcam.update(_dt); else V.controls.update();
+  if (!POV.save) { const rB = V.models && V.models[V.url];          // Phase 82l: a panned view stays on the product (target within its central 70 %)
+    if (rB && rB.bbox && !rB.bbox.isEmpty()) { const ex = rB.bbox.getSize(_panV).multiplyScalar(-0.15), t = V.controls.target, t0 = _panT.copy(t);
+      t.clamp(_panA.copy(rB.bbox.min).sub(ex), _panB.copy(rB.bbox.max).add(ex));
+      if (!t.equals(t0)) V.camera.position.add(_panV.subVectors(t, t0)); } }
   // Engineering callouts track their 3D anchors (cutaway only, after the cut).
   updateCallouts(mode === 'cutaway' && cutAmt > 0.6);
   // Reflect wheel/pinch zoom back onto the slider (unless it's being dragged).
@@ -2019,7 +2540,7 @@ function frame() {
   const rA = V.models && V.models[V.url], camMoved = !near(PWR.cam, V.camera.matrixWorld, 2e-5) || !near(PWR.proj, V.camera.projectionMatrix, 1e-5);
   const settling = Math.abs(cutTarget - cutAmt) > 1e-3 || Math.abs(truckTarget - truckAmt) > 1e-3 || Math.abs(dimTarget - dimAmt) > 1e-3
     || Math.abs(gunDimTarget - gunDimAmt) > 1e-3 || (GHOST.amt > 0.004 && GHOST.amt < 0.996) || (PCUT.amt > 0 && PCUT.amt < 1);
-  const fx = (spray && spray.points.visible) || systemOn || (mode === 'gun' && !!prodGunRig()) || PGUN.yaw !== 0 || PGUN.pitch !== 0;
+  const fx = (spray && spray.points.visible) || systemOn || WET.max > 0.002 || now < DIS.wetUntil || DIS.on > 0.01 || (mode === 'gun' && !!prodGunRig()) || PGUN.yaw !== 0 || PGUN.pitch !== 0;
   const key = `${V.url}|${mode}|${rA && rA.production ? rA.production.activeLOD : ''}|${V.loaded}`;
   const dirty = camMoved || settling || fx || key !== PWR.key || V.renderer.shadowMap.needsUpdate || now - PWR.lastInput < 1200;
   if (dirty) { PWR.tail = 12; PWR.why = [camMoved && 'cam', settling && 'settle', fx && 'fx', key !== PWR.key && 'key', V.renderer.shadowMap.needsUpdate && 'shadow', now - PWR.lastInput < 1200 && 'input'].filter(Boolean).join(','); }
@@ -2032,13 +2553,318 @@ function frame() {
 
 // One frame. Production profile: HDR pipeline (ProductPost; AO applied to scene-linear radiance
 // before AgX). Legacy profile: the direct path, unchanged (in-shader tone mapping on the canvas).
+const TURN = { az0: null, url: null, base: [] };   // Phase 98c
+let TRANSP = false;   // Phase 90: DrawerViewer.setTransparent
+let FLOOR_GLOW_TEX = null;   // Phase 94: DrawerViewer.setFloorGlow
+let PLINTH = null;           // Phase 95: DrawerViewer.setPlinth
+const SPIN = { on: false, speed: -1.6 };   // Phase 104: DrawerViewer.setSpin (the scene turns on its own while you aim)
+let ROOM = null;             // Phase 97: DrawerViewer.setRoom
+const SKY = { on: false, mesh: null, scene: null, env: null, envPrev: null, key: null };   // Phase 102: DrawerViewer.setSkybox
+const ROOM_U = { vp: { value: new THREE.Vector4(0, 0, 1, 1) }, on: { value: 0 } };
+// Phase 117 (owner: "why is it gone — just do it right"): a true planar reflection on the showroom floor, in see-through mode only.
+// Once per frame the scene is drawn from the camera mirrored in the floor plane (clipped at the floor) into a reduced-size
+// target; a floor plane samples it in projection — softly blurred, faint, fading out away from the product — so the reflection
+// meets every wheel exactly and turns with the product. Hidden again straight after the frame, so the full-screen viewer never has it.
+const MIRROR = { on: true, strength: 0.17,   // Phase 118 (owner: "less reflection, a little blur"): was 0.3
+  mesh: null, rt: null, cam: null, tm: new THREE.Matrix4(),
+  clip: new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), v2: new THREE.Vector2(), p: new THREE.Vector3(), d: new THREE.Vector3(),
+  u: new THREE.Vector3(), q: new THREE.Quaternion(), c: new THREE.Color() };
+// Phase 119 (owner: "the floor must get wet where you spray"): a wetness map on the floor around the product. Every droplet of
+// the cannon that lands stamps a soft spot; the map dries out slowly. The floor-reflection plane reads it: wet floor is darker
+// and a far better mirror (the product, the jet and the fires shine in it), with organic, noisy edges.
+const WET = { N: 256, g: null, px: null, tex: null, key: null, cx: 0, cz: 0, E: 1, s: 1, max: 0, dirty: false };
+function wetStamp(x, z, amt, s) {
+  if (!WET.g) { WET.g = new Float32Array(WET.N * WET.N); WET.f = new Float32Array(WET.N * WET.N); WET.px = new Uint8Array(WET.N * WET.N * 2);   // R wet, G foam (Phase 121)
+    WET.tex = new THREE.DataTexture(WET.px, WET.N, WET.N, THREE.RGFormat, THREE.UnsignedByteType);
+    WET.tex.magFilter = WET.tex.minFilter = THREE.LinearFilter; WET.tex.needsUpdate = true; }
+  const r = V.models && V.models[V.url];
+  if (WET.key !== V.url && r && r.bbox) {                  // another product: a dry floor centred on it
+    WET.key = V.url; WET.g.fill(0); WET.f.fill(0); WET.max = 0; WET.dirty = true; WET.s = s;
+    WET.cx = (r.bbox.min.x + r.bbox.max.x) / 2; WET.cz = (r.bbox.min.z + r.bbox.max.z) / 2; WET.E = 30 * s;
+  }
+  const N = WET.N, u = ((x - WET.cx) / (2 * WET.E) + 0.5) * N, v = ((z - WET.cz) / (2 * WET.E) + 0.5) * N;
+  const i0 = Math.round(u), j0 = Math.round(v);
+  if (i0 < 2 || j0 < 2 || i0 >= N - 2 || j0 >= N - 2) return;
+  for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++) {
+    const d2 = (i0 + i - u) ** 2 + (j0 + j - v) ** 2; if (d2 > 6.25) continue;
+    const k = (j0 + j) * N + i0 + i, e = Math.exp(-d2 / 1.8); WET.g[k] = Math.min(1.6, WET.g[k] + amt * e);
+    WET.f[k] = Math.min(1.4, WET.f[k] + amt * 1.3 * e);   // Phase 121 (owner: "white foam on the ground where I spray, fading after a few seconds")
+  }
+  WET.max = Math.max(WET.max, WET.g[j0 * N + i0]); WET.dirty = true;
+}
+function wetUpdate(dt) {                                   // spread a little (the puddle runs), dry out (~25 s), hand the map to the GPU
+  if (!WET.g || WET.max <= 0.002) return;
+  const N = WET.N, f = Math.exp(-dt / 25), g = WET.g, px = WET.px, a = Math.min(0.2, dt * 0.9);
+  if (!WET.t) WET.t = new Float32Array(N * N);
+  const t = WET.t; t.set(g);
+  for (let j = 1; j < N - 1; j++) for (let i = 1, k = j * N + 1; i < N - 1; i++, k++)
+    g[k] = t[k] + a * (t[k - 1] + t[k + 1] + t[k - N] + t[k + N] - 4 * t[k]);
+  let mx = 0; const fo = WET.f, ff = Math.exp(-dt / 3.2);   // the foam collapses in a few seconds; the wet stays longer
+  for (let k = 0; k < g.length; k++) { const w = g[k] * f, q = fo[k] * ff; g[k] = w; fo[k] = q; if (w > mx) mx = w;
+    px[2 * k] = w >= 1 ? 255 : (w * 255) | 0; px[2 * k + 1] = q >= 1 ? 255 : (q * 255) | 0; }
+  WET.max = mx < 0.002 ? 0 : mx; WET.tex.needsUpdate = true; WET.dirty = false;
+}
+// Phase 119 (owner: "a POV angle when we're in spray mode"): the operator's view — the camera stands behind the cannon at head
+// height, looking where the cannon pointed when POV was switched on. A mouse aims by hovering (as in Gun view) and looks around
+// by dragging; a finger aims by dragging. Entering and leaving glide (position, aim point, field of view); on leaving, the
+// camera lands exactly where it was and the orbit controls take over again.
+const POV = { on: false, k: 0, save: null, head: new THREE.Vector3(), yawOff: 0, eye: new THREE.Vector3(), look: new THREE.Vector3(),
+  t: new THREE.Vector3(), j: new THREE.Vector3(), hp: new THREE.Vector3(), M: new THREE.Matrix4() };
+function setPOV(on, opts = {}) {
+  if (!V) return false;
+  // Phase 121 (owner: "a button to view the system far out, the whole vehicle in frame while it sprays"): leave POV gliding
+  // straight to the whole-vehicle framing (from the side the visitor was on) instead of back to the old view
+  if (!on && opts.whole && POV.save && V.pcam && V.pcam.active) {
+    const fr = V.pcam.framing('full', { direction: POV.save.pos.clone().sub(POV.save.tgt) });
+    POV.save.pos.copy(fr.position); POV.save.tgt.copy(fr.target);
+  }
+  const P = prodGunRig(), S = P && prodGunFrame(P);
+  if (on && (!P || !S || mode !== 'gun')) return false;
+  if (on && !POV.on) {
+    if (!POV.save) POV.save = { pos: V.camera.position.clone(), tgt: V.controls.target.clone(), fov: V.camera.fov, near: V.camera.near };
+    POV.head.set(_pg.dir.x, 0, _pg.dir.z); if (POV.head.lengthSq() < 1e-6) POV.head.set(0, 0, -1); POV.head.normalize();
+    POV.yawOff = 0; V.controls.enabled = false; V.controls.autoRotate = false;
+  }
+  POV.on = !!on; lastInteract = performance.now();
+  return POV.on;
+}
+function povDrop() {   // leave POV at once, the camera staying where it is (the caller moves it on)
+  if (!POV.save) return;
+  V.camera.fov = POV.save.fov; V.camera.near = POV.save.near; V.camera.updateProjectionMatrix();
+  POV.on = false; POV.k = 0; POV.save = null; V.controls.enabled = true;
+  DOF.amt = 0; DOF_STAGE.enabled = false;
+}
+// Phase 121 (owner: "do the aperture and blur properly"): a real depth-of-field lens for POV. A depth pass (half resolution, opaque
+// geometry only — the jet, the fires and the floor effects carry no depth, so they read as background and stay sharp) gives each
+// pixel its distance; the lens is focused on the cannon head, and everything nearer goes out of focus by how much nearer it is
+// (circle of confusion ~ F/z - 1). The near circle of confusion is spread outward, so the blurred cylinders melt over their own
+// edges as foreground bokeh does — and nothing behind the focus plane is blurred, so the sharp cannon gets no halo.
+const DOF = { amt: 0, F: 2, built: false, hide: [] };
+function dofBuild() {
+  const T = THREE, rt = o => new T.WebGLRenderTarget(1, 1, Object.assign({ type: T.HalfFloatType, depthBuffer: false, stencilBuffer: false, minFilter: T.LinearFilter, magFilter: T.LinearFilter }, o));
+  DOF.z = rt({ depthBuffer: true });
+  DOF.a = rt(); DOF.b = rt(); DOF.c = rt(); DOF.d = rt(); DOF.out = rt();
+  DOF.zMat = new T.ShaderMaterial({ vertexShader: 'varying float vZ; void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); vZ = -mv.z; gl_Position = projectionMatrix * mv; }',
+    fragmentShader: 'varying float vZ; void main(){ gl_FragColor = vec4(1.0 / max(vZ, 1e-3), 0.0, 0.0, 1.0); }', side: T.DoubleSide });   // inverse depth: the clear (0) is infinitely far
+  DOF.zMatC = DOF.zMat.clone(); DOF.zMatC.fragmentShader = 'varying float vZ; void main(){ gl_FragColor = vec4(1.0 / max(vZ, 1e-3), 1.0, 0.0, 1.0); }';   // the cannon: G = 1 where it is the visible surface
+  DOF.copy = new FullScreenQuad(new T.ShaderMaterial({ uniforms: { t: { value: null } }, vertexShader: FQ_VS, fragmentShader: 'uniform sampler2D t; varying vec2 vUv; void main(){ gl_FragColor = texture2D(t, vUv); }', depthTest: false, depthWrite: false }));
+  DOF.blur = new FullScreenQuad(new T.ShaderMaterial({ uniforms: { t: { value: null }, dir: { value: new T.Vector2() } }, vertexShader: FQ_VS,
+    fragmentShader: `uniform sampler2D t; uniform vec2 dir; varying vec2 vUv;
+      void main(){ vec4 c = texture2D(t, vUv) * 0.2270270;
+        c += (texture2D(t, vUv + dir * 1.3846154) + texture2D(t, vUv - dir * 1.3846154)) * 0.3162162;
+        c += (texture2D(t, vUv + dir * 3.2307692) + texture2D(t, vUv - dir * 3.2307692)) * 0.0702703; gl_FragColor = c; }`, depthTest: false, depthWrite: false }));
+  DOF.coc = new FullScreenQuad(new T.ShaderMaterial({ uniforms: { tZ: { value: null }, F: { value: 2 } }, vertexShader: FQ_VS,
+    fragmentShader: `uniform sampler2D tZ; uniform float F; varying vec2 vUv;
+      void main(){ vec2 z = texture2D(tZ, vUv).rg; float c = z.x > 0.0 && z.y < 0.5 ? smoothstep(0.03, 0.24, F * z.x - 1.0) : 0.0; /* a wide-open aperture: a shallow depth of field */ gl_FragColor = vec4(c, c, c, 1.0); }`, depthTest: false, depthWrite: false }));
+  DOF.comp = new FullScreenQuad(new T.ShaderMaterial({ uniforms: { tS: { value: null }, tB: { value: null }, tC: { value: null }, tCs: { value: null }, tZ: { value: null }, amt: { value: 0 }, dbg: { value: 0 } }, vertexShader: FQ_VS,
+    fragmentShader: `uniform sampler2D tS, tB, tC, tCs, tZ; uniform float amt, dbg; varying vec2 vUv;
+      void main(){ vec4 s = texture2D(tS, vUv), b = texture2D(tB, vUv);
+        float c = max(texture2D(tC, vUv).r, min(1.0, texture2D(tCs, vUv).r * 1.7));   // the near blur spreads past its own edge
+        float k = clamp(c, 0.0, 1.0) * amt * (1.0 - smoothstep(0.3, 0.7, texture2D(tZ, vUv).g));   // the cannon itself stays sharp
+        gl_FragColor = mix(s, b, k); if (dbg > 0.5) gl_FragColor = vec4(k, texture2D(tZ, vUv).g, texture2D(tZ, vUv).r * 0.5, 1.0); }`, depthTest: false, depthWrite: false }));
+  DOF.built = true;
+}
+function dofPass(R, q, src, dst, dir) { q.material.uniforms.t.value = src.texture; q.material.uniforms.dir.value.copy(dir); R.setRenderTarget(dst); q.render(R); }
+const DOF_STAGE = {
+  enabled: false,
+  render(R, src) {
+    if (!DOF.built) dofBuild();
+    const w = Math.max(1, src.width >> 1), h = Math.max(1, src.height >> 1);
+    for (const t of [DOF.z, DOF.a, DOF.b, DOF.c, DOF.d]) if (t.width !== w || t.height !== h) t.setSize(w, h);
+    if (DOF.out.width !== src.width || DOF.out.height !== src.height) DOF.out.setSize(src.width, src.height);
+    const sc = V.scene, cam = V.camera, cc = R.getClearColor(new THREE.Color()), ca = R.getClearAlpha(), bg = sc.background, ov = sc.overrideMaterial, su = R.shadowMap.autoUpdate;
+    // 1. depth of the opaque scene (inverse view depth; anything see-through or additive is left out)
+    const hide = DOF.hide; hide.length = 0;
+    sc.traverse(o => { if (!o.visible || !(o.isMesh || o.isPoints || o.isSprite || o.isLine)) return; const m = Array.isArray(o.material) ? o.material[0] : o.material;
+      if (o.isPoints || o.isSprite || o.isLine || !m || m.transparent || m.blending === THREE.AdditiveBlending || m.isShadowMaterial) { o.visible = false; hide.push(o); } });
+    sc.overrideMaterial = DOF.zMat; sc.background = null; R.shadowMap.autoUpdate = false; R.setClearColor(0x000000, 0);
+    R.setRenderTarget(DOF.z); R.clear(true, true, false); R.render(sc, cam);
+    { const ac = R.autoClear, L0 = cam.layers.mask; R.autoClear = false; cam.layers.set(FOCUS_LAYER); sc.overrideMaterial = DOF.zMatC; R.render(sc, cam); cam.layers.mask = L0; R.autoClear = ac; }
+    for (const o of hide) o.visible = true;
+    sc.overrideMaterial = ov; sc.background = bg; R.shadowMap.autoUpdate = su; R.setClearColor(cc, ca);
+    // 2. circle of confusion, and a spread copy of it (the near field bleeds outward)
+    DOF.coc.material.uniforms.tZ.value = DOF.z.texture; DOF.coc.material.uniforms.F.value = DOF.F; R.setRenderTarget(DOF.c); DOF.coc.render(R);
+    const px = new THREE.Vector2(1 / w, 1 / h);
+    dofPass(R, DOF.blur, DOF.c, DOF.d, new THREE.Vector2(px.x * 4, 0)); dofPass(R, DOF.blur, DOF.d, DOF.b, new THREE.Vector2(0, px.y * 4));
+    dofPass(R, DOF.blur, DOF.b, DOF.d, new THREE.Vector2(px.x * 4, 0)); dofPass(R, DOF.blur, DOF.d, DOF.b, new THREE.Vector2(0, px.y * 4));
+    DOF.c2 = DOF.c2 || new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, depthBuffer: false, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter });
+    if (DOF.c2.width !== w || DOF.c2.height !== h) DOF.c2.setSize(w, h);
+    DOF.copy.material.uniforms.t.value = DOF.b.texture; R.setRenderTarget(DOF.c2); DOF.copy.render(R);   // the spread CoC
+    // 3. the out-of-focus image: half resolution, a wide gaussian (the aperture)
+    DOF.copy.material.uniforms.t.value = src.texture; R.setRenderTarget(DOF.a); DOF.copy.render(R);
+    for (const k of COARSE ? [1, 2] : [1, 1.9, 3.2]) { dofPass(R, DOF.blur, DOF.a, DOF.b, new THREE.Vector2(px.x * k, 0)); dofPass(R, DOF.blur, DOF.b, DOF.a, new THREE.Vector2(0, px.y * k)); }
+    // 4. sharp where in focus, the aperture's blur where not
+    const u = DOF.comp.material.uniforms; u.tS.value = src.texture; u.tB.value = DOF.a.texture; u.tC.value = DOF.c.texture; u.tCs.value = DOF.c2.texture; u.tZ.value = DOF.z.texture; u.amt.value = DOF.amt; u.dbg.value = DOF.dbg ? 1 : 0;
+    R.setRenderTarget(DOF.out); DOF.comp.render(R);
+    return DOF.out;
+  },
+};
+function povFocus(dt) {
+  const want = POV.on && POV.k > 0.5;
+  DOF.amt += ((want ? 1 : 0) - DOF.amt) * Math.min(1, dt * 4); if (!want && DOF.amt < 0.01) DOF.amt = 0;
+  DOF_STAGE.enabled = DOF.amt > 0.01;
+  if (V.post && !V.post.stages.includes(DOF_STAGE)) V.post.stages.push(DOF_STAGE);
+  // the cannon's own meshes are tagged (kept sharp); the lens focuses on its head, so what stands nearer — the cylinders — blurs
+  const P = prodGunRig();
+  if (want && P) for (const L of P.a.lods.values()) { const rest = PGUN.rest.get(L.scene); if (rest) for (const e of rest) { e.o.layers.enable(FOCUS_LAYER); if (e.head) e.head.layers.enable(FOCUS_LAYER); } }
+  // the lens is focused out on the target (the fires), the cannon held sharp: everything between you and the fires — the cylinders,
+  // the vehicle — falls out of focus (they stand at the cannon's own distance, so a focus on the cannon could never blur them)
+  V.camera.getWorldDirection(_dofDir); DOF.F = Math.max(0.05, _dofV.copy(POV.hp).sub(V.camera.position).dot(_dofDir) * 2.6);
+}
+
+const _dofDir = new THREE.Vector3(), _dofV = new THREE.Vector3();
+function updatePOV(dt) {
+  const sv = POV.save; if (!sv) return false;
+  const P = prodGunRig(), S = P && prodGunFrame(P);
+  if (!P || !S || mode !== 'gun') POV.on = false;
+  POV.k += ((POV.on ? 1 : 0) - POV.k) * (1 - Math.exp(-dt * 2.2));   // Phase 121 (owner: "rotate slower"): a calmer glide
+  const e = POV.k * POV.k * (3 - 2 * POV.k), cam = V.camera;
+  if (P && S) {
+    const s = _pg.s.setFromMatrixScale(S).x;
+    POV.j.copy(P.j).applyMatrix4(S);                                   // the cannon's turning axis on the vehicle
+    POV.hp.copy(P.hp).applyMatrix4(prodGunYaw(P, PGUN.yaw, POV.M)).applyMatrix4(S);   // its head
+    const c = Math.cos(POV.yawOff), sn = Math.sin(POV.yawOff), hx = POV.head.x * c - POV.head.z * sn, hz = POV.head.x * sn + POV.head.z * c;
+    // Phase 120 (owner: "POV must be closer" + his reference): right behind the cannon, just above the cylinders, the head up in frame
+    POV.eye.set(POV.j.x - hx * 1.9 * s, POV.hp.y - 0.12 * s, POV.j.z - hz * 1.9 * s);   // just over the cylinder tops: the head whole, the fires beyond
+    POV.look.set(POV.eye.x + hx * 10 * s, POV.eye.y - 0.35 * s, POV.eye.z + hz * 10 * s);
+    cam.position.lerpVectors(sv.pos, POV.eye, e); POV.t.lerpVectors(sv.tgt, POV.look, e); cam.lookAt(POV.t);
+    cam.fov = sv.fov + (52 - sv.fov) * e; cam.near = Math.min(sv.near, sv.near + (0.03 * s - sv.near) * e); cam.updateProjectionMatrix();
+  }
+  povFocus(dt);
+  if (!POV.on && POV.k < 0.003) {                                       // back where the visitor was: the controls take over
+    cam.position.copy(sv.pos); V.controls.target.copy(sv.tgt); cam.fov = sv.fov; cam.near = sv.near; cam.updateProjectionMatrix(); cam.lookAt(sv.tgt);
+    POV.k = 0; POV.save = null; V.controls.enabled = true; lastInteract = performance.now();
+    DOF.amt = 0; DOF_STAGE.enabled = false;
+  }
+  return true;
+}
+function ensureMirror() {
+  if (MIRROR.mesh) return MIRROR;
+  const T = THREE;
+  MIRROR.rt = new T.WebGLRenderTarget(2, 2, { type: T.HalfFloatType, samples: 4 });
+  MIRROR.cam = new T.PerspectiveCamera();
+  const mat = new T.ShaderMaterial({
+    uniforms: { tMirror: { value: MIRROR.rt.texture }, uTM: { value: MIRROR.tm }, uTexel: { value: new T.Vector2(1, 1) },
+      uK: { value: MIRROR.strength }, uC: { value: new T.Vector2() }, uR: { value: 3 },
+      uWet: { value: null }, uWetC: { value: new T.Vector2() }, uWetE: { value: 1 }, uWetOn: { value: 0 }, uNs: { value: 1 } },
+    vertexShader: `uniform mat4 uTM; varying vec4 vP; varying vec3 vW;
+      void main() { vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vP = uTM * w; gl_Position = projectionMatrix * viewMatrix * w; }`,
+    fragmentShader: `uniform sampler2D tMirror, uWet; uniform vec2 uTexel, uC, uWetC; uniform float uK, uR, uWetE, uWetOn, uNs; varying vec4 vP; varying vec3 vW;
+      float h2(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+      float vn(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+        return mix(mix(h2(i), h2(i + vec2(1.0, 0.0)), f.x), mix(h2(i + vec2(0.0, 1.0)), h2(i + vec2(1.0, 1.0)), f.x), f.y); }
+      void main() {
+        vec2 uv = vP.xy / vP.w, o = uTexel * 2.6, q = uTexel * 1.9;   // Phase 118: a softer, satin blur (13 taps, two rings)
+        vec4 c = texture2D(tMirror, uv) * 0.16
+          + (texture2D(tMirror, uv + vec2(o.x, 0.0)) + texture2D(tMirror, uv - vec2(o.x, 0.0))
+           + texture2D(tMirror, uv + vec2(0.0, o.y)) + texture2D(tMirror, uv - vec2(0.0, o.y))) * 0.09
+          + (texture2D(tMirror, uv + q) + texture2D(tMirror, uv - q)
+           + texture2D(tMirror, uv + vec2(q.x, -q.y)) + texture2D(tMirror, uv + vec2(-q.x, q.y))) * 0.075
+          + (texture2D(tMirror, uv + vec2(o.x * 2.0, 0.0)) + texture2D(tMirror, uv - vec2(o.x * 2.0, 0.0))
+           + texture2D(tMirror, uv + vec2(0.0, o.y * 2.0)) + texture2D(tMirror, uv - vec2(0.0, o.y * 2.0))) * 0.045;
+        float k = uK * (1.0 - smoothstep(0.45, 1.0, length(vW.xz - uC) / uR));   // a polished floor, fading out across the room
+        float w = 0.0, fm = 0.0;                             // Phase 119: wet floor — darker, and a much better mirror; Phase 121: foam
+        if (uWetOn > 0.5) {
+          vec2 wu = (vW.xz - uWetC) / (2.0 * uWetE) + 0.5;
+          if (wu.x > 0.0 && wu.x < 1.0 && wu.y > 0.0 && wu.y < 1.0) { vec2 t = texture2D(uWet, wu).rg; w = t.r; fm = t.g; }
+          float b = vn(vW.xz * uNs * 9.0) * 0.55 + vn(vW.xz * uNs * 23.0) * 0.45;   // clumps and bubbles
+          fm = smoothstep(0.22, 0.75, fm + (b - 0.5) * 0.55) * (0.55 + 0.45 * b);
+          float n = vn(vW.xz * uNs) * 0.6 + vn(vW.xz * uNs * 3.1) * 0.4;
+          w = smoothstep(0.1, 0.5, w + (n - 0.5) * 0.3);
+        }
+        float kr = k + w * 0.42;
+        // the sheen of a wet floor: brighter at a glancing view (Fresnel), streaked, in the room's cool white and red neon
+        float fr = pow(1.0 - abs(normalize(cameraPosition - vW).y), 3.0);
+        float st = vn(vW.xz * uNs * vec2(0.6, 4.0)) * 0.5 + 0.5;
+        vec3 sheen = w * (0.012 + 0.11 * fr) * st * mix(vec3(0.62, 0.68, 0.8), vec3(1.0, 0.14, 0.12), 0.4);
+        vec3 foam = vec3(0.62, 0.65, 0.7) * fm;               // white foam lying on the floor
+        float a = clamp(w * 0.5 + c.a * kr + dot(sheen, vec3(0.3)) + fm * 0.9, 0.0, 1.0);
+        gl_FragColor = vec4(a > 0.0 ? (c.rgb * kr * (1.0 - fm) + sheen + foam) / a : vec3(0.0), a);
+      }`,
+    transparent: true, depthWrite: false, opacity: 0.99 });   // opacity < 1: no part in the AO passes
+  const m = new T.Mesh(new T.PlaneGeometry(1, 1), mat);
+  m.rotation.x = -Math.PI / 2; m.renderOrder = -9; m.frustumCulled = false; m.visible = false; m.name = 'Phase117Mirror';   // under the shadow catcher (-8)
+  V.scene.add(m); MIRROR.mesh = m;
+  return MIRROR;
+}
+function renderMirror() {
+  const M = ensureMirror(), r = V.models && V.models[V.url];
+  if (!M.on || !r || !r.bbox) { M.mesh.visible = false; return; }
+  const R = V.renderer, cam = V.camera, U = M.mesh.material.uniforms;
+  const fy = V.stageState && Number.isFinite(V.stageState.floorY) ? V.stageState.floorY : 0;
+  const box = r.hulls && r.hulls.full ? r.hulls.full.box : r.bbox;
+  const cx = (box.min.x + box.max.x) / 2, cz = (box.min.z + box.max.z) / 2, rad = 0.5 * Math.max(box.max.x - box.min.x, box.max.z - box.min.z);
+  const wetOn = !!(WET.tex && WET.max > 0.002 && WET.key === V.url), ext = wetOn ? Math.max(rad * 6, 2 * WET.E) : rad * 6;
+  M.mesh.position.set(cx, fy + 0.0005, cz); M.mesh.scale.set(ext, ext, 1); M.mesh.updateMatrixWorld();
+  U.uWetOn.value = wetOn ? 1 : 0;
+  if (wetOn) { U.uWet.value = WET.tex; U.uWetC.value.set(WET.cx, WET.cz); U.uWetE.value = WET.E; U.uNs.value = 1 / (0.9 * WET.s); }
+  U.uC.value.set(cx, cz); U.uR.value = rad * 1.6; U.uK.value = M.strength;
+  R.getDrawingBufferSize(M.v2);
+  const sc = M.v2.x < 1200 ? 0.4 : 0.5, w = Math.max(2, Math.round(M.v2.x * sc)), h = Math.max(2, Math.round(M.v2.y * sc));
+  if (M.rt.width !== w || M.rt.height !== h) M.rt.setSize(w, h);
+  U.uTexel.value.set(1 / w, 1 / h);
+  // the camera mirrored in the floor: position, view direction and up reflected (a proper camera; the projection undoes the flip)
+  const vc = M.cam; cam.updateMatrixWorld();
+  vc.copy(cam, false);
+  M.p.setFromMatrixPosition(cam.matrixWorld); cam.getWorldDirection(M.d); cam.getWorldQuaternion(M.q); M.u.set(0, 1, 0).applyQuaternion(M.q);
+  M.d.add(M.p); M.p.y = 2 * fy - M.p.y; M.d.y = 2 * fy - M.d.y; M.u.y = -M.u.y;
+  vc.position.copy(M.p); vc.up.copy(M.u); vc.lookAt(M.d); vc.updateMatrixWorld();
+  vc.projectionMatrix.copy(cam.projectionMatrix); vc.projectionMatrixInverse.copy(cam.projectionMatrixInverse);
+  M.tm.set(0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1).multiply(vc.projectionMatrix).multiply(vc.matrixWorldInverse);
+  M.clip.constant = -(fy + 0.012);   // a hair above the floor: the flat ground pieces (contact shadow, wet ground) stay out of the reflection
+  const bg = V.scene.background, prev = R.getRenderTarget(), ca = R.getClearAlpha(), su = R.shadowMap.autoUpdate;
+  R.getClearColor(M.c);
+  M.mesh.visible = false; V.scene.background = null; R.shadowMap.autoUpdate = false;   // the shadow maps of this frame are reused
+  R.setRenderTarget(M.rt); R.setClearColor(0x000000, 0); R.clear(true, true, false);
+  R.clippingPlanes = [M.clip]; R.render(V.scene, vc); R.clippingPlanes = [];
+  R.setRenderTarget(prev); R.setClearColor(M.c, ca); R.shadowMap.autoUpdate = su; V.scene.background = bg;
+  M.mesh.visible = true;
+}
+
 function renderFrame(withAO = true) {
   const ps = V.aoTargets && V.pr.postSettings();
   if (ps) {
     V.post.configure({ quality: ps.quality, look: ps.look });
     const aoCfg = withAO ? V.pr.aoSettings() : null;
     if (aoCfg) V.ao.configure(aoCfg.params, aoCfg.quality);
-    V.post.render(V.scene, V.camera, { ao: aoCfg ? V.ao : null, aoArgs: aoCfg ? [V.aoTargets, m => aoRole(m, aoCfg)] : null, dome: V.dome, aoResponse: aoCfg ? aoCfg.hdrResponse : 'linear' });
+    // Phase 90: see-through mode (the showcase stage) — no room: the dome and the floors stay out of this frame, the shadow
+    // catcher keeps the product's own shadow, and the output carries alpha so the page's showroom shows behind it.
+    const LF = V.stage.floor;   // the legacy floor (V.floor is the stage floor for a production asset)
+    const see = TRANSP, keep = see ? [V.dome.visible, LF.visible, V.stageFloor ? V.stageFloor.visible : false] : null;
+    if (see && !SKY.on) {   // Phase 98c: a turntable look — the lights keep their place relative to the camera, so the shadow does not swing round with the product
+      const t = V.controls.target, c = V.camera.position, az = Math.atan2(c.x - t.x, c.z - t.z);
+      if (TURN.az0 == null || TURN.url !== V.url) { TURN.az0 = az; TURN.url = V.url; TURN.base = []; V.scene.traverse(o => { if (o.isDirectionalLight) TURN.base.push([o, o.position.clone()]); }); }
+      const d = az - TURN.az0, cs = Math.cos(d), sn = Math.sin(d);
+      for (const [L, p0] of TURN.base) { const tx = L.target ? L.target.position.x : 0, tz = L.target ? L.target.position.z : 0, x = p0.x - tx, z = p0.z - tz;
+        L.position.set(tx + x * cs + z * sn, p0.y, tz - x * sn + z * cs); L.updateMatrixWorld(); if (L.target) L.target.updateMatrixWorld(); }
+    }
+    let fcol = null;
+    if (see) {
+      V.dome.visible = false; if (LF !== V.stageFloor) LF.visible = false; if (V.stageFloor) V.stageFloor.visible = false;   // (Phase 119: POV too — the dark room, the reflection, the shadow and the fires' glow carry the ground)   // Phase 99 (owner): no floor, no room — the page's own black; only the product's shadow stays
+      const SF = V.stageFloor, U = SF && SF.userData.horizon;
+      if (U && U.uSee) {
+        const gl = V.renderer.getContext();
+        U.uSee.value.set(POV.k > 0.35 ? 0 : 1, 0.42, 0.46, 0.5);                  // ellipse centre (y, share of the canvas from the bottom), radii
+        U.uSeeVP.value.set(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+        ROOM_U.vp.value.copy(U.uSeeVP.value); ROOM_U.on.value = 1;
+        if (ROOM && ROOM.g.visible) { const p = ROOM.g.position, c = V.camera.position; ROOM.g.rotation.y = Math.atan2(p.x - c.x, p.z - c.z); }   // the arc stays behind the product
+        fcol = SF.material.color.clone(); SF.material.color.multiplyScalar(0.7);    // darker, to sit in the page's own black
+        fcol.r0 = SF.material.roughness; fcol.e0 = SF.material.envMapIntensity;
+        SF.material.roughness = 0.3; SF.material.envMapIntensity = 1.1;           // Phase 96: a polished floor that catches the light
+        fcol.ei = SF.material.emissiveIntensity;
+        if (POV.k > 0.35) { SF.material.color.setRGB(0.008, 0.008, 0.01); SF.material.envMapIntensity = 0.4; SF.material.emissiveIntensity = 0; }   // Phase 119: POV — a dark, polished showroom floor
+      }
+    }
+    V.post.transparent = see;
+    V.post.overlay = see && SKY.on && !!SKY.scene;
+    if (V.post.overlay) {   // Phase 102: the Blender room, ground-projected, straight onto the canvas; the product goes over it
+      const R = V.renderer; R.setRenderTarget(null); R.setClearColor(0x000000, 0); R.clear(true, true, false); R.render(SKY.scene, V.camera);
+    }
+    if (see && !V.post.overlay) renderMirror();   // Phase 117: the floor reflection (see-through mode only)
+    V.post.render(V.scene, V.camera, { ao: aoCfg ? V.ao : null, aoArgs: aoCfg ? [V.aoTargets, m => aoRole(m, aoCfg)] : null, dome: see ? null : V.dome, aoResponse: aoCfg ? aoCfg.hdrResponse : 'linear' });
+    if (see) { V.dome.visible = keep[0]; LF.visible = keep[1]; if (V.stageFloor) V.stageFloor.visible = keep[2]; }
+    if (MIRROR.mesh) MIRROR.mesh.visible = false;
+    if (fcol) { V.stageFloor.material.color.copy(fcol); V.stageFloor.material.roughness = fcol.r0; V.stageFloor.material.envMapIntensity = fcol.e0; V.stageFloor.material.emissiveIntensity = fcol.ei; V.stageFloor.userData.horizon.uSee.value.x = 0; }
     return 'hdr';
   }
   V.renderer.render(V.scene, V.camera);
@@ -2109,6 +2935,7 @@ function productScreenBox() {
 let resetAnim = null;
 function resetView(animate) {
   if (!V) return false;
+  povDrop();     // Phase 119: Reset leaves the operator's view (the camera glides home from there)
   const r = V.models && V.models[V.url]; if (!r) return false;
   const prod = !!(r.production && r.hulls && V.pcam.active);
   if (!prod && mode !== 'full') { DrawerViewer.setMode(mode); return true; }
@@ -2375,7 +3202,8 @@ function focusFeatures(names, o = {}) {
   if (!b) return null;
   // during a view change (Full → System) the camera carries the union of both views' limits until it lands: focus
   // with the limits of the view being entered, so the move lands on them (Phase 26: switch view, then focus, one move)
-  const L = (pc.transition && pc.transition.fr && pc.transition.fr.limits) || pc.limits, cam = V.camera, k = V.controls, D2R = Math.PI / 180;
+  let L = (pc.transition && pc.transition.fr && pc.transition.fr.limits) || pc.limits; const cam = V.camera, k = V.controls, D2R = Math.PI / 180;
+  if (o.minDistance != null || o.maxDistance != null) L = { ...L, minDistance: Math.min(L.minDistance, o.minDistance ?? L.minDistance), maxDistance: Math.max(L.maxDistance, o.maxDistance ?? L.maxDistance) };   // Phase 82k close-ups
   let dir = cam.position.clone().sub(k.target).normalize(); const turn = o.azimuth != null || o.elevation != null;
   if (turn) {
     const cur = new THREE.Spherical().setFromVector3(dir), az = o.azimuth != null ? o.azimuth : Math.atan2(dir.z, dir.x) / D2R;
@@ -2450,6 +3278,7 @@ export const DrawerViewer = {
   open(url) {
     if (!V) build();
     if (!V) return false;
+    povDrop();   // Phase 119: a new product starts outside the operator's view
     // A production asset is only kept while it is on screen (it is ~150 MB of GPU
     // memory); switching to another product releases it first.
     if (url && V.releaseProduction) for (const k of Object.keys(V.models)) if (k !== url && V.models[k].production) { ++V.prodToken; V.releaseProduction(); break; }
@@ -2509,7 +3338,10 @@ export const DrawerViewer = {
     HL.names = []; clearOverlays(); ++focusWatch;                   // component highlight (Phase 25)
   },
   // Switch view mode: 'full' | 'system' | 'cutaway'.
-  setMode(newMode) {
+  // opts.keepView (Phase 114, owner: "activate system must not change the view"): switch what the product does, not where the
+  // camera is — no gun close-up, no re-framing, and the vehicle stays visible
+  setMode(newMode, opts = {}) {
+    const keep = keepView = !!opts.keepView;
     mode = newMode;
     ++focusWatch;
     if (!V) return mode;
@@ -2517,15 +3349,16 @@ export const DrawerViewer = {
     const prodGun = !!(rec0 && rec0.production && rec0.hasGun && newMode === 'gun');                 // Phase 80
     const cutGhost = prodCut && cutawayContextOf(V.url) === 'ghost';
     cutTarget    = newMode === 'cutaway' ? 1 : 0;
-    truckTarget  = newMode === 'full' || prodGun || (prodCut && !cutGhost) ? 0 : 1;  // hide the truck for system/cutaway/gun (a production Cutaway / Gun keeps the product whole)
+    truckTarget  = newMode === 'full' || prodGun || (prodCut && !cutGhost) || keep ? 0 : 1;  // hide the truck for system/cutaway/gun (a production Cutaway / Gun keeps the product whole)
     truckFloor   = 0;                              // fully hidden (no ghost bakkie)
     dimTarget    = newMode === 'cutaway' && !prodCut ? 1 : 0;  // legacy: ghost everything but the sliced cylinder
-    gunDimTarget = newMode === 'gun' && !prodGun ? 1 : 0;  // legacy: ghost everything but the cannon head
+    gunDimTarget = newMode === 'gun' && !prodGun && !keep ? 1 : 0;  // legacy: ghost everything but the cannon head
 
     // Orbit stays on in every mode (gun aims by hover, drag still orbits).
     V.controls.enabled = true;
     if (newMode === 'gun') { gunYawT = 0; gunPitchT = 0; foamOn = false; }
     if (newMode !== 'system') systemOn = false;   // leaving System shuts the discharge off
+    if (newMode !== 'gun') POV.on = false;        // Phase 119: POV belongs to the cannon
 
     const rec = (V.models && V.models[V.url]) || null;
     if (prodCut && V.pcam.active) {                // Phase 67: fetch the cut geometry (once) and look into the section
@@ -2534,6 +3367,7 @@ export const DrawerViewer = {
       V.controls.autoRotate = false; lastInteract = performance.now();
       return mode;
     }
+    if (keep) { lastInteract = performance.now(); return mode; }
     if (prodGun && V.pcam.active) {                // Phase 80: the cannon, framed where it is mounted
       focusGun(true);
       V.controls.autoRotate = false; lastInteract = performance.now();
@@ -2611,6 +3445,13 @@ export const DrawerViewer = {
   getMode() { return mode; },
   getCaps() { return V && V.caps ? V.caps() : null; },
   setFoam(on) { foamOn = !!on; return foamOn; },
+  discharge() { return DIS; },             // Phase 82j (checks)
+  viewAsset(t, dir, dist) {                 // Phase 82l (checks): camera at an asset-frame target / direction / distance
+    const r = V.models[V.url], AF = disAssetFrame(r); if (!AF) return null; const sc = new THREE.Vector3().setFromMatrixScale(AF).x;
+    const T = new THREE.Vector3().fromArray(t).applyMatrix4(AF), u = new THREE.Vector3().fromArray(dir).transformDirection(AF).normalize(), d = dist * sc;
+    const L = { ...V.pcam.limits, minDistance: Math.min(V.pcam.limits.minDistance, d * 0.5), maxDistance: Math.max(V.pcam.limits.maxDistance, d * 2) };
+    V.pcam.snap({ mode: V.pcam.mode, target: T, position: T.clone().addScaledVector(u, d), distance: d, limits: L }); V.controls.autoRotate = false; lastInteract = performance.now(); return true;
+  },
   gunAim() {                                // Phase 82 (checks)
     const st = PGUN.stream && PGUN.stream.layers.map(L => { let n = 0, sx = 0, sy = 0, sz = 0; const v = [];
       for (let i = 0; i < L.o.n; i++) if (L.life[i] < L.max[i]) { n++; v.push([L.vel[i * 3], L.vel[i * 3 + 1], L.vel[i * 3 + 2]]); }
@@ -2618,10 +3459,211 @@ export const DrawerViewer = {
     const rc = V.renderer.domElement.getBoundingClientRect();
     const fires = FIRE.list && FIRE.list.map(f => { const q = f.p.clone().project(V.camera);
       return { hp: +f.hp.toFixed(2), out: f.out, vis: f.grp.visible, screen: [Math.round(rc.left + (q.x + 1) / 2 * rc.width), Math.round(rc.top + (1 - q.y) / 2 * rc.height)] }; });
-    return { power: { draws: PWR.draws, skips: PWR.skips, visible: PWR.visible, coarse: COARSE, why: PWR.why,
+    return { camDist: V.camera.position.distanceTo(V.controls.target), tgt: V.controls.target.toArray().map(v => +v.toFixed(3)), shotT: DIS.lastT, power: { draws: PWR.draws, skips: PWR.skips, visible: PWR.visible, coarse: COARSE, why: PWR.why,
       d: { cut: cutTarget - cutAmt, truck: truckTarget - truckAmt, dim: dimTarget - dimAmt, gd: gunDimTarget - gunDimAmt, ghost: GHOST.amt, pcut: PCUT.amt } }, fires, speed: PGUN.speed, yaw: PGUN.yaw, pitch: PGUN.pitch, yawT: PGUN.yawT, pitchT: PGUN.pitchT, rig: !!prodGunRig(), muzzle: _pg.mz.toArray(), dir: _pg.dir.toArray(), stream: st };
   },
   getFoam() { return foamOn; },
+  setSpin(on, speed) { SPIN.on = !!on; if (speed) SPIN.speed = speed; if (V && !SPIN.on) { V.controls.autoRotate = false; V.controls.autoRotateSpeed = -0.9; lastInteract = performance.now(); } return SPIN.on; },   // Phase 104
+  // Phase 104: frame the whole product (keeping the current direction), whatever the mode — e.g. the cannon while it sprays
+  frameWhole() { if (!V || !V.pcam || !V.pcam.active) return false; const dir = V.camera.position.clone().sub(V.controls.target);
+    V.pcam.moveTo(V.pcam.framing('full', { direction: dir.lengthSq() > 1e-8 ? dir : null })); return true; },
+  setPolarLock(rad) { if (V && V.pcam) V.pcam.polarLock = rad == null ? null : rad; return true; },   // Phase 103: lock the tilt (showcase turntable)
+  setTransparent(on) { TRANSP = !!on; TURN.az0 = null; if (!TRANSP) this.setSkybox(null); if (!TRANSP) { for (const [L, p0] of TURN.base) { L.position.copy(p0); L.updateMatrixWorld(); } TURN.base = []; this.setFloorGlow(null); this.setPlinth(null); this.setRoom(null); } return TRANSP; },
+  // Phase 102: the showroom built in Blender — a 360° equirectangular panorama, ground-projected so the product stands on its
+  // floor with true perspective at any orbit angle, plus the same room as the product's environment light (reflections).
+  //   opts: { url, envUrl, heightM (panorama centre above the floor), radiusM (room radius), productHeightM, angle (radians) }
+  async setSkybox(opts) {
+    if (!V) return false;
+    if (!opts) { SKY.on = false; if (SKY.envPrev !== null) { V.scene.environment = SKY.envPrev; SKY.envPrev = null; } return true; }
+    const r = V.models && V.models[V.url]; if (!r) return false;
+    const box = r.hulls && r.hulls.full ? r.hulls.full.box : r.bbox;
+    const u = opts.productHeightM ? (box.max.y - box.min.y) / opts.productHeightM : 1;   // viewer units per metre
+    const fy = V.stageFloor ? V.stageFloor.position.y : 0;
+    if (SKY.key !== opts.url) {
+      const tex = await new THREE.TextureLoader().loadAsync(opts.url);
+      tex.colorSpace = THREE.SRGBColorSpace; tex.mapping = THREE.EquirectangularReflectionMapping; tex.anisotropy = 8;
+      if (SKY.mesh) { SKY.mesh.material.uniforms.map.value.dispose(); SKY.mesh.geometry.dispose(); SKY.mesh.material.dispose(); }
+      SKY.mesh = new GroundProjectedSkybox(tex); SKY.mesh.material.toneMapped = false; SKY.mesh.material.depthWrite = false;
+      SKY.scene = new THREE.Scene(); SKY.scene.add(SKY.mesh); SKY.key = opts.url;
+      if (opts.envUrl) {
+        try {
+          const hdr = await new RGBELoader().loadAsync(opts.envUrl); hdr.mapping = THREE.EquirectangularReflectionMapping;
+          const pm = new THREE.PMREMGenerator(V.renderer); SKY.env = pm.fromEquirectangular(hdr).texture; pm.dispose(); hdr.dispose();
+        } catch (e) { SKY.env = null; }
+      }
+    }
+    // the shader projects around the world origin with the floor at y = 0: centre the room under the product, on its floor
+    SKY.mesh.position.set((box.min.x + box.max.x) / 2, fy, (box.min.z + box.max.z) / 2);
+    SKY.mesh.scale.setScalar(Math.max(4, 22 * u));
+    SKY.mesh.height = (opts.heightM || 1.5) * u; SKY.mesh.radius = (opts.radiusM || 8) * u;
+    SKY.mesh.rotation.y = opts.angle || 0;
+    if (SKY.env) { if (SKY.envPrev === null) SKY.envPrev = V.scene.environment; V.scene.environment = SKY.env; }
+    SKY.on = true;
+    return { u };
+  },
+  // Phase 97: an architectural showroom around the product (owner: "that shape feels cheap — make it feel like an expensive
+  // room"). A round room in 3D, so it turns with the camera: walls of dark fluted panels (instanced half-round slats) on a black
+  // backing, a recessed LED cove at the foot of the wall and a fine line at its top, and accent slots of the product's colour
+  // between panel bays. Every surface fades out at the canvas edges in see-through mode, so the room melts into the page.
+  setRoom(color, opts = {}) {
+    if (!V) return false;
+    const r = V.models && V.models[V.url], SF = V.stageFloor;
+    if (!ROOM) {
+      // Phase 97b (owner: "seamless, elegant, expensive"): ONE continuous surface — the floor sweeps up into the wall through a
+      // soft cove (an infinity cove), so there is no join anywhere. The fluting lives in the material: it rises out of the dark
+      // at wall height and dissolves toward the top and the ends of the arc. A soft halo of the product's colour sits on the
+      // wall right behind it. Every edge fades (floor edge, top, arc ends, canvas edges).
+      const T = THREE, g = new T.Group(); g.name = 'Phase97Room';
+      const R = 4.6, Hh = 6.5, ARC = Math.PI * 1.3, CR = 1.1, RIN = R - CR - 1.4;
+      const prof = [new T.Vector2(RIN, 0.003)];
+      for (let k = 0; k <= 4; k++) prof.push(new T.Vector2(RIN + (R - CR - RIN) * k / 4, 0.003));
+      for (let k = 1; k <= 18; k++) { const t = (k / 18) * Math.PI / 2; prof.push(new T.Vector2(R - CR + Math.sin(t) * CR, 0.003 + CR - Math.cos(t) * CR)); }
+      for (let k = 1; k <= 10; k++) prof.push(new T.Vector2(R, 0.003 + CR + (Hh - CR) * k / 10));
+      const geo = new T.LatheGeometry(prof, 160, -ARC / 2, ARC);
+      // Phase 98b (owner's reference: sweeping dark slabs with thin red neon edges): large overlapping curved plates, drawn once.
+      // The lathe's v runs floor -> cove -> wall; it is remapped so the wall alone spans the texture (v 0..1, top = ceiling).
+      { const uv = geo.attributes.uv, n = prof.length; for (let i = 0; i < uv.count; i++) { const j = uv.getY(i) * (n - 1); uv.setY(i, Math.min(1, Math.max(0, (j - 23) / (n - 1 - 23)))); } }
+      const faceted = (() => {
+        const W = 2048, H = 768, TAU = Math.PI * 2;
+        const cc = document.createElement('canvas'), nc = document.createElement('canvas'); cc.width = nc.width = W; cc.height = nc.height = H;
+        const cx = cc.getContext('2d'), nx = nc.getContext('2d');
+        cx.fillStyle = '#060709'; cx.fillRect(0, 0, W, H); nx.fillStyle = '#000'; nx.fillRect(0, 0, W, H);
+        const curve = (x, o) => H * 0.5 + o.off + o.A * Math.sin(TAU * o.k * x / W + o.ph) + o.B * Math.sin(TAU * (o.k + 1) * x / W + o.ph * 1.7);
+        const rb = [
+          { off: -300, th: 330, A: 120, B: 40, k: 2, ph: 0.4, a: '#3a3c44', b: '#16171c' }, { off: -150, th: 300, A: 150, B: 50, k: 3, ph: 2.1, a: '#30323a', b: '#121317' },
+          { off: -10, th: 340, A: 130, B: 60, k: 2, ph: 3.6, a: '#40424b', b: '#191a1f' }, { off: 120, th: 300, A: 160, B: 40, k: 3, ph: 5.2, a: '#2d2f36', b: '#101115' },
+          { off: 250, th: 360, A: 110, B: 55, k: 2, ph: 1.3, a: '#363840', b: '#14151a' }];
+        const neon = [[1, 0.5, 0.26], [2, 0.38, 0.2], [3, 0.52, 0.24], [4, 0.63, 0.22]];   // [ribbon, centre across the width, half-length share]
+        rb.forEach((o, ri) => {
+          cx.save(); cx.shadowColor = 'rgba(0,0,0,0.95)'; cx.shadowBlur = 70; cx.shadowOffsetY = 26;
+          cx.beginPath(); for (let x = 0; x <= W; x += 8) { const y = curve(x, o); x ? cx.lineTo(x, y) : cx.moveTo(x, y); }
+          for (let x = W; x >= 0; x -= 8) cx.lineTo(x, curve(x, o) + o.th); cx.closePath();
+          const g = cx.createLinearGradient(0, H * 0.2, 0, H * 0.95); g.addColorStop(0, o.a); g.addColorStop(1, o.b); cx.fillStyle = g; cx.fill(); cx.restore();
+          // the plate's top edge: a thin lit rim in every plate
+          cx.save(); cx.beginPath(); for (let x = 0; x <= W; x += 8) { const y = curve(x, o); x ? cx.lineTo(x, y) : cx.moveTo(x, y); }
+          cx.strokeStyle = 'rgba(190,196,210,0.10)'; cx.lineWidth = 1.5; cx.stroke(); cx.restore();
+          neon.filter(n => n[0] === ri).forEach(([, c, hl]) => {
+            const x0 = (c - hl) * W, x1 = (c + hl) * W, mk = (g2, col) => { g2.addColorStop(0, col + '0)'); g2.addColorStop(0.5, col + '1)'); g2.addColorStop(1, col + '0)'); return g2; };
+            const edge = (ctx, wd, col, blur) => { ctx.save(); ctx.lineCap = 'round'; ctx.lineWidth = wd; ctx.shadowColor = col + '0.9)'; ctx.shadowBlur = blur;
+              ctx.strokeStyle = mk(ctx.createLinearGradient(x0, 0, x1, 0), col); ctx.beginPath();
+              for (let x = x0; x <= x1; x += 6) { const y = curve(x, o); x === x0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); } ctx.stroke(); ctx.restore(); };
+            edge(nx, 9, 'rgba(255,255,255,', 40); edge(nx, 3.2, 'rgba(255,255,255,', 14);       // the neon (white; the material tints it)
+            edge(cx, 46, 'rgba(120,12,20,', 70);                                                  // and its faint glow on the plate beside it
+          });
+        });
+        const cm = new T.CanvasTexture(cc), nm = new T.CanvasTexture(nc);
+        cm.colorSpace = T.SRGBColorSpace; nm.colorSpace = T.SRGBColorSpace;
+        for (const t of [cm, nm]) { t.wrapS = T.RepeatWrapping; t.wrapT = T.ClampToEdgeWrapping; t.anisotropy = 4; }
+        return { cm, nm };
+      })();
+      const U = { uGlow: { value: new T.Color(0xff2030) }, uR: { value: R }, uH: { value: Hh }, uRin: { value: RIN }, uHalfArc: { value: ARC / 2 } };
+      const mat = new T.MeshStandardMaterial({ color: 0xffffff, map: faceted.cm, emissive: new T.Color(0xff2030), emissiveMap: faceted.nm, emissiveIntensity: 2.6, roughness: 0.4, metalness: 0.15, envMapIntensity: 0.5, side: T.BackSide, transparent: true, depthWrite: false });
+      mat.onBeforeCompile = (sh) => {
+        Object.assign(sh.uniforms, U); sh.uniforms.uSeeVP = ROOM_U.vp; sh.uniforms.uSeeOn = ROOM_U.on;
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vRoomP;')
+          .replace('#include <project_vertex>', '#include <project_vertex>\n  vRoomP = position;');
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+varying vec3 vRoomP; uniform vec3 uGlow; uniform float uR, uH, uRin, uHalfArc; uniform vec4 uSeeVP; uniform float uSeeOn;`)
+          .replace('#include <map_fragment>', `#include <map_fragment>
+  float rr = length(vRoomP.xz), yy = vRoomP.y, ang = atan(vRoomP.x, vRoomP.z);
+  float wallK = smoothstep(1.0, 2.0, yy) * (1.0 - smoothstep(uH * 0.5, uH * 0.92, yy));       // flutes only on the open wall
+  float fl = 0.5 + 0.5 * cos(ang * 150.0);                                                     // ~150 flutes over the circle
+  diffuseColor.rgb *= mix(1.0, 0.0, 0.0) * mix(0.18, 1.0, smoothstep(0.6, 2.6, yy));`)   // the floor part stays dark; the wall carries the relief
+          .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+  { float behind = exp(-ang * ang / 0.16);                                                      // straight behind the product
+    float halo = behind * exp(-pow((yy - 1.6) / 1.5, 2.0));
+    float wash = exp(-pow((yy - 3.4) / 1.8, 2.0)) * (0.5 + 0.5 * wallK);                 // a soft wash from above
+    totalEmissiveRadiance += uGlow * 0.06 * halo + vec3(0.62, 0.64, 0.7) * 0.014 * wash * behind; }`)
+          .replace('#include <dithering_fragment>', `#include <dithering_fragment>
+  float k = smoothstep(0.45, 1.9, yy)                                                           // Phase 99b: rises out of the black floor (the floor part stays invisible)
+          * (1.0 - smoothstep(uH * 0.55, uH * 0.98, yy))                                        // dissolves toward the top
+          * smoothstep(0.0, 0.5, uHalfArc - abs(ang));                                           // and toward the ends of the arc
+  if (uSeeOn > 0.5) { vec2 e = (gl_FragCoord.xy - uSeeVP.xy) / uSeeVP.zw;
+    k *= smoothstep(0.0, 0.22, 1.0 - e.y) * smoothstep(0.0, 0.04, e.x) * smoothstep(0.0, 0.04, 1.0 - e.x); }   // Phase 99c: the canvas spans the whole section — only a soft fade at the top, no vignette
+  gl_FragColor *= k;`);
+      };
+      mat.customProgramCacheKey = () => 'phase97cove';
+      const cove = new T.Mesh(geo, mat); cove.renderOrder = -9;
+      g.add(cove);
+      ROOM = { g, U, R, mat };
+      V.scene.add(g);
+    }
+    if (!color || !r || !SF) { ROOM.g.visible = false; ROOM_U.on.value = 0; return false; }
+    const box = r.hulls && r.hulls.full ? r.hulls.full.box : r.bbox;
+    ROOM.g.position.set((box.min.x + box.max.x) / 2, SF.position.y, (box.min.z + box.max.z) / 2);
+    const size = Math.max(box.max.x - box.min.x, box.max.z - box.min.z);
+    ROOM.g.scale.setScalar(Math.max(0.85, size / 3.4));
+    ROOM.U.uGlow.value.set(color); ROOM.mat.emissive.set(color);
+    ROOM.g.visible = true;
+    return true;
+  },
+  // Phase 95: "The Bay" — a display turntable inlaid in the stage floor: a dark, glossy disc under the product, a thin glowing
+  // ring at its rim (the Ritestand circle, in the product's colour) and a soft halo just outside it. See-through stage only.
+  setPlinth(color) {
+    if (!V) return false;
+    const r = V.models && V.models[V.url], SF = V.stageFloor;
+    if (!PLINTH) {
+      const T = THREE, g = new T.Group(); g.name = 'Phase95Plinth';
+      const disc = new T.Mesh(new T.CircleGeometry(1, 96), new T.MeshStandardMaterial({ color: 0x050608, roughness: 0.4, metalness: 0.1, envMapIntensity: 0.18, transparent: true, opacity: 0.85, depthWrite: false }));
+      disc.rotation.x = -Math.PI / 2; disc.renderOrder = -9;
+      const ring = new T.Mesh(new T.RingGeometry(0.991, 1.0, 160), new T.MeshBasicMaterial({ color: 0xff2030, transparent: true, opacity: 0.5, depthWrite: false, blending: T.AdditiveBlending, toneMapped: false, side: T.DoubleSide }));
+      ring.rotation.x = -Math.PI / 2; ring.renderOrder = -7;
+      const hc = document.createElement('canvas'); hc.width = 512; hc.height = 8; const hx = hc.getContext('2d');
+      const hg = hx.createLinearGradient(0, 0, 512, 0); hg.addColorStop(0, 'rgba(255,255,255,0)'); hg.addColorStop(0.42, 'rgba(255,255,255,0.55)'); hg.addColorStop(0.5, 'rgba(255,255,255,1)'); hg.addColorStop(0.58, 'rgba(255,255,255,0.4)'); hg.addColorStop(1, 'rgba(255,255,255,0)');
+      hx.fillStyle = hg; hx.fillRect(0, 0, 512, 8);
+      const htex = new T.CanvasTexture(hc);
+      const haloGeo = new T.RingGeometry(0.86, 1.16, 160, 1);
+      { const uv = haloGeo.attributes.uv, pos = haloGeo.attributes.position; for (let i = 0; i < uv.count; i++) { const d = Math.hypot(pos.getX(i), pos.getY(i)); uv.setXY(i, (d - 0.86) / 0.30, 0.5); } }
+      const halo = new T.Mesh(haloGeo, new T.MeshBasicMaterial({ color: 0xff2030, map: htex, transparent: true, opacity: 0.22, depthWrite: false, blending: T.AdditiveBlending, toneMapped: false }));
+      halo.rotation.x = -Math.PI / 2; halo.renderOrder = -7;
+      g.add(disc, ring, halo); PLINTH = { g, disc, ring, halo };
+      V.scene.add(g);
+    }
+    if (!color || !r || !SF) { PLINTH.g.visible = false; return false; }
+    const box = r.hulls && r.hulls.full ? r.hulls.full.box : r.bbox;
+    const cx = (box.min.x + box.max.x) / 2, cz = (box.min.z + box.max.z) / 2;
+    const rad = 0.5 * Math.max(box.max.x - box.min.x, box.max.z - box.min.z) * 0.98;   // the footprint's long side: the wheels sit on the disc, the corners may overhang (as on any turntable)
+    PLINTH.g.position.set(cx, SF.position.y + 0.0004, cz); PLINTH.g.scale.setScalar(rad);
+    PLINTH.ring.position.y = PLINTH.halo.position.y = 0.0015 / rad;
+    PLINTH.ring.material.color.set(color); PLINTH.halo.material.color.set(color);
+    PLINTH.g.visible = true;
+    return { cx, cz, rad };
+  },
+  // Phase 94: a pool of the product's colour on the stage floor itself (emissive, in perspective, under the product)
+  setFloorGlow(color, intensity = 1) {
+    const f = V && V.stageFloor; if (!f) return false;
+    const m = f.material;
+    if (!color) { m.emissiveIntensity = 0; return true; }
+    if (!FLOOR_GLOW_TEX) {
+      const c = document.createElement('canvas'); c.width = c.height = 512; const x = c.getContext('2d');
+      const g = x.createRadialGradient(256, 256, 0, 256, 256, 256);
+      // the floor is a disc of radius 16; the pool reaches ~4.5 units, hot in the middle, long soft falloff
+      g.addColorStop(0, '#ffffff'); g.addColorStop(0.03, '#d2d2d2'); g.addColorStop(0.07, '#7a7a7a'); g.addColorStop(0.11, '#2e2e2e');
+      g.addColorStop(0.16, '#0c0c0c'); g.addColorStop(0.22, '#000000'); g.addColorStop(1, '#000000');
+      x.fillStyle = g; x.fillRect(0, 0, 512, 512);
+      // Phase 98: the light of a ring-shaped ceiling fixture overhead, falling on the floor as fine concentric rings
+      x.globalCompositeOperation = 'lighter'; x.lineCap = 'round';
+      [[0.115, 2.2, 0.55], [0.17, 1.4, 0.4], [0.235, 1.0, 0.28], [0.31, 0.8, 0.18]].forEach(([r, w, a]) => {
+        x.strokeStyle = `rgba(255,255,255,${a})`; x.lineWidth = w; x.beginPath(); x.arc(256, 256, r * 512, 0, Math.PI * 2); x.stroke(); });
+      x.globalCompositeOperation = 'source-over';
+      FLOOR_GLOW_TEX = new THREE.CanvasTexture(c); FLOOR_GLOW_TEX.colorSpace = THREE.SRGBColorSpace;
+    }
+    if (m.emissiveMap !== FLOOR_GLOW_TEX) { m.emissiveMap = FLOOR_GLOW_TEX; m.needsUpdate = true; }
+    m.emissive.set(color); m.emissiveIntensity = intensity;
+    return true;
+  },   // Phase 90: see-through canvas for the showcase stage (no dome / floor, shadow kept)
+  getTransparent() { return TRANSP; },
+  // Phase 117: the floor reflection in see-through mode — on/off and its strength (0..1)
+  // Phase 119: the operator's POV behind the cannon (Gun view / spraying only)
+  setPOV(on, opts) { return setPOV(on, opts); },
+  getPOV() { return POV.on; },
+  dofDebug(on) { DOF.dbg = !!on; return DOF.dbg; },
+  dofRead(fx, fy) { const R = V.renderer, out = {}; for (const k of ['z', 'c', 'c2', 'a']) { const t = DOF[k]; if (!t) continue; const b = new Uint16Array(4);
+      R.readRenderTargetPixels(t, Math.floor(fx * t.width), Math.floor(fy * t.height), 1, 1, b); out[k] = [...b].map(v => THREE.DataUtils.fromHalfFloat(v).toFixed(3)).join(','); } return out; },
+  jetInfo() { const T = PGUN.tube; return { vh: !!VH.h, vhKey: VH.key, end: T ? +T.m.uniforms.uEnd.value.toFixed(3) : null, path: PGUN.path ? PGUN.path.length : 0, last: PGUN.path && PGUN.path.length ? PGUN.path[PGUN.path.length - 1].toArray().map(v => +v.toFixed(2)) : null }; },
+  dofInfo() { const P = prodGunRig(); let tagged = 0; if (P) for (const L of P.a.lods.values()) { const r = PGUN.rest.get(L.scene); if (r) for (const e of r) { tagged++; } } return { amt: DOF.amt, F: DOF.F, enabled: DOF_STAGE.enabled, inStages: !!(V.post && V.post.stages.includes(DOF_STAGE)), stages: V.post ? V.post.stages.length : -1, tagged, nodes: P ? [...P.nodes] : null }; },
+  wetLevel() { return { max: WET.max, key: WET.key, E: WET.E, cx: WET.cx, cz: WET.cz }; },
+  setMirror(on, strength) { MIRROR.on = !!on; if (Number.isFinite(strength)) MIRROR.strength = strength; return MIRROR.on; },
   // Vehicle-system discharge — every nozzle sprays at once (system mode only).
   setSystem(on) { systemOn = !!on; return systemOn; },
   getSystem() { return systemOn; },

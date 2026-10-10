@@ -1,14 +1,14 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta name="robots" content="noindex, nofollow">  <!-- client test preview: never indexed -->
+  <meta name="robots" content="noindex, nofollow">
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Ritestand Fire — Water Mist Technology</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="preload" href="fonts/Gesrics.otf" as="font" type="font/otf" crossorigin />
   <link rel="preload" href="fonts/inter-latin-var.woff2" as="font" type="font/woff2" crossorigin />
-  <link rel="stylesheet" href="styles.css?v=site37" />
+  <link rel="stylesheet" href="styles.css?v=site133" />
   <!-- Three.js via importmap (Phase 70: in the head, before every module — the hero boot is an async module in the body,
        and an import map that arrives after a module has started loading is ignored). -->
   <script type="importmap">
@@ -18,6 +18,10 @@
         "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
       }
     }
+  </script>
+  <script>
+    // Phase 86: the logo intro plays on every visit (owner), never with reduced motion
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('intro-seen');
   </script>
 </head>
 <body id="top">
@@ -42,28 +46,31 @@
     <nav class="site-nav__links" aria-label="Primary">
       <a href="#products" class="site-nav__link">Products</a>
       <a href="#contact"  class="site-nav__link">Contact</a>
-      <a href="tel:+27104492051" class="site-nav__cta">
-        <span class="site-nav__cta-dot" aria-hidden="true"></span>
-        +27 10 449 2051
-      </a>
     </nav>
+    <a href="tel:+27104492051" class="site-nav__cta">
+      <span class="site-nav__cta-dot" aria-hidden="true"></span>
+      <span class="site-nav__cta-num">+27 10 449 2051</span>
+    </a>
   </header>
   <!-- Hero (Phase 70) — poster first, live 3D second, content on top.
        The hero product is declared once, here (data-hero-model) + the four band posters (images/hero/, rendered from the
        live scene's own camera per band). Copy: the H1 is the company name; the approved headline and value line are
        CONTENT REQUIRED — their slots below stay empty and hidden until approved text exists. -->
-  <section class="hero" id="hero" aria-labelledby="hero-title" data-hero-product="attac-bakkie-4cu" data-hero-model="models/hero.glb?v=1">
+  <section class="hero" id="hero" aria-labelledby="hero-title" data-hero-product="attac-bakkie-4cu" data-hero-model="models/attac-4cu/A4CU_HERO.gltf?v=1">
     <div class="stage" aria-hidden="true">
-      <picture class="stage__poster">
-        <source media="(max-aspect-ratio: 31/50)" srcset="images/hero/hero-phone.webp" type="image/webp">
-        <source media="(max-aspect-ratio: 23/20)" srcset="images/hero/hero-tablet.webp" type="image/webp">
-        <source media="(max-aspect-ratio: 29/20)" srcset="images/hero/hero-standard.webp" type="image/webp">
-        <img src="images/hero/hero-wide.webp" alt="" width="3600" height="1500" fetchpriority="high" decoding="async" elementtiming="hero-poster">
-      </picture>
-      <canvas id="scene"></canvas>
+      <!-- Phase 82v: the showroom promo (Cycles, 6 shots ~4 s, 1 s dissolves (82w), headlights + neon, DOF; loops through black). Phones get the 1280 encode. -->
+      <video class="stage__video" id="hero-reel" autoplay muted loop playsinline preload="auto" poster="images/hero/promo-poster.webp?v=1" disablepictureinpicture>
+        <source media="(max-width: 900px)" src="media/promo_slow-720-hevc.mp4?v=1" type='video/mp4; codecs="hvc1"'>
+        <source media="(max-width: 900px)" src="media/promo_slow-720.mp4?v=1" type="video/mp4">
+        <source src="media/promo_slow-1080-hevc.mp4?v=1" type='video/mp4; codecs="hvc1"'>
+        <source src="media/promo_slow-1080.mp4?v=1" type="video/mp4">
+      </video>
     </div>
     <div class="hero__veil" aria-hidden="true"></div>
     <div class="hero__progress" aria-hidden="true"></div>
+    <!-- Phase 86: the logo intro over the reel (once per session) and a scroll cue -->
+    <div class="hero__intro" aria-hidden="true"><img src="images/Ritestand_Fire_W.png" alt="" class="hero__intro-logo"><span class="hero__intro-line"></span></div>
+    <a href="#products" class="hero__cue" aria-label="Scroll to the products"><span class="hero__cue-label">Scroll to explore</span><span class="hero__cue-line"></span></a>
     <div class="hero__content">
       <p class="hero__eyebrow" data-content-slot="hero.eyebrow" hidden></p>
       <h1 class="hero__title" id="hero-title">Ritestand Fire</h1>
@@ -72,12 +79,17 @@
         <a class="btn btn--primary" href="#products">Our Products</a>
         <a class="btn btn--ghost" href="#contact">Request a Quote</a>
       </div>
-      <p class="hero__product">Inferno Attac Bakkie 4CU</p>
+      <p class="hero__product" hidden>Inferno Attac Bakkie 4CU</p>
     </div>
   </section>
   <!-- The hero boot runs as soon as it arrives (async, right after the hero it drives), so the live scene's modules and the
        hero model start downloading while the rest of the page is still parsing, not after every deferred module. -->
-  <script type="module" async src="showroom.js?v=25"></script>
+  <script>
+    // Phase 82u: the reel rests on its poster for reduced motion / Save-Data; otherwise it plays (muted autoplay).
+    (function () { var v = document.getElementById('hero-reel'); if (!v) return;
+      var still = (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) || (navigator.connection && navigator.connection.saveData);
+      if (still) { v.removeAttribute('autoplay'); v.preload = 'none'; try { v.pause(); } catch (e) {} } else { var p = v.play(); if (p && p.catch) p.catch(function () {}); } })();
+  </script>
 
   <!-- Products section — scrolled into view from the bakkie panel button -->
   <section class="products-section" id="products">
@@ -86,6 +98,27 @@
         <div class="products-header__label">Our Products</div>
         <h2 class="products-header__title">Full Suppression Range</h2>
       </div>
+    </div>
+
+    <!-- Phase 84: the products showcase stage (owner's ref: one product at a time, the next one waiting in the corner, the
+         outgoing product flies off while the next arcs in, the glow behind it changes). Built by showcase.js from the cards
+         below, which stay in the document (hidden) as the data source and the drawer's entry point. -->
+    <div class="showcase" id="showcase" aria-roledescription="carousel" aria-label="Product range">
+      <div class="showcase__backdrop" aria-hidden="true"><div class="bd-layer bd-room"></div><div class="bd-layer bd-glow"></div><div class="bd-layer bd-sweep"></div><div class="bd-layer bd-sweep bd-streak"></div><div class="bd-cove"></div></div>
+      <div class="showcase__glow" aria-hidden="true"></div>
+      <div class="showcase__main">
+        <div class="showcase__info" aria-live="polite">
+          <div class="showcase__group"></div>
+          <img class="showcase__logo" alt="" hidden>
+          <h3 class="showcase__name"></h3>
+          <p class="showcase__desc"></p>
+          <dl class="showcase__stats"></dl>
+          <button type="button" class="showcase__cta">More info <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
+        </div>
+        <div class="showcase__stage"></div>
+        <div class="showcase__actions" role="group" aria-label="See it in 3D"></div>
+      </div>
+      <nav class="showcase__rail" aria-label="All products"></nav>
     </div>
 
     <div class="products-groups">
@@ -221,10 +254,10 @@
         data-product-logo="images/Fire_Logos_VSS.png"
         data-product-thumb="images/drawer-vss.png"
         data-product-model="true"
-        data-product-glb="models/vss-830e.asset.json?v=15"
+        data-product-glb="models/vss-830e.asset.json?v=29"
         data-product-rig="true"
         data-product-viewer="product-first"
-        data-product-config="products/vss-830e.json?v=9"
+        data-product-config="products/vss-830e.json?v=11"
         data-product-desc="Large mining and construction vehicles represent substantial investments. The Vehicle Suppression System installs in the engine compartment and other risk-identified zones to safeguard both assets and operators. Deploys a kinetically charged Foam Mist agent, tailored to the operating environment. Linear Heat Detection Tubes trigger suppression automatically — resilient to vibration and temperature, gradual cooling with no thermal shock, human-safe, quick recharge with minimal downtime."
         data-product-specs='[{"key":"Agent","val":"Kinetically charged Foam Mist"},{"key":"Detection","val":"Linear Heat Detection Tubes"},{"key":"Activation","val":"Automatic"},{"key":"Installation Zone","val":"Engine compartment + risk-identified areas"},{"key":"Application","val":"Mining & construction vehicles"},{"key":"Resilience","val":"Temperature & movement"},{"key":"Thermal Shock","val":"None — gradual cooling"},{"key":"Recharge","val":"Quick, minimal downtime"},{"key":"Safety","val":"Human-safe"}]'>
         <div class="product-card__media">
@@ -461,7 +494,13 @@
 
   <footer class="footer">
     <div class="footer-inner">
-      <a href="#top" class="footer-logo">RITESTAND <span>FIRE</span></a>
+      <a href="#top" class="footer-logo" aria-label="Ritestand Fire — back to top"><img src="images/Ritestand_Fire_W.png" alt="Ritestand Fire" class="footer-logo__img"></a>
+      <nav class="footer-links" aria-label="Footer">
+        <a href="#products">Products</a>
+        <a href="#contact">Contact</a>
+        <a href="tel:+27104492051">+27 10 449 2051</a>
+        <a href="mailto:info@ritestand.com">info@ritestand.com</a>
+      </nav>
       <p class="footer-note">Inferno Attac · T-Rotor Technology · A Ritestand Group brand</p>
       <p class="footer-copy">© 2025 Ritestand Group of Companies. All rights reserved. · <a href="https://www.ritestand.com" target="_blank" rel="noreferrer">ritestand.com</a></p>
     </div>
@@ -473,9 +512,12 @@
   <!-- Lenis momentum smooth-scroll (window.Lenis). -->
   <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.14/dist/lenis.min.js"></script>
 
-  <script type="module" src="drawer-viewer.js?v=site164"></script>
-  <script type="module" src="product-viewer-ui.js?v=12"></script>
+  <script type="module" src="drawer-viewer.js?v=site258"></script>
+  <script type="module" src="product-viewer-ui.js?v=14"></script>
   <script type="module" src="product-interaction.js?v=15"></script>
+  <script type="module" src="showcase.js?v=55"></script>
+  <script type="module" src="product-sheet.js?v=6"></script>
+  <script type="module" src="micro.js?v=3"></script>
 
   <!-- Static hero boot — replaces cinematic.js: smooth-scroll, reveal, products cover. -->
   <script>
@@ -555,7 +597,7 @@
               <button type="button" class="drawer__mode is-active" data-mode="full">Full</button>
               <button type="button" class="drawer__mode" data-mode="system">System</button>
               <button type="button" class="drawer__mode" data-mode="gun">Gun</button>
-              <button type="button" class="drawer__mode" data-mode="cutaway">Cutaway</button>
+              <button type="button" class="drawer__mode" data-mode="cutaway" aria-label="T-ROTOR® Technology — cutaway">T-ROTOR®</button>
             </div>
 
             <!-- Foam spray toggle — only shown in Gun mode. -->
@@ -780,7 +822,7 @@
           const ft = document.getElementById('drawer-foam-toggle');
           if (ft) { ft.setAttribute('aria-pressed', 'false'); ft.classList.remove('is-on'); }
           const vh = document.getElementById('drawer-viewer-hint');
-          if (vh) vh.textContent = productFirst ? 'Drag to explore' : 'Drag to rotate';
+          if (vh) vh.textContent = productFirst ? 'Drag to explore · two fingers to move' : 'Drag to rotate · right-drag to move';
           // Mode buttons (full / system / cutaway / gun). Every product has a
           // rig, but not every one has a cannon — the viewer reports what it
           // found in the GLB and we show only those tabs.
@@ -958,7 +1000,7 @@
           viewer.classList.toggle('is-system', m === 'system');
           viewer.classList.toggle('is-gun', m === 'gun');
           resetFoamBtn();
-          if (viewerHint) viewerHint.textContent = (m === 'gun') ? (foamToggle && foamToggle.classList.contains('is-activate') ? (drawer.classList.contains('pv-mobile') ? 'Tap where to spray · drag to orbit' : 'Point where to spray · drag to orbit') : 'Drag to orbit') : (drawer.classList.contains('pv-mobile') ? 'Drag to explore' : 'Drag to rotate');
+          if (viewerHint) viewerHint.textContent = (m === 'gun') ? (foamToggle && foamToggle.classList.contains('is-activate') ? (drawer.classList.contains('pv-mobile') ? 'Tap where to spray · drag to orbit' : 'Point where to spray · drag to orbit') : 'Drag to orbit') : (drawer.classList.contains('pv-mobile') ? 'Drag to explore · two fingers to move' : 'Drag to rotate · right-drag to move');
         });
       }
 
@@ -1079,10 +1121,46 @@
         if (s !== scrolled) {
           scrolled = s;
           nav.classList.toggle('is-scrolled', s);
+          document.documentElement.classList.toggle('has-scrolled', s);
         }
       };
       tick();
       window.addEventListener('scroll', tick, { passive: true });
+
+      // Phase 83: a white pill marks the section you are in (Products / Contact); it slides to a hovered link and
+      // returns when the pointer leaves. The link under it takes the dark text.
+      const links = nav.querySelector('.site-nav__links');
+      if (!links) return;
+      const items = [...links.querySelectorAll('.site-nav__link')];
+      const pill = document.createElement('span');
+      pill.className = 'site-nav__pill';
+      pill.setAttribute('aria-hidden', 'true');
+      links.prepend(pill);
+      let active = null;
+      const to = (a) => {
+        items.forEach((x) => x.classList.toggle('is-pill', x === a));
+        if (!a) { pill.style.opacity = '0'; return; }
+        pill.style.width = a.offsetWidth + 'px';
+        pill.style.height = a.offsetHeight + 'px';
+        pill.style.transform = 'translate(' + a.offsetLeft + 'px,' + a.offsetTop + 'px)';
+        pill.style.opacity = '1';
+      };
+      items.forEach((a) => {
+        a.addEventListener('mouseenter', () => to(a));
+        a.addEventListener('focus', () => to(a));
+      });
+      links.addEventListener('mouseleave', () => to(active));
+      const bySection = new Map(items.map((a) => [a.getAttribute('href').slice(1), a]));
+      const seen = new Map();
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((e) => seen.set(e.target.id, e.isIntersecting ? e.intersectionRatio : 0));
+        let best = null, r = 0;
+        seen.forEach((v, k) => { if (v > r) { r = v; best = k; } });
+        active = best ? bySection.get(best) : null;
+        if (!links.matches(':hover')) to(active);
+      }, { threshold: [0, 0.15, 0.35, 0.6] });
+      bySection.forEach((_, id) => { const el = document.getElementById(id); if (el) io.observe(el); });
+      window.addEventListener('resize', () => to(active));
     })();
 
     // Scroll panels — entrance fade + differential parallax so headings feel

@@ -3907,3 +3907,1250 @@ body.is-3d .hero__progress, body.hero-static .hero__progress { opacity: 0; }
 }
 .drawer__fires.is-on { opacity: 1; transform: translateY(0); }
 .drawer__fires.is-done { border-color: rgba(120, 220, 140, 0.7); }
+/* Phase 82j: VSS discharge labels (in-cab protection / escape route), projected onto the model. */
+.drawer__dlabel {
+  position: absolute; left: 0; top: 0; z-index: 4; pointer-events: none; white-space: nowrap;
+  padding: 7px 12px; border-radius: 100px; background: rgba(6, 10, 18, 0.7); backdrop-filter: blur(8px);
+  color: #fff; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; font-weight: 600;
+  border: 1px solid rgba(120, 180, 255, 0.55); opacity: 0; transition: opacity 400ms ease;
+}
+.drawer__dlabel.is-escape { border-color: rgba(43, 255, 138, 0.75); color: #b8ffd6; }
+.drawer__dlabel.is-on { opacity: 1; }
+/* Phase 82k/l: discharge shot bar - one glass segmented control (icon + label), a sliding indicator marks the active shot. */
+.drawer__shots {
+  position: absolute; left: 50%; top: 62px; z-index: 5; display: flex; gap: 2px; padding: 4px;
+  border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(180deg, rgba(20, 24, 32, 0.72), rgba(8, 10, 16, 0.72)); backdrop-filter: blur(14px) saturate(140%);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  opacity: 0; pointer-events: none; transform: translate(-50%, -10px); transition: opacity 320ms ease, transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.drawer__shots.is-on { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
+.drawer__shot-ind {
+  position: absolute; top: 4px; left: 0; bottom: 4px; border-radius: 10px; opacity: 0;
+  background: rgba(255, 32, 48, 0.18); box-shadow: inset 0 0 0 1px rgba(255, 32, 48, 0.75), 0 0 18px rgba(255, 32, 48, 0.25);
+  transition: transform 380ms cubic-bezier(0.22, 1, 0.36, 1), width 380ms cubic-bezier(0.22, 1, 0.36, 1), background 300ms ease, box-shadow 300ms ease, opacity 200ms ease;
+}
+.drawer__shot-ind[data-shot="cab"] { background: rgba(120, 180, 255, 0.16); box-shadow: inset 0 0 0 1px rgba(122, 180, 255, 0.8), 0 0 18px rgba(122, 180, 255, 0.25); }
+.drawer__shot-ind[data-shot="escape"] { background: rgba(53, 255, 160, 0.14); box-shadow: inset 0 0 0 1px rgba(53, 255, 160, 0.8), 0 0 18px rgba(53, 255, 160, 0.25); }
+.drawer__shot {
+  position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 7px; padding: 9px 13px; border: 0; border-radius: 10px;
+  background: transparent; color: rgba(236, 240, 246, 0.62); font: 600 10px/1 inherit; letter-spacing: 0.16em; text-transform: uppercase;
+  white-space: nowrap; cursor: pointer; transition: color 220ms ease;
+}
+.drawer__shot svg { flex: none; opacity: 0.85; }
+.drawer__shot:hover { color: #fff; }
+.drawer__shot[aria-pressed="true"] { color: #fff; }
+.drawer__shot:focus-visible { outline: 2px solid rgba(255, 255, 255, 0.6); outline-offset: 1px; }
+@media (max-width: 560px) {
+  .drawer__shots { top: 58px; }
+  .drawer__shot { padding: 10px 11px; }
+  .drawer__shot span { display: none; }                 /* icons only on phones; the active shot keeps its label */
+  .drawer__shot[aria-pressed="true"] span { display: inline; }
+}
+.drawer__dlabel::before { content: ''; display: inline-block; width: 6px; height: 6px; margin-right: 8px; border-radius: 50%; vertical-align: 1px;
+  background: currentColor; box-shadow: 0 0 10px currentColor; }
+/* Phase 82m: a one-line description of the chosen view under the shot bar (so the buttons explain themselves). */
+.drawer__shot-cap {
+  position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); width: max-content; max-width: min(560px, 86vw);
+  padding: 6px 12px; border-radius: 8px; background: rgba(6, 10, 18, 0.55); backdrop-filter: blur(8px);
+  color: rgba(236, 240, 246, 0.86); font: 500 12px/1.35 inherit; letter-spacing: 0.01em; text-transform: none; text-align: center; pointer-events: none;
+  opacity: 0; transition: opacity 500ms ease;
+}
+.drawer__shot-cap.is-on { opacity: 1; }
+.drawer__shot-cap:empty { display: none; }
+
+/* Phase 82s (owner: "UI voel baie clutter, te besig"): while it discharges the drag hint steps back, the shot bar is slimmer. */
+#drawer-stage-3d.is-discharging .drawer__viewer-hint, .is-discharging ~ .drawer__viewer-hint { opacity: 0; transition: opacity 300ms ease; }
+.drawer__shot { padding: 8px 11px; letter-spacing: 0.12em; }
+.drawer__shot svg { width: 14px; height: 14px; }
+.drawer__dlabel { padding: 5px 10px; font-size: 9px; }
+
+/* Phase 82u: the showroom reel fills the hero stage (cover); the band posters / live canvas are retired. */
+.stage__video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%; display: block; background: #0a0908; }
+.hero__progress { display: none; }
+/* Phase 82u: over the moving reel the copy side needs a firmer veil; the single-product caption is retired. */
+.hero__product[hidden] { display: none; }
+@media (min-aspect-ratio: 23/20) {
+  .hero__veil { background:
+    linear-gradient(90deg, rgba(7, 6, 6, 0.86) 0%, rgba(7, 6, 6, 0.62) 30%, rgba(7, 6, 6, 0.18) 52%, rgba(7, 6, 6, 0) 66%),
+    linear-gradient(180deg, rgba(9, 8, 7, 0.45) 0%, rgba(9, 8, 7, 0) 15%, rgba(9, 8, 7, 0) 74%, rgba(5, 6, 8, 0.92) 100%); }
+}
+@media (max-aspect-ratio: 23/20) {
+  .hero__veil { background: linear-gradient(180deg, rgba(9, 8, 7, 0.45) 0%, rgba(9, 8, 7, 0) 14%, rgba(9, 8, 7, 0.1) 40%, rgba(9, 8, 7, 0.72) 60%, rgba(5, 6, 8, 0.95) 100%); }
+}
+.hero__veil { z-index: 1; pointer-events: none; }   /* Phase 82u: above the reel (the stage is z 1), under the copy (z 2) */
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   PHASE 83 — design language (owner 2026-10-07): "fresh, modern, premium — thin lines and gradient" → "clean, less is more"
+   → "the hero must be clean, the reel already shows the products and the logo; show the logo + nav only once you scroll;
+   the nav felt too plain". Rules: 1 px hairlines, quiet glass, one red accent, motion only where it means something.
+   Earlier passes archived as styles_83a_bold.css / styles_83b_clean.css.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+:root {
+  --p83-hair: rgba(255, 255, 255, 0.08);
+  --p83-hair-2: rgba(255, 255, 255, 0.2);
+  --p83-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+@property --p83-a { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+
+/* ── Nav (owner's ref: a dark tab hanging from the top edge, the active link a solid white pill, the logo on its own at the
+   left, round outlined controls at the right). Hidden over the reel; slides in on the first scroll. ── */
+.site-nav { top: 0; left: 0; right: 0; width: auto; max-width: none; margin: 0; height: 64px; padding: 0 clamp(18px, 2.6vw, 40px);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  border: 0; border-radius: 0; background: transparent; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+  animation: none; opacity: 0; transform: translateY(-100%); pointer-events: none; visibility: hidden;
+  transition: opacity 420ms var(--p83-ease), transform 620ms var(--p83-ease), visibility 0s linear 620ms; }
+.site-nav.is-scrolled, .site-nav:focus-within { opacity: 1; transform: none; visibility: visible; background: transparent; box-shadow: none;
+  border: 0; backdrop-filter: none; -webkit-backdrop-filter: none; transition: opacity 420ms var(--p83-ease), transform 620ms var(--p83-ease), visibility 0s; }
+.site-nav > * { pointer-events: auto; }
+/* a soft black fade behind the top edge, so content scrolling under the logo and the tab stays quiet */
+.site-nav::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 120px; z-index: -1; pointer-events: none;
+  background: linear-gradient(180deg, rgba(5, 6, 8, 0.92) 0%, rgba(5, 6, 8, 0.6) 45%, rgba(5, 6, 8, 0) 100%); }
+.site-nav.is-scrolled { pointer-events: none; }   /* the empty bar lets clicks through; only its pieces catch them */
+.site-nav__brand { display: flex; align-items: center; padding: 0; margin: 0; border: 0; }
+.site-nav__logo-wrap { width: clamp(104px, 9vw, 132px); margin: 0; animation: none; }
+.site-nav__logo { width: 100%; height: auto; filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.6)); }
+.site-nav__shimmer, .site-nav__flare { display: none; }
+/* the tab: flush with the top edge, rounded below, dark glass with a hairline on three sides */
+.site-nav__links { position: absolute; left: 50%; top: 0; transform: translateX(-50%); display: flex; align-items: center; gap: 2px;
+  padding: 7px; border-radius: 0 0 22px 22px; border: 1px solid var(--p83-hair); border-top: 0;
+  background: linear-gradient(180deg, rgba(8, 9, 12, 0.9), rgba(16, 17, 22, 0.82));
+  backdrop-filter: blur(16px) saturate(130%); -webkit-backdrop-filter: blur(16px) saturate(130%);
+  box-shadow: 0 14px 34px -18px rgba(0, 0, 0, 0.9); }
+.site-nav__link { position: relative; z-index: 1; padding: 11px 18px; border-radius: 999px; font: 500 11px/1 var(--font-ui, Inter, sans-serif);
+  letter-spacing: 0.14em; text-transform: uppercase; white-space: nowrap; color: rgba(241, 242, 245, 0.72); transition: color 260ms ease; }
+.site-nav__link::after { display: none; }
+.site-nav__link:hover { color: #fff; }
+.site-nav__link.is-pill { color: #0b0c10; }
+.site-nav__pill { position: absolute; z-index: 0; left: 0; top: 0; width: 0; height: 0; border-radius: 999px; pointer-events: none; opacity: 0;
+  background: linear-gradient(180deg, #ffffff, #e9ebef); box-shadow: 0 4px 14px -6px rgba(255, 255, 255, 0.35);
+  transition: transform 460ms var(--p83-ease), width 460ms var(--p83-ease), opacity 240ms ease; }
+/* the call control: round outlined phone mark + the number, a thin glass pill */
+.site-nav__cta { display: inline-flex; align-items: center; gap: 10px; margin: 0; padding: 4px 16px 4px 4px; border-radius: 999px;
+  border: 1px solid var(--p83-hair-2); background: rgba(10, 11, 14, 0.55); box-shadow: none;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  font: 500 11px/1 var(--font-ui, Inter, sans-serif); letter-spacing: 0.1em; color: #fff; transition: background 220ms ease, border-color 220ms ease; }
+.site-nav__cta:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.36); box-shadow: none; }
+.site-nav__cta-dot { display: none; }
+.site-nav__cta::before { content: ""; flex: none; width: 34px; height: 34px; border-radius: 50%; background-color: #e3121d;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z'/%3E%3C/svg%3E");
+  background-size: 15px 15px; background-position: center; background-repeat: no-repeat; }
+@media (max-width: 640px) {
+  .site-nav { height: 56px; padding: 0 12px; }
+  .site-nav__logo-wrap { width: 84px; }
+  .site-nav__links { padding: 5px; border-radius: 0 0 18px 18px; }
+  .site-nav__link { padding: 10px 12px; font-size: 10px; letter-spacing: 0.12em; }
+  .site-nav__cta { padding: 3px; gap: 0; }
+  .site-nav__cta-num { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .site-nav__cta::before { width: 32px; height: 32px; }
+}
+
+/* ── Hero: only the reel. The H1 stays in the document for search + screen readers; the copy and buttons step aside. ── */
+.hero__title { position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.hero__actions { display: none; }
+.hero__veil, .hero .hero__veil { background: linear-gradient(180deg, rgba(5, 6, 8, 0.3) 0%, rgba(5, 6, 8, 0) 12%, rgba(5, 6, 8, 0) 80%, rgba(5, 6, 8, 0.92) 100%); }
+
+/* ── Buttons elsewhere: soft gradient + light edge (approved on the hero pass) ── */
+.btn { border-radius: 10px; min-height: 48px; padding: 0 24px; font-size: 11px; letter-spacing: 0.16em; font-weight: 500;
+  transition: background 200ms ease, border-color 200ms ease, color 200ms ease; }
+.btn--primary { background: linear-gradient(180deg, #f2232f 0%, #c90f19 100%); border: 1px solid rgba(255, 120, 125, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18); }
+.btn--primary:hover { background: linear-gradient(180deg, #ff3440 0%, #d8131d 100%); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22); transform: none; }
+.btn--ghost { background: linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.015) 100%); border: 1px solid var(--p83-hair-2);
+  color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.btn--ghost:hover { background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.03) 100%); border-color: rgba(255, 255, 255, 0.34); transform: none; }
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   PHASE 84b — products showcase stage (showcase.js). Owner 2026-10-07: the reel-style product view, then "still confusing:
+   easier to move through, show what's available per family, product more centred, fewer extra buttons". Product centre stage
+   on a hairline horizon, the name + one line + "View details" under it, ONE rail of every product grouped by family below.
+   (The first pass — copy left, count + family chips right, the next product in the corner, ticks — is archived as
+   styles_pre84b.css / showcase_v4.js.)
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+@property --glow { syntax: "<color>"; inherits: true; initial-value: #e4202c; }
+.products-section.has-showcase { padding: 0; }
+.products-section.has-showcase .products-groups { display: none; }
+.products-section.has-showcase .products-header { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; padding: 0; }
+
+.showcase { --pad: clamp(20px, 4vw, 64px); position: relative; height: 100svh; min-height: 700px; max-height: 1040px; overflow: hidden; isolation: isolate;
+  display: grid; grid-template-rows: minmax(0, 1fr) auto auto; justify-items: center; padding: 84px var(--pad) 84px; gap: 0;   /* bottom: the contact section overlaps by 50px */
+  color: var(--ink, #f1f2f5); transition: --glow 1200ms ease; }
+.showcase__glow { position: absolute; z-index: 0; left: 50%; top: 40%; width: min(80vmin, 900px); aspect-ratio: 1; transform: translate(-50%, -50%); pointer-events: none;
+  border-radius: 50%; background: radial-gradient(closest-side, color-mix(in srgb, var(--glow) 32%, transparent) 0%, color-mix(in srgb, var(--glow) 11%, transparent) 50%, transparent 100%); }
+
+/* stage: the product stands on a hairline horizon */
+.showcase__stage { position: relative; z-index: 2; width: 100%; height: 100%; min-height: 0; cursor: pointer; touch-action: pan-y; container-type: size; }
+.showcase__stage::after { content: ""; position: absolute; left: 0; right: 0; bottom: 7%; height: 1px; pointer-events: none; z-index: -1;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1) 20%, color-mix(in srgb, var(--glow) 55%, rgba(255, 255, 255, 0.3)) 50%, rgba(255, 255, 255, 0.1) 80%, transparent); }
+.showcase__product { position: absolute; inset: 0; margin: 0; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6%; will-change: transform, opacity; }
+.showcase__body { position: relative; display: inline-block; }
+.showcase__float { animation: sc-float 6.5s ease-in-out infinite; }
+.showcase__float img { display: block; width: auto; height: auto; max-width: min(70cqw, 860px); max-height: 82cqh;   /* sized by the stage itself, so it never reaches under the nav */
+  user-select: none; -webkit-user-drag: none; filter: drop-shadow(0 24px 30px rgba(0, 0, 0, 0.55)); }
+.showcase__shadow { position: absolute; left: 10%; right: 10%; bottom: -2%; height: 8%; z-index: -1; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0)); filter: blur(6px); animation: sc-shadow 6.5s ease-in-out infinite; }
+@keyframes sc-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@keyframes sc-shadow { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.9); opacity: 0.75; } }
+
+/* the name, one line, one action — centred under the product */
+.showcase__info { position: relative; z-index: 3; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; margin: 2px 0 26px; max-width: 640px; }
+.showcase__group { font: 500 10px/1.4 var(--font-ui, Inter, sans-serif); letter-spacing: 0.24em; text-transform: uppercase; color: rgba(241, 242, 245, 0.5); }
+.showcase__name { margin: 0; font-family: var(--font-display, sans-serif); font-weight: 400; font-size: clamp(26px, 2.5vw, 42px); line-height: 1.05; letter-spacing: 0.01em; color: #fff; text-wrap: balance; }
+.showcase__desc { margin: 0; font: 400 15px/1.55 var(--font-ui, Inter, sans-serif); color: rgba(241, 242, 245, 0.64); }
+.showcase__cta { margin-top: 8px; display: inline-flex; align-items: center; gap: 10px; padding: 13px 18px 13px 22px; border: 0; border-radius: 999px; cursor: pointer;
+  background: linear-gradient(180deg, #ffffff, #e8eaee); color: #0b0c10; font: 600 11px/1 var(--font-ui, Inter, sans-serif); letter-spacing: 0.16em; text-transform: uppercase;
+  box-shadow: 0 10px 30px -12px rgba(255, 255, 255, 0.35); transition: transform 220ms ease, box-shadow 220ms ease; }
+.showcase__cta:hover { transform: translateY(-1px); box-shadow: 0 14px 34px -12px rgba(255, 255, 255, 0.5); }
+.showcase__cta svg { transition: transform 220ms ease; }
+.showcase__cta:hover svg { transform: translateX(3px); }
+
+/* the rail: every product, grouped by family under a hairline label */
+.showcase__rail { position: relative; z-index: 3; display: flex; justify-content: center; gap: 0; max-width: 100%; overflow-x: auto; scrollbar-width: none;
+  padding: 2px 4px 4px; -webkit-mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 16px), transparent); mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 16px), transparent); }
+.showcase__rail::-webkit-scrollbar { display: none; }
+.showcase__fam { flex: none; display: flex; flex-direction: column; gap: 10px; padding: 0 clamp(10px, 1.4vw, 22px); }
+.showcase__fam + .showcase__fam { border-left: 1px solid rgba(255, 255, 255, 0.08); }
+.showcase__fam-head { display: flex; align-items: center; gap: 10px; padding-left: 6px; font: 500 9px/1 var(--font-ui, Inter, sans-serif); letter-spacing: 0.22em; text-transform: uppercase; color: rgba(241, 242, 245, 0.5); }
+.showcase__fam-head::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(255, 255, 255, 0.16), transparent); }
+.showcase__fam-count { order: 2; min-width: 18px; height: 18px; display: inline-grid; place-items: center; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.16); font-size: 9px; letter-spacing: 0; color: rgba(241, 242, 245, 0.7); }
+.showcase__fam-items { display: flex; gap: 4px; }
+.showcase__item { position: relative; width: clamp(86px, 7.6vw, 112px); padding: 8px 6px 10px; border: 1px solid transparent; border-radius: 14px; background: transparent; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 8px; color: rgba(241, 242, 245, 0.55); transition: background 240ms ease, border-color 240ms ease, color 240ms ease; }
+.showcase__item-img { --th: clamp(46px, 4.6vw, 64px); width: 100%; height: var(--th); display: flex; align-items: center; justify-content: center; }
+.showcase__item-img img { max-width: 100%; max-height: var(--th); width: auto; height: auto; filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.55)); transition: transform 320ms var(--p83-ease, ease), opacity 320ms ease; }
+.showcase__item-name { font: 500 10px/1.3 var(--font-ui, Inter, sans-serif); letter-spacing: 0.02em; text-align: center; text-wrap: balance; }
+.showcase__item:hover { color: #fff; background: rgba(255, 255, 255, 0.04); }
+.showcase__item:hover img { transform: translateY(-3px) scale(1.05); }
+.showcase__item.is-on { color: #fff; border-color: rgba(255, 255, 255, 0.22); background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)); }
+.showcase__item.is-on img { opacity: 0.35; }   /* it is out on the stage */
+.showcase__item:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .showcase__float, .showcase__shadow { animation: none; } }
+
+@media (max-width: 900px) {
+  .showcase { height: auto; min-height: 0; max-height: none; padding: 72px 0 80px; grid-template-rows: auto auto auto; }
+  .showcase__stage { height: 46svh; min-height: 280px; }
+  .showcase__float img { max-width: 88cqw; max-height: 82cqh; }
+  .showcase__glow { top: 28%; width: 110vw; }
+  .showcase__info { padding: 0 20px; margin-bottom: 22px; gap: 8px; }
+  .showcase__name { font-size: 26px; }
+  .showcase__desc { font-size: 14px; }
+  .showcase__rail { justify-content: flex-start; width: 100%; padding: 2px 12px 4px; scroll-snap-type: x proximity; }
+  .showcase__fam { padding: 0 10px; }
+  .showcase__item { width: 84px; scroll-snap-align: center; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   PHASE 85 — the product drawer (3D viewer UI) in the Phase 83/84 language: glass pills on 1 px hairlines, the active choice a
+   solid white pill (as the nav), round controls (as the showcase arrows), hairline cards, a white primary action; the red stays
+   for live / fire meaning only. Visual properties only — every layout + position rule (desktop and pv-mobile) is untouched.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+#product-drawer .product-drawer__panel { border-top: 1px solid rgba(255, 255, 255, 0.1); background: rgba(9, 10, 14, 0.94);
+  box-shadow: 0 -30px 60px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.04); }
+#product-drawer .product-drawer__panel::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 1px; pointer-events: none; z-index: 5;
+  background: linear-gradient(90deg, transparent, rgba(255, 32, 48, 0.7) 30%, rgba(255, 106, 61, 0.5) 50%, transparent 72%); }
+/* the family badge: a glass pill */
+#product-drawer .drawer__family { border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(10, 11, 14, 0.5);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: rgba(241, 242, 245, 0.78); letter-spacing: 0.24em; box-shadow: none; }
+/* view modes: a glass track, the active mode a white pill */
+#product-drawer .drawer__modes { border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(10, 11, 14, 0.55);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: none; padding: 4px; }
+#product-drawer .drawer__mode { border-radius: 999px; color: rgba(241, 242, 245, 0.68); letter-spacing: 0.14em; transition: background 240ms ease, color 240ms ease; }
+#product-drawer .drawer__mode:hover { color: #fff; background: rgba(255, 255, 255, 0.06); }
+#product-drawer .drawer__mode.is-active { background: linear-gradient(180deg, #ffffff, #e9ebef); color: #0b0c10; box-shadow: 0 4px 14px -6px rgba(255, 255, 255, 0.35); }
+/* zoom rail: glass capsule, white knob */
+#product-drawer .drawer__zoom { border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(10, 11, 14, 0.55); box-shadow: none; }
+#product-drawer .drawer__zoom-btn { border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.18); background: transparent; color: #fff; }
+#product-drawer .drawer__zoom-btn:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.34); }
+#product-drawer .drawer__zoom-range::-webkit-slider-thumb { background: #fff; border: 0; box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.12), 0 2px 8px rgba(0, 0, 0, 0.5); }
+#product-drawer .drawer__zoom-range::-moz-range-thumb { background: #fff; border: 0; box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.12), 0 2px 8px rgba(0, 0, 0, 0.5); }
+#product-drawer .drawer__zoom-range:hover::-webkit-slider-thumb { box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.16), 0 2px 8px rgba(0, 0, 0, 0.5); }
+#product-drawer .drawer__viewer-hint { border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(10, 11, 14, 0.5); color: rgba(241, 242, 245, 0.6); }
+/* close: a round hairline control */
+#product-drawer .drawer__close { border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(10, 11, 14, 0.5); width: 44px; height: 44px; }
+#product-drawer .drawer__close:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.4); }
+#product-drawer .drawer__lightbox-close { border-radius: 50%; }
+/* photo thumbs */
+#product-drawer .drawer__photo { border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.12); overflow: hidden; }
+/* info: quiet index, hairline cards */
+#product-drawer .drawer__index { color: rgba(241, 242, 245, 0.45); letter-spacing: 0.24em; }
+#product-drawer .drawer__highlight { border: 1px solid rgba(255, 255, 255, 0.1); border-left: 1px solid rgba(255, 255, 255, 0.1); border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.01)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05); }
+#product-drawer .pc-features li::before { width: 14px; height: 1px; top: 9px; border-radius: 0; background: rgba(255, 255, 255, 0.5); }
+#product-drawer .pc-features li { padding-left: 26px; }
+#product-drawer .pc-list__item { border-radius: 12px; border-color: rgba(255, 255, 255, 0.09); background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01));
+  transition: background 200ms ease, border-color 200ms ease; }
+#product-drawer .pc-list__item:hover { border-color: rgba(255, 255, 255, 0.24); background: rgba(255, 255, 255, 0.06); }
+#product-drawer .pc-list__item[aria-pressed="true"] { border-color: rgba(255, 255, 255, 0.55); background: rgba(255, 255, 255, 0.09); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08); }
+#product-drawer .pc-list__check { border-radius: 50%; }
+#product-drawer .pc-features__link, #product-drawer .pc-nav__btn, #product-drawer .pc-card__view-btn { border-radius: 999px; }
+#product-drawer .drawer__specs-details { border-radius: 14px; }
+#product-drawer .drawer__spec-row { border-color: rgba(255, 255, 255, 0.07); }
+/* actions: a white primary pill + a hairline secondary pill, on a footer hairline */
+#product-drawer .drawer__cta-row { border-top-color: rgba(255, 255, 255, 0.08); }
+#product-drawer .drawer__cta { border-radius: 999px; }
+#product-drawer .drawer__cta--primary { background: linear-gradient(180deg, #ffffff, #e8eaee); color: #0b0c10; border: 0;
+  box-shadow: 0 10px 30px -12px rgba(255, 255, 255, 0.35); }
+#product-drawer .drawer__cta--primary:hover { background: #fff; box-shadow: 0 14px 34px -12px rgba(255, 255, 255, 0.5); }
+#product-drawer .drawer__cta--secondary { border: 1px solid rgba(255, 255, 255, 0.22); background: rgba(255, 255, 255, 0.03); color: #fff; }
+#product-drawer .drawer__cta--secondary:hover { border-color: rgba(255, 255, 255, 0.42); background: rgba(255, 255, 255, 0.08); }
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   PHASE 84c — the product sheet (product-sheet.js): "View details" slides it in from the right. Product cut-out on its glow,
+   name + description, the 3D buttons, three headline numbers, key features, all specs folded; quote + call pinned below.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+.psheet { position: fixed; inset: 0; z-index: 60; }
+.psheet[hidden] { display: none; }
+html.psheet-open { overflow: hidden; }
+.psheet__overlay { position: absolute; inset: 0; background: rgba(3, 4, 7, 0.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); opacity: 0; transition: opacity 420ms ease; }
+.psheet.is-open .psheet__overlay { opacity: 1; }
+.psheet__panel { position: absolute; top: 0; right: 0; bottom: 0; width: min(580px, 100vw); display: flex; flex-direction: column;
+  background: linear-gradient(180deg, rgba(16, 17, 22, 0.97), rgba(8, 9, 12, 0.98)); border-left: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: -40px 0 80px -30px rgba(0, 0, 0, 0.8); transform: translateX(102%); transition: transform 620ms cubic-bezier(0.22, 1, 0.36, 1); }
+.psheet.is-open .psheet__panel { transform: none; }
+.psheet__panel::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 1px; pointer-events: none;
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--glow, #e4202c) 70%, transparent) 30%, transparent 70%); }
+.psheet__close { position: absolute; top: 18px; right: 18px; z-index: 3; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(10, 11, 14, 0.6); color: #fff; cursor: pointer; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  transition: background 200ms ease, border-color 200ms ease, transform 300ms ease; }
+.psheet__close:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.4); transform: rotate(90deg); }
+.psheet__scroll { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 0 clamp(22px, 3vw, 40px) 28px; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.15) transparent; }
+/* hero: the cut-out on its glow, on a hairline horizon */
+.psheet__hero { position: relative; height: clamp(220px, 34vh, 320px); margin: 0 calc(-1 * clamp(22px, 3vw, 40px)); display: flex; align-items: flex-end; justify-content: center; padding: 64px 40px 26px; }
+.psheet__hero::after { content: ""; position: absolute; left: 8%; right: 8%; bottom: 20px; height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--glow, #e4202c) 50%, rgba(255, 255, 255, 0.25)), transparent); }
+.psheet__glow { position: absolute; left: 50%; top: 55%; width: 420px; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--glow, #e4202c) 30%, transparent), transparent); }
+.psheet__img { position: relative; max-width: 86%; max-height: 100%; width: auto; height: auto; filter: drop-shadow(0 20px 26px rgba(0, 0, 0, 0.6)); }
+.psheet__head { display: flex; flex-direction: column; gap: 12px; margin-top: 18px; }
+.psheet__group, .psheet__label { font: 500 10px/1.4 var(--font-ui, Inter, sans-serif); letter-spacing: 0.24em; text-transform: uppercase; color: rgba(241, 242, 245, 0.5); }
+.psheet__name { margin: 0; font-family: var(--font-display, sans-serif); font-weight: 400; font-size: clamp(26px, 2.6vw, 36px); line-height: 1.05; color: #fff; text-wrap: balance; }
+.psheet__desc { margin: 0; font: 400 15px/1.65 var(--font-ui, Inter, sans-serif); color: rgba(241, 242, 245, 0.68); }
+/* the 3D buttons: glass tiles */
+.psheet__explore { margin-top: 28px; display: flex; flex-direction: column; gap: 12px; }
+.psheet__explore[hidden], .psheet__features[hidden], .psheet__specs[hidden] { display: none; }
+.psheet__btns { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.psheet__btn { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 14px; cursor: pointer; text-align: left;
+  border: 1px solid rgba(255, 255, 255, 0.12); background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015)); color: #fff;
+  font: 500 13px/1.2 var(--font-ui, Inter, sans-serif); transition: border-color 200ms ease, background 200ms ease, transform 200ms ease; }
+.psheet__btn svg { flex: none; opacity: 0.8; }
+.psheet__btn:hover { border-color: rgba(255, 255, 255, 0.34); background: rgba(255, 255, 255, 0.09); transform: translateY(-1px); }
+.psheet__btn--live { border-color: rgba(255, 60, 70, 0.4); background: linear-gradient(180deg, rgba(255, 40, 52, 0.16), rgba(255, 40, 52, 0.04)); }
+.psheet__btn--live svg { color: #ff4a52; opacity: 1; }
+.psheet__btn--live:hover { border-color: rgba(255, 80, 90, 0.7); background: rgba(255, 40, 52, 0.2); }
+/* three headline numbers */
+.psheet__stats { margin-top: 26px; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid rgba(255, 255, 255, 0.08); border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+.psheet__stat { padding: 16px 14px 16px 0; }
+.psheet__stat + .psheet__stat { padding-left: 14px; border-left: 1px solid rgba(255, 255, 255, 0.08); }
+.psheet__stat-key { font: 500 9px/1.4 var(--font-ui, Inter, sans-serif); letter-spacing: 0.18em; text-transform: uppercase; color: rgba(241, 242, 245, 0.45); margin-bottom: 8px; }
+.psheet__stat-val { font: 500 15px/1.3 var(--font-ui, Inter, sans-serif); color: #fff; }
+/* key features */
+.psheet__features { margin-top: 28px; display: flex; flex-direction: column; gap: 14px; }
+.psheet__features ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.psheet__features li { position: relative; display: grid; gap: 3px; padding-left: 26px; }
+.psheet__features li::before { content: ""; position: absolute; left: 0; top: 9px; width: 14px; height: 1px; background: rgba(255, 255, 255, 0.5); }
+.psheet__feat-title { font: 600 14px/1.4 var(--font-ui, Inter, sans-serif); color: #fff; }
+.psheet__feat-text { font: 400 13px/1.55 var(--font-ui, Inter, sans-serif); color: rgba(241, 242, 245, 0.6); }
+/* all specs, folded */
+.psheet__specs { margin-top: 26px; border: 1px solid rgba(255, 255, 255, 0.09); border-radius: 14px; background: rgba(255, 255, 255, 0.02); }
+.psheet__specs summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; }
+.psheet__specs summary::-webkit-details-marker { display: none; }
+.psheet__specs summary::after { content: ""; width: 8px; height: 8px; border-right: 1.5px solid rgba(255, 255, 255, 0.6); border-bottom: 1.5px solid rgba(255, 255, 255, 0.6); transform: rotate(45deg); margin-left: 12px; transition: transform 240ms ease; }
+.psheet__specs[open] summary::after { transform: rotate(-135deg); }
+.psheet__count { margin-left: auto; min-width: 22px; height: 22px; display: inline-grid; place-items: center; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.16); font: 500 10px/1 var(--font-ui, Inter, sans-serif); color: rgba(241, 242, 245, 0.7); }
+.psheet__specs dl { margin: 0; padding: 0 18px 10px; }
+.psheet__specs dl > div { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 11px 0; border-top: 1px solid rgba(255, 255, 255, 0.06); }
+.psheet__specs dt { font: 400 13px/1.45 var(--font-ui, Inter, sans-serif); color: rgba(241, 242, 245, 0.55); }
+.psheet__specs dd { margin: 0; font: 500 13px/1.45 var(--font-ui, Inter, sans-serif); color: #fff; }
+/* pinned actions */
+.psheet__foot { display: flex; gap: 10px; padding: 16px clamp(22px, 3vw, 40px) calc(16px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid rgba(255, 255, 255, 0.08); background: rgba(8, 9, 12, 0.9); }
+.psheet__quote { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 50px; border: 0; border-radius: 999px; cursor: pointer;
+  background: linear-gradient(180deg, #ffffff, #e8eaee); color: #0b0c10; font: 600 11px/1 var(--font-ui, Inter, sans-serif); letter-spacing: 0.16em; text-transform: uppercase;
+  box-shadow: 0 10px 30px -12px rgba(255, 255, 255, 0.35); }
+.psheet__quote:hover { background: #fff; }
+.psheet__talk { display: inline-flex; align-items: center; justify-content: center; min-height: 50px; padding: 0 22px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #fff; text-decoration: none; font: 600 11px/1 var(--font-ui, Inter, sans-serif); letter-spacing: 0.16em; text-transform: uppercase; }
+.psheet__talk:hover { border-color: rgba(255, 255, 255, 0.42); background: rgba(255, 255, 255, 0.06); }
+/* entrance: content rises in after the panel */
+.psheet__hero, .psheet__head, .psheet__explore, .psheet__stats, .psheet__features, .psheet__specs { opacity: 0; transform: translateY(14px); transition: opacity 500ms ease, transform 640ms cubic-bezier(0.22, 1, 0.36, 1); }
+.psheet.is-open .psheet__hero { opacity: 1; transform: none; transition-delay: 160ms; }
+.psheet.is-open .psheet__head { opacity: 1; transform: none; transition-delay: 240ms; }
+.psheet.is-open .psheet__explore { opacity: 1; transform: none; transition-delay: 310ms; }
+.psheet.is-open .psheet__stats { opacity: 1; transform: none; transition-delay: 370ms; }
+.psheet.is-open .psheet__features, .psheet.is-open .psheet__specs { opacity: 1; transform: none; transition-delay: 420ms; }
+@media (prefers-reduced-motion: reduce) { .psheet__panel, .psheet__hero, .psheet__head, .psheet__explore, .psheet__stats, .psheet__features, .psheet__specs { transition: none; } }
+@media (max-width: 600px) {
+  .psheet__btns { grid-template-columns: 1fr 1fr; }
+  .psheet__btn { padding: 12px; gap: 9px; font-size: 12px; }
+  .psheet__stats { grid-template-columns: 1fr 1fr 1fr; }
+  .psheet__stat-val { font-size: 13px; }
+}
+/* Phase 84d: each product's own logo carries its name (owner: "add the products' logos again"); the text name stays for screen readers */
+.showcase__logo { display: block; width: auto; height: clamp(54px, 5.4vw, 78px); max-width: min(78vw, 400px); object-fit: contain; filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.5)); }
+.showcase__logo[hidden], .psheet__logo[hidden] { display: none; }
+.showcase__logo:not([hidden]) + .showcase__name, .psheet.has-logo .psheet__name { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.psheet__logo { display: block; width: auto; height: clamp(58px, 7vw, 84px); max-width: 100%; object-fit: contain; object-position: left center; }
+@media (max-width: 900px) { .showcase__logo { height: 52px; } }
+/* Phase 84e — mobile 3D gets the screen (owner: "enough space on mobile to explore the 3D model"). The component strip at the
+   bottom goes (the details live in the product sheet now; the (i) button top-right still opens everything), the modes drop to
+   the bottom edge, and the drag hint leaves after a few seconds. */
+.product-drawer.pv-mobile { --pv-bar: 0px; }
+.product-drawer.pv-mobile .pv-info { display: none; }
+.product-drawer.pv-mobile .drawer__viewer-hint { animation: pv-hint-out 700ms ease 3.5s forwards; }
+@keyframes pv-hint-out { to { opacity: 0; visibility: hidden; } }
+.product-drawer.pv-mobile .drawer__mode.is-active { background: linear-gradient(180deg, #ffffff, #e9ebef); color: #0b0c10; }
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   PHASE 86 — friendlier, more alive. Step 1: the hero opens with a short logo reveal over the reel (once per session; never with
+   reduced motion) and keeps a quiet "scroll to explore" cue until the first scroll.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+.hero__intro { position: absolute; inset: 0; z-index: 4; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
+  background: #050608; pointer-events: none; animation: hi-lift 900ms cubic-bezier(0.6, 0, 0.2, 1) 1.75s forwards; }
+.hero__intro-logo { width: clamp(200px, 26vw, 400px); height: auto; opacity: 0; filter: blur(14px); transform: scale(0.94);
+  animation: hi-logo-in 1000ms cubic-bezier(0.22, 1, 0.36, 1) 150ms forwards, hi-logo-out 700ms cubic-bezier(0.55, 0, 0.75, 0.2) 1.65s forwards; }
+.hero__intro-line { width: clamp(120px, 14vw, 200px); height: 1px; transform: scaleX(0);
+  background: linear-gradient(90deg, transparent, #ff2030 30%, #ff6a3d 70%, transparent); box-shadow: 0 0 12px rgba(255, 32, 48, 0.7);
+  animation: hi-line 800ms cubic-bezier(0.22, 1, 0.36, 1) 650ms forwards, hi-logo-out 600ms ease 1.65s forwards; }
+@keyframes hi-logo-in { to { opacity: 1; filter: blur(0); transform: none; } }
+@keyframes hi-logo-out { to { opacity: 0; transform: translateY(-14px) scale(1.02); filter: blur(4px); } }
+@keyframes hi-line { to { transform: scaleX(1); } }
+@keyframes hi-lift { to { opacity: 0; visibility: hidden; } }
+html.intro-seen .hero__intro { display: none; }
+
+.hero__cue { position: absolute; z-index: 3; left: 50%; bottom: 26px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 12px;
+  color: rgba(241, 242, 245, 0.62); text-decoration: none; transition: opacity 500ms ease, transform 500ms ease; animation: hi-cue-in 900ms ease 2.4s backwards; }
+html.intro-seen .hero__cue { animation-delay: 0.6s; }
+.hero__cue:hover { color: #fff; }
+.hero__cue-label { font: 500 9.5px/1 var(--font-ui, Inter, sans-serif); letter-spacing: 0.3em; text-transform: uppercase; }
+.hero__cue-line { position: relative; width: 1px; height: 46px; overflow: hidden; background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0)); }
+.hero__cue-line::after { content: ""; position: absolute; left: 0; top: -16px; width: 1px; height: 16px; background: linear-gradient(180deg, transparent, #fff);
+  animation: hi-cue 2.2s cubic-bezier(0.65, 0, 0.35, 1) infinite; }
+@keyframes hi-cue { 0% { top: -16px; } 70%, 100% { top: 46px; } }
+@keyframes hi-cue-in { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translateX(-50%); } }
+html.has-scrolled .hero__cue { opacity: 0; transform: translate(-50%, 10px); pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .hero__cue-line::after { animation: none; top: 15px; } }
+@media (max-width: 720px) { .hero__cue { bottom: 18px; } .hero__cue-line { height: 34px; } }
+
+/* Phase 86 step 2 — the 3D viewer is full-screen on every screen (product-viewer-ui.js media: 'all'); on wide screens the views
+   get their names back and sit centred at the bottom, the live action centred above them, and the header carries a quote pill.
+   Focus rings are white (a red ring read as an error). */
+.product-drawer.pv-mobile .pv-btn:focus-visible, .product-drawer.pv-mobile .drawer__mode:focus-visible { outline: 2px solid rgba(255, 255, 255, 0.9); outline-offset: 2px; box-shadow: none; }
+.product-drawer.pv-mobile .pv-back:focus:not(:focus-visible) { outline: none; box-shadow: none; }
+.pv-quote { display: none; }
+@media (min-width: 1024px) {
+  .product-drawer.pv-mobile .pv-header { position: absolute; }
+  .product-drawer.pv-mobile .pv-quote { position: absolute; right: calc(max(16px, var(--pv-sar)) + 56px); top: 50%; transform: translateY(-50%); display: inline-flex; align-items: center; min-height: 42px; padding: 0 20px; border: 0; border-radius: 999px; cursor: pointer;
+    background: linear-gradient(180deg, #ffffff, #e8eaee); color: #0b0c10; font: 600 11px/1 var(--font-ui, Inter, sans-serif); letter-spacing: 0.14em; text-transform: uppercase;
+    box-shadow: 0 8px 24px -10px rgba(255, 255, 255, 0.35); }
+  .product-drawer.pv-mobile .pv-quote:hover { background: #fff; }
+  .product-drawer.pv-mobile.pv-landscape .drawer__modes { left: calc((100% - (var(--pv-sheet-open, 0) * var(--pv-side-w, 0px))) / 2); bottom: 26px; transform: translateX(-50%); }
+  .product-drawer.pv-mobile.pv-landscape.pv-sheet-open { --pv-sheet-open: 1; }
+  .product-drawer.pv-mobile.pv-many-views .drawer__mode { width: auto; min-width: 0; padding: 0 18px 0 14px; gap: 9px; font-size: 11px; letter-spacing: 0.14em; }
+  .product-drawer.pv-mobile.pv-many-views .drawer__mode::before { flex-basis: 16px; width: 16px; height: 16px; }
+  .product-drawer.pv-mobile.pv-landscape .drawer__activate,
+  .product-drawer.pv-mobile.pv-landscape .drawer__foam-toggle { left: calc((100% - (var(--pv-sheet-open, 0) * var(--pv-side-w, 0px))) / 2); bottom: calc(26px + var(--pv-modes) + 14px); transform: translate(-50%, 8px); }
+  .product-drawer.pv-mobile.pv-landscape .drawer__viewer.is-system .drawer__activate,
+  .product-drawer.pv-mobile.pv-landscape .drawer__viewer.is-gun .drawer__foam-toggle { transform: translateX(-50%); }
+}
+
+/* Phase 86 step 3 — micro-interactions (micro.js; mouse only, never with reduced motion) */
+.mx-cursor { position: fixed; left: 0; top: 0; z-index: 50; width: 84px; height: 84px; margin: -42px 0 0 -42px; border-radius: 50%; pointer-events: none;
+  display: grid; place-items: center; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(8px) saturate(140%); -webkit-backdrop-filter: blur(8px) saturate(140%); }
+.mx-cursor span { font: 600 10px/1 var(--font-ui, Inter, sans-serif); letter-spacing: 0.22em; text-transform: uppercase; color: #fff;
+  transform: scale(0); transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1); }
+.mx-cursor { scale: 0; opacity: 0; transition: scale 420ms cubic-bezier(0.22, 1, 0.36, 1), opacity 300ms ease; }
+.mx-cursor.is-on { scale: 1; opacity: 1; }
+.mx-cursor.is-on span { transform: none; }
+.mx-cursor.is-down { scale: 0.86; }
+.mx-hide-cursor, .mx-hide-cursor * { cursor: none !important; }
+.showcase__body { transform: perspective(1100px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1); }
+.showcase__cta, .psheet__quote, .site-nav__cta, .hero__cue, .pv-quote, .psheet__close { translate: var(--mx, 0px) var(--my, 0px);
+  transition: translate 420ms cubic-bezier(0.22, 1, 0.36, 1), transform 260ms ease, background 220ms ease, box-shadow 220ms ease, border-color 220ms ease, opacity 500ms ease, color 220ms ease; }
+.showcase__item { overflow: hidden; }
+.showcase__item::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity 300ms ease;
+  background: radial-gradient(120px circle at var(--lx, 50%) var(--ly, 50%), color-mix(in srgb, var(--glow, #e4202c) 22%, transparent), transparent 70%); }
+.showcase__item:hover::before { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .showcase__body { transform: none; } }
+
+/* Phase 86 step 4 — contact + footer in the hairline language: no red grid, glass form card, soft fields with a white focus ring,
+   a white pill to send, grey labels with one red dot, a clear success / error line. The form's sending logic is untouched. */
+#contact.contact-section { background:
+    radial-gradient(70% 60% at 100% 0%, rgba(255, 32, 48, 0.09) 0%, transparent 60%),
+    radial-gradient(60% 60% at 0% 100%, rgba(80, 90, 110, 0.12) 0%, transparent 60%),
+    linear-gradient(180deg, #0b0c10 0%, #07080b 100%); }
+#contact.contact-section::before { background: linear-gradient(90deg, transparent, rgba(255, 32, 48, 0.55) 30%, rgba(255, 106, 61, 0.35) 50%, transparent 75%);
+  inset: 0 0 auto 0; height: 1px; background-size: auto; }
+#contact .contact-info__label { display: flex; align-items: center; gap: 10px; color: rgba(241, 242, 245, 0.5); letter-spacing: 0.24em; font-size: 10px; }
+#contact .contact-info__label::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: #ff2030; box-shadow: 0 0 8px rgba(255, 32, 48, 0.7); }
+#contact .contact-info__link { position: relative; display: inline-flex; align-items: center; gap: 8px; color: #fff; text-decoration: none; width: fit-content; }
+#contact .contact-info__link::after { content: "→"; opacity: 0; transform: translateX(-6px); transition: opacity 200ms ease, transform 260ms ease; color: rgba(241, 242, 245, 0.7); }
+#contact .contact-info__link:hover::after { opacity: 1; transform: none; }
+#contact .contact-info__download { border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.22); background: rgba(255, 255, 255, 0.03); padding: 14px 22px; width: fit-content;
+  transition: background 220ms ease, border-color 220ms ease; }
+#contact .contact-info__download:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.4); }
+#contact .contact-form { border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.09);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 40px 80px -40px rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+#contact .contact-form__label { color: rgba(241, 242, 245, 0.5); letter-spacing: 0.2em; }
+#contact-form input:not([type="hidden"]), #contact-form select, #contact-form textarea { border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.035); color: #fff;
+  transition: border-color 200ms ease, box-shadow 200ms ease, background 200ms ease; }
+#contact-form input:not([type="hidden"]):hover, #contact-form select:hover, #contact-form textarea:hover { border-color: rgba(255, 255, 255, 0.2); }
+#contact-form input:focus, #contact-form select:focus, #contact-form textarea:focus { outline: none; border-color: rgba(255, 255, 255, 0.5); background: rgba(255, 255, 255, 0.055);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.07); }
+#contact-form input::placeholder, #contact-form textarea::placeholder { color: rgba(241, 242, 245, 0.32); }
+#contact-form select { appearance: none; -webkit-appearance: none; padding-right: 44px; cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-opacity='.7' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 16px center; background-size: 16px; }
+#contact-form select option { background: #111217; color: #fff; }
+#contact-form select.is-prefilled { border-color: rgba(255, 255, 255, 0.6); box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1); }
+#contact .contact-form__submit { border-radius: 999px; border: 0; min-height: 52px; padding: 0 26px 0 30px; gap: 12px; cursor: pointer;
+  background: linear-gradient(180deg, #ffffff, #e8eaee); color: #0b0c10; box-shadow: 0 10px 30px -12px rgba(255, 255, 255, 0.35); }
+#contact .contact-form__submit::after { content: "→"; font-size: 15px; letter-spacing: 0; transition: transform 220ms ease; }
+#contact .contact-form__submit:hover:not(:disabled) { background: #fff; box-shadow: 0 14px 34px -12px rgba(255, 255, 255, 0.5); }
+#contact .contact-form__submit:hover:not(:disabled)::after { transform: translateX(3px); }
+#contact .contact-form__submit:disabled { opacity: 0.65; cursor: default; }
+#contact .contact-form__status:empty { display: none; }
+#contact .contact-form__status { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.03); font-size: 13px; }
+#contact .contact-form__status::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; }
+#contact .contact-form__status.is-ok { border-color: rgba(110, 231, 154, 0.35); background: rgba(110, 231, 154, 0.07); }
+#contact .contact-form__status.is-error { border-color: rgba(255, 32, 48, 0.4); background: rgba(255, 32, 48, 0.07); color: #ff6b74; }
+#contact .contact-form__status.is-warn { border-color: rgba(240, 164, 74, 0.35); background: rgba(240, 164, 74, 0.07); }
+/* footer */
+.footer { border-top: 1px solid rgba(255, 255, 255, 0.07); }
+.footer .footer-inner { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 18px 40px; max-width: 1240px; margin: 0 auto; text-align: left; }
+.footer .footer-logo__img { display: block; width: 150px; height: auto; }
+.footer .footer-links { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px 26px; }
+.footer .footer-links a { color: rgba(241, 242, 245, 0.62); text-decoration: none; font: 500 12px/1 var(--font-ui, Inter, sans-serif); letter-spacing: 0.06em; transition: color 200ms ease; }
+.footer .footer-links a:hover { color: #fff; }
+.footer .footer-note, .footer .footer-copy { grid-column: 1 / -1; margin: 0; }
+.footer .footer-note { padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.06); }
+.footer .footer-copy a:hover { color: #fff; }
+@media (max-width: 720px) {
+  .footer .footer-inner { grid-template-columns: 1fr; justify-items: start; }
+  .footer .footer-links { justify-content: flex-start; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   PHASE 87 — showcase in three columns (owner: "logo + details more to the left, model in the middle bigger, the interactive
+   buttons on the right; the sheet shows the details only; bigger names in the rail so people find a product easily").
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+.showcase { grid-template-rows: minmax(0, 1fr) auto; }
+.showcase__glow { top: 42%; }
+.showcase__main { position: relative; z-index: 2; width: 100%; max-width: 1480px; height: 100%; min-height: 0; display: grid;
+  grid-template-columns: minmax(260px, 24%) minmax(0, 1fr) minmax(230px, 20%); align-items: center; gap: clamp(16px, 2.4vw, 40px); margin-bottom: 18px; }
+/* left: the product's own words */
+.showcase .showcase__info { align-items: flex-start; text-align: left; margin: 0; max-width: 340px; gap: 14px; }
+.showcase .showcase__logo { height: clamp(60px, 5.4vw, 84px); max-width: 100%; object-position: left center; }
+.showcase .showcase__desc { font-size: 15px; }
+.showcase__stats { margin: 4px 0 0; width: 100%; display: grid; }
+.showcase__stats > div { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 11px 0; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+.showcase__stats > div:last-child { border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+.showcase__stats dt { font: 500 9.5px/1.4 var(--font-ui, Inter, sans-serif); letter-spacing: 0.18em; text-transform: uppercase; color: rgba(241, 242, 245, 0.45); }
+.showcase__stats dd { margin: 0; font: 500 14px/1.3 var(--font-ui, Inter, sans-serif); color: #fff; text-align: right; }
+.showcase .showcase__cta { margin-top: 10px; }
+/* centre: the model, bigger, standing on a horizon that runs under the whole row */
+.showcase .showcase__stage { align-self: stretch; height: auto; }
+.showcase .showcase__stage::after { left: -38%; right: -38%; }
+.showcase .showcase__float img { max-width: min(96cqw, 980px); max-height: 88cqh; }
+.showcase .showcase__product { padding-bottom: 5%; }
+/* right: the 3D views as glass tiles */
+.showcase__actions { justify-self: end; width: 100%; max-width: 270px; display: flex; flex-direction: column; gap: 10px; }
+.showcase__act { display: flex; align-items: center; gap: 14px; width: 100%; padding: 12px 16px 12px 12px; border-radius: 16px; cursor: pointer; text-align: left;
+  border: 1px solid rgba(255, 255, 255, 0.11); background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015)); color: #fff;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: border-color 220ms ease, background 220ms ease, transform 300ms cubic-bezier(0.22, 1, 0.36, 1); }
+.showcase__act:hover { border-color: rgba(255, 255, 255, 0.34); background: rgba(255, 255, 255, 0.09); transform: translateX(-4px); }
+.showcase__act-icon { flex: none; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(255, 255, 255, 0.04); }
+.showcase__act-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.showcase__act-label { font: 500 14px/1.2 var(--font-ui, Inter, sans-serif); }
+.showcase__act-sub { font: 400 11.5px/1.3 var(--font-ui, Inter, sans-serif); color: rgba(241, 242, 245, 0.5); }
+.showcase__act--live { border-color: rgba(255, 60, 70, 0.4); background: linear-gradient(180deg, rgba(255, 40, 52, 0.15), rgba(255, 40, 52, 0.04)); }
+.showcase__act--live .showcase__act-icon { color: #ff4a52; border-color: rgba(255, 74, 82, 0.45); background: rgba(255, 40, 52, 0.1); }
+.showcase__act--live:hover { border-color: rgba(255, 80, 90, 0.7); background: rgba(255, 40, 52, 0.2); }
+.showcase__actions.is-in .showcase__act { animation: sc-act-in 520ms cubic-bezier(0.22, 1, 0.36, 1) both; animation-delay: calc(var(--n, 0) * 70ms + 200ms); }
+@keyframes sc-act-in { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+/* the rail: bigger names + thumbnails, easier to find a product */
+.showcase .showcase__item { width: clamp(86px, 7.1vw, 120px); gap: 10px; padding: 10px 4px 12px; }
+.showcase .showcase__rail { justify-content: safe center; }
+.showcase .showcase__fam { padding: 0 clamp(8px, 1.1vw, 20px); }
+.showcase .showcase__item-img { --th: clamp(54px, 5.2vw, 76px); }
+.showcase .showcase__item-name { font: 500 12.5px/1.25 var(--font-ui, Inter, sans-serif); letter-spacing: 0.01em; }
+.showcase .showcase__fam-head { font-size: 10px; }
+@media (prefers-reduced-motion: reduce) { .showcase__actions.is-in .showcase__act { animation: none; } }
+
+@media (max-width: 900px) {
+  .showcase__main { display: flex; flex-direction: column; height: auto; gap: 0; margin-bottom: 26px; }
+  .showcase .showcase__stage { order: 1; width: 100%; height: 44svh; min-height: 280px; }
+  .showcase .showcase__float img { max-width: 90cqw; max-height: 84cqh; }
+  .showcase .showcase__info { order: 2; max-width: none; width: 100%; padding: 0 20px; margin-top: 6px; }
+  .showcase .showcase__logo { height: 54px; }
+  .showcase__stats { grid-template-columns: repeat(3, 1fr); }
+  .showcase__stats > div { flex-direction: column; align-items: flex-start; gap: 6px; padding: 12px 10px 12px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+  .showcase__stats > div + div { padding-left: 10px; border-left: 1px solid rgba(255, 255, 255, 0.08); }
+  .showcase__stats dd { text-align: left; font-size: 13px; }
+  .showcase__actions { order: 3; max-width: none; padding: 18px 20px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .showcase__act { padding: 10px 12px 10px 10px; gap: 10px; }
+  .showcase__act-icon { width: 34px; height: 34px; }
+  .showcase__act-label { font-size: 13px; }
+  .showcase__act-sub { display: none; }
+  .showcase .showcase__item { width: 92px; }
+}
+/* Phase 87: on a phone the rail sits right under the product, so a tap shows its result in view */
+@media (max-width: 900px) {
+  .showcase { display: flex; flex-direction: column; }
+  .showcase__main { display: contents; }
+  .showcase .showcase__stage { order: 1; }
+  .showcase .showcase__rail { order: 2; margin: 4px 0 18px; }
+  .showcase .showcase__info { order: 3; }
+  .showcase .showcase__actions { order: 4; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   PHASE 88 — the 3D plays inside the showcase stage (showcase.js live()). The drawer's 3D stage is borrowed: its studio melts
+   into the page through a soft radial mask, its own controls are hidden (the right-hand tiles drive it), its HUD (fires,
+   discharge labels, shot chips) stays. A full-screen button sits in the corner.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+.showcase__live { position: absolute; inset: -4% -8% 3%; z-index: 1; opacity: 0; transition: opacity 600ms ease; }
+.showcase.has-3d .showcase__live { opacity: 1; }
+.showcase__live > #drawer-stage-3d { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; margin: 0 !important;
+  border-radius: 0 !important; transform: none !important; background: transparent !important; display: block !important; visibility: visible !important;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent), linear-gradient(180deg, transparent, #000 9%, #000 86%, transparent);
+  -webkit-mask-composite: source-in; mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent), linear-gradient(180deg, transparent, #000 9%, #000 86%, transparent);
+  mask-composite: intersect; }
+.showcase__live .drawer__modes, .showcase__live .drawer__zoom, .showcase__live .drawer__foam-toggle, .showcase__live .drawer__activate,
+.showcase__live .drawer__viewer-hint, .showcase__live .drawer__viewer-loading, .showcase__live .drawer__scan { display: none !important; }
+.showcase__live .drawer__shots { top: 10% !important; }
+.showcase .showcase__main > .showcase__info, .showcase .showcase__main > .showcase__actions { position: relative; z-index: 3; }
+.showcase__product { transition: opacity 600ms ease; }
+.showcase.has-3d .showcase__product { opacity: 0; pointer-events: none; }
+.showcase.has-3d .showcase__stage { cursor: grab; }
+.showcase.has-3d .showcase__stage:active { cursor: grabbing; }
+.showcase.is-live .showcase__stage::after { opacity: 0; }
+.showcase__fs { position: absolute; z-index: 4; bottom: 8%; right: 0; display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px 9px 11px; border-radius: 999px; cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(10, 11, 14, 0.6); color: #fff; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  font: 500 11px/1 var(--font-ui, Inter, sans-serif); letter-spacing: 0.1em; text-transform: uppercase; opacity: 0; transform: translateY(-6px);
+  animation: sc-fs-in 500ms cubic-bezier(0.22, 1, 0.36, 1) 300ms forwards; transition: background 200ms ease, border-color 200ms ease; }
+.showcase__fs:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.4); }
+@keyframes sc-fs-in { to { opacity: 1; transform: none; } }
+.showcase__livehint { position: absolute; z-index: 4; left: 50%; bottom: 2%; transform: translateX(-50%); white-space: nowrap; pointer-events: none;
+  font: 500 10px/1 var(--font-ui, Inter, sans-serif); letter-spacing: 0.16em; text-transform: uppercase; color: rgba(241, 242, 245, 0.55);
+  animation: sc-hint 5s ease 0.6s both; }
+@keyframes sc-hint { 0% { opacity: 0; } 12%, 80% { opacity: 1; } 100% { opacity: 0; } }
+.showcase__spin { position: absolute; z-index: 4; left: 50%; top: 50%; width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50%; pointer-events: none;
+  border: 1.5px solid rgba(255, 255, 255, 0.15); border-top-color: #fff; animation: sc-spin 900ms linear infinite; opacity: 0; transition: opacity 300ms ease; }
+.showcase.is-loading .showcase__spin { opacity: 1; }
+@keyframes sc-spin { to { transform: rotate(360deg); } }
+/* the tile that is playing */
+.showcase__act.is-on { border-color: rgba(255, 255, 255, 0.6); background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.05)); }
+.showcase__act.is-on .showcase__act-icon { background: #fff; color: #0b0c10; border-color: #fff; }
+.showcase__act--live.is-on { border-color: rgba(255, 80, 90, 0.85); background: linear-gradient(180deg, rgba(255, 40, 52, 0.28), rgba(255, 40, 52, 0.08)); }
+.showcase__act--live.is-on .showcase__act-icon { background: #ff2a36; color: #fff; border-color: #ff2a36; box-shadow: 0 0 0 0 rgba(255, 42, 54, 0.6); animation: sc-live 1.6s ease-out infinite; }
+@keyframes sc-live { 70%, 100% { box-shadow: 0 0 0 10px rgba(255, 42, 54, 0); } }
+.showcase__act--live.is-on .showcase__act-sub { color: rgba(255, 210, 212, 0.75); }
+@media (max-width: 900px) {
+  .showcase__live { inset: 0; }
+  .showcase__fs span { display: none; }
+  .showcase__fs { padding: 9px; bottom: 10px; right: 12px; }
+  .showcase__livehint { font-size: 9px; letter-spacing: 0.1em; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   PHASE 89 — the stage is a showroom floor: nothing floats. The live 3D stands on its studio floor; a cut-out (photo products,
+   and a 3D product for the moment before its model is in) stands on a matching dark floor with a contact shadow and a faint
+   reflection. Fullscreen button, hint and the playing state only with the live model.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+.showcase .showcase__float { animation: none; }
+.showcase .showcase__body { transform: none; }
+.showcase .showcase__shadow { left: 6%; right: 6%; bottom: -1.2%; height: 4.5%; animation: none; opacity: 1; filter: blur(5px);
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.55) 55%, rgba(0, 0, 0, 0)); }
+.showcase__reflect { position: absolute; left: 0; top: 100%; width: 100%; height: auto; transform: scaleY(-1); opacity: 0.16; pointer-events: none; user-select: none;
+  -webkit-mask-image: linear-gradient(to top, #000 0%, transparent 28%); mask-image: linear-gradient(to top, #000 0%, transparent 28%); filter: blur(1.5px); }
+.showcase .showcase__stage::after { opacity: 0; }
+.showcase .showcase__stage::before { content: ""; position: absolute; z-index: -1; left: -26%; right: -26%; bottom: -2%; height: 30%; pointer-events: none;
+  background: radial-gradient(ellipse 52% 62% at 50% 26%, rgba(62, 64, 70, 0.45) 0%, rgba(30, 31, 36, 0.3) 48%, transparent 78%); transition: opacity 600ms ease; }
+/* Phase 90: the live model is see-through around itself, so the page's showroom floor stays under it too */
+.showcase:not(.has-3d) .showcase__fs, .showcase:not(.has-3d) .showcase__livehint { display: none; }
+.showcase__live canvas { touch-action: pan-y !important; }   /* phone: sideways drag turns the model, up/down still scrolls the page */
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   PHASE 91 — one seamless showroom (owner: "make the floor and background seamless"; "the model must load on its own, no image
+   to model hand-over; a cool fun loading thing while it loads"). The room is a single layer behind the product: a wall glow in
+   the product's colour, a faint floor sheen and a pool of that light exactly where the product stands (--fy, measured from the
+   model's own foot), all fading into the page with no edge. While a model loads, a pressure gauge climbs to the product's own
+   working pressure; when it is in, the needle sweeps home, a puff of mist, and the model rises onto the floor.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+@property --fy { syntax: "<percentage>"; inherits: true; initial-value: 82%; }
+.showcase { transition: --glow 1200ms ease, --fy 900ms cubic-bezier(0.22, 1, 0.36, 1); }
+.showcase .showcase__glow { display: none; }
+.showcase .showcase__stage::before { content: none; }
+.showcase__room { position: absolute; z-index: -1; left: -60%; right: -60%; top: -20%; bottom: -20%; pointer-events: none;
+  background:
+    radial-gradient(ellipse 15% 4.2% at 50% var(--fy), color-mix(in srgb, var(--glow) 34%, transparent) 0%, transparent 100%),
+    radial-gradient(ellipse 30% 10% at 50% var(--fy), rgba(150, 156, 170, 0.085) 0%, transparent 100%),
+    radial-gradient(ellipse 17% 30% at 50% calc(var(--fy) - 27%), color-mix(in srgb, var(--glow) 30%, transparent) 0%, color-mix(in srgb, var(--glow) 9%, transparent) 55%, transparent 100%),
+    radial-gradient(ellipse 42% 22% at 50% calc(var(--fy) + 6%), rgba(255, 255, 255, 0.022) 0%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 55%, transparent 100%); mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 55%, transparent 100%); }
+
+/* the model rises onto the floor once it is in */
+.showcase .showcase__live { opacity: 0; transform: translateY(18px) scale(0.985); transform-origin: 50% 85%;
+  transition: opacity 700ms ease, transform 1000ms cubic-bezier(0.22, 1, 0.36, 1); }
+.showcase.has-3d .showcase__live { opacity: 1; transform: none; }
+
+/* the pressure gauge */
+.showcase__loader { position: absolute; z-index: 3; left: 50%; top: 50%; transform: translate(-50%, -54%); display: flex; flex-direction: column; align-items: center; gap: 6px;
+  pointer-events: none; opacity: 0; transition: opacity 400ms ease, transform 500ms ease; --p: 0; }
+.showcase.is-3d:not(.has-3d) .showcase__loader { opacity: 1; }
+.showcase__gauge { position: relative; width: 132px; height: 132px; }
+.showcase__gauge svg { width: 100%; height: 100%; overflow: visible; }
+.showcase__gauge-track { fill: none; stroke: rgba(255, 255, 255, 0.1); stroke-width: 2; stroke-linecap: round; }
+.showcase__gauge-fill { fill: none; stroke: url(#sc-gauge-g); stroke-width: 2.5; stroke-linecap: round; stroke-dasharray: 100px; stroke-dashoffset: calc((1 - var(--p)) * 100px);
+  filter: drop-shadow(0 0 6px rgba(255, 32, 48, 0.6)); }
+.showcase__gauge-ticks line { stroke: rgba(255, 255, 255, 0.35); stroke-width: 1.2; stroke-linecap: round; }
+.showcase__gauge-needle { transform-origin: 60px 60px; transform: rotate(calc(-135deg + var(--p) * 270deg)); }
+.showcase__gauge-needle line { stroke: #fff; stroke-width: 2; stroke-linecap: round; }
+.showcase__gauge-needle circle { fill: #0b0c10; stroke: #fff; stroke-width: 1.5; }
+.showcase__loader-val { display: flex; align-items: baseline; gap: 6px; margin-top: -18px; font-variant-numeric: tabular-nums; }
+.showcase__loader-num { font: 500 22px/1 var(--font-ui, Inter, sans-serif); color: #fff; min-width: 2.6ch; text-align: right; }
+.showcase__loader-unit { font: 500 10px/1 var(--font-ui, Inter, sans-serif); letter-spacing: 0.2em; text-transform: uppercase; color: rgba(241, 242, 245, 0.5); }
+.showcase__loader-label { font: 500 9.5px/1 var(--font-ui, Inter, sans-serif); letter-spacing: 0.3em; text-transform: uppercase; color: rgba(241, 242, 245, 0.55); }
+.showcase__loader.is-done .showcase__loader-label { color: #fff; }
+.showcase__loader.is-done .showcase__gauge-fill { stroke: #fff; }
+/* the puff: a ring of mist leaves the gauge as the needle hits home */
+.showcase__puff { position: absolute; inset: 18%; border-radius: 50%; opacity: 0; pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.12) 45%, transparent 70%); filter: blur(4px); }
+.showcase__loader.is-done .showcase__puff { animation: sc-puff 700ms cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+@keyframes sc-puff { 0% { opacity: 0.9; transform: scale(0.6); } 100% { opacity: 0; transform: scale(2.6); } }
+.showcase.has-3d .showcase__loader { transform: translate(-50%, -54%) scale(0.92); }
+@media (prefers-reduced-motion: reduce) { .showcase .showcase__live { transform: none; } .showcase__loader.is-done .showcase__puff { animation: none; } }
+@media (max-width: 900px) { .showcase__gauge { width: 112px; height: 112px; } }
+
+/* Phase 92 — a real extinguisher gauge (showcase.js loader) */
+.showcase .showcase__gauge { width: 168px; height: 168px; filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.6)); }
+.showcase__gauge .zr { fill: none; stroke: #d3141f; stroke-width: 4; opacity: 0.85; }
+.showcase__gauge .zg { fill: none; stroke: #3ccf6e; stroke-width: 4; filter: drop-shadow(0 0 4px rgba(60, 207, 110, 0.6)); }
+.showcase__gauge .tk line { stroke: rgba(255, 255, 255, 0.85); stroke-linecap: round; }
+.showcase__gauge .tk .mn { stroke-width: 0.8; stroke: rgba(255, 255, 255, 0.45); }
+.showcase__gauge .tk .mj { stroke-width: 1.6; }
+.showcase__gauge .nm text { fill: rgba(255, 255, 255, 0.85); font: 600 9.5px/1 var(--font-ui, Inter, sans-serif); text-anchor: middle; dominant-baseline: central; }
+.showcase__gauge .un { fill: rgba(255, 255, 255, 0.55); font: 600 8px/1 var(--font-ui, Inter, sans-serif); letter-spacing: 0.2em; text-anchor: middle; }
+.showcase__gauge .sub { fill: rgba(60, 207, 110, 0.85); font: 600 5.5px/1 var(--font-ui, Inter, sans-serif); letter-spacing: 0.18em; text-anchor: middle; }
+.showcase__gauge .nd path { fill: #ff2a36; filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.7)); }
+.showcase__gauge .nd circle { fill: #1a1b20; stroke: #8a8f99; stroke-width: 1; }
+.showcase__gauge .nd .pin { fill: #c9cdd4; stroke: none; }
+.showcase__gauge .gl { pointer-events: none; }
+.showcase .showcase__gauge-fill, .showcase .showcase__gauge-track, .showcase .showcase__gauge-ticks, .showcase .showcase__gauge-needle { display: none; }
+.showcase .showcase__loader-val { margin-top: 10px; }
+.showcase__loader.is-done .showcase__loader-label { color: #3ccf6e; }
+@media (max-width: 900px) { .showcase .showcase__gauge { width: 140px; height: 140px; } }
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   PHASE 93 — one background, no cut-out block (owner: "make the background all the same, and the colour in front of the
+   product nicer with the ground; I don't like that you can see a block cut out with a fade").
+   The block was the 3D stage's own film-grain layer (a 5 % overlay over the whole canvas rectangle) plus the section's corner
+   gradients. The section is now one flat dark; the stage has no layer of its own; the only light is the room: a pool of the
+   product's colour lying on the floor in front of and under it, and a faint glow on the wall behind — every gradient runs to
+   zero long before its box ends, so nothing has an edge.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+:root { --room-bg: #08090c; }
+.products-section.has-showcase { background: var(--room-bg); box-shadow: none; }
+#contact.contact-section { background:
+    radial-gradient(70% 60% at 100% 0%, rgba(255, 32, 48, 0.07) 0%, transparent 60%),
+    linear-gradient(180deg, var(--room-bg) 0%, #07080b 100%); }
+.showcase__live #drawer-stage-3d > div:not([class]):not([id]) { display: none !important; }   /* the viewer's film grain: full screen only */
+.showcase__live > #drawer-stage-3d { -webkit-mask-image: none; mask-image: none; }              /* the canvas is see-through: nothing to fade */
+.showcase__room { left: -80%; right: -80%; top: -40%; bottom: -40%; -webkit-mask-image: none; mask-image: none;
+  background:
+    /* the pool on the ground: hot under the product, spreading forward toward the viewer, flattened by perspective */
+    radial-gradient(ellipse 11% 2.6% at 50% calc(var(--fy) + 0.6%),
+      color-mix(in srgb, var(--glow) 42%, transparent) 0%, color-mix(in srgb, var(--glow) 26%, transparent) 30%,
+      color-mix(in srgb, var(--glow) 10%, transparent) 62%, color-mix(in srgb, var(--glow) 3%, transparent) 82%, transparent 100%),
+    radial-gradient(ellipse 22% 5.5% at 50% calc(var(--fy) + 1.8%),
+      color-mix(in srgb, var(--glow) 14%, transparent) 0%, color-mix(in srgb, var(--glow) 6%, transparent) 45%,
+      color-mix(in srgb, var(--glow) 2%, transparent) 75%, transparent 100%),
+    /* a cool sheen where the floor catches the room light */
+    radial-gradient(ellipse 30% 7% at 50% calc(var(--fy) + 2.5%), rgba(170, 176, 190, 0.05) 0%, rgba(170, 176, 190, 0.02) 50%, transparent 100%),
+    /* the wall behind: a tall, soft wash of the same colour */
+    radial-gradient(ellipse 13% 24% at 50% calc(var(--fy) - 17%),
+      color-mix(in srgb, var(--glow) 20%, transparent) 0%, color-mix(in srgb, var(--glow) 9%, transparent) 40%,
+      color-mix(in srgb, var(--glow) 3%, transparent) 72%, transparent 100%); }
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   PHASE 94 — a real floor, a deep room (owner: "the floor colour must feel like the floor; the back needs more depth").
+   3D products stand on the viewer's own stage floor (see-through mode): it is lit, carries the product's contact shadow and a
+   pool of the product's colour in true perspective, and fades out in screen space into the page. The room behind is only wall:
+   a tall wash of light falling from above onto the back wall, brightest just above the horizon and dying toward the ceiling,
+   and a faint horizon band where floor meets wall. Photo products keep the painted floor pool (::after).
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+.showcase__room { background: none; }
+.showcase__room::before, .showcase__room::after { content: ""; position: absolute; inset: 0; pointer-events: none; transition: opacity 700ms ease; }
+.showcase__room::before { background:
+    /* the wall wash: a soft cone of light from above, coloured by the product */
+    radial-gradient(ellipse 15% 26% at 50% calc(var(--fy) - 15%),
+      color-mix(in srgb, var(--glow) 17%, transparent) 0%, color-mix(in srgb, var(--glow) 8%, transparent) 38%,
+      color-mix(in srgb, var(--glow) 2.5%, transparent) 70%, transparent 100%),
+    /* neutral room light on the wall, wider and fainter: the room has width */
+    radial-gradient(ellipse 32% 20% at 50% calc(var(--fy) - 8%), rgba(150, 156, 172, 0.045) 0%, rgba(150, 156, 172, 0.018) 50%, transparent 100%),
+    /* the horizon: where the floor meets the wall, a long, thin lift */
+    radial-gradient(ellipse 36% 1.6% at 50% calc(var(--fy) - 4.5%), rgba(190, 196, 210, 0.05) 0%, rgba(190, 196, 210, 0.015) 55%, transparent 100%); }
+.showcase__room::after { background:
+    radial-gradient(ellipse 11% 2.6% at 50% calc(var(--fy) + 0.6%),
+      color-mix(in srgb, var(--glow) 42%, transparent) 0%, color-mix(in srgb, var(--glow) 26%, transparent) 30%,
+      color-mix(in srgb, var(--glow) 10%, transparent) 62%, color-mix(in srgb, var(--glow) 3%, transparent) 82%, transparent 100%),
+    radial-gradient(ellipse 22% 5.5% at 50% calc(var(--fy) + 1.8%),
+      color-mix(in srgb, var(--glow) 14%, transparent) 0%, color-mix(in srgb, var(--glow) 6%, transparent) 45%, transparent 100%); }
+.showcase.is-3d .showcase__room::after { opacity: 0; }
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   PHASE 95 — "The Bay" (owner: "the room doesn't feel premium — come up with something cool that fits"). Each product stands on
+   a display turntable inlaid in the floor, ringed in its colour (the Ritestand circle as light; drawer-viewer setPlinth). The
+   back wall gets two slim architectural LED strips with their streaks on the floor; low mist drifts across the floor (the
+   product's own medium), lit by the bay.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+.showcase__room::before { background:
+    /* LED strips on the back wall: a slim core and its soft bloom, left and right of the bay */
+    radial-gradient(ellipse 0.09% 15% at 33% calc(var(--fy) - 19%), rgba(255, 236, 236, 0.55) 0%, rgba(255, 236, 236, 0.18) 55%, transparent 100%),
+    radial-gradient(ellipse 0.09% 15% at 67% calc(var(--fy) - 19%), rgba(255, 236, 236, 0.55) 0%, rgba(255, 236, 236, 0.18) 55%, transparent 100%),
+    radial-gradient(ellipse 1.6% 19% at 33% calc(var(--fy) - 19%), color-mix(in srgb, var(--glow) 16%, transparent) 0%, transparent 100%),
+    radial-gradient(ellipse 1.6% 19% at 67% calc(var(--fy) - 19%), color-mix(in srgb, var(--glow) 16%, transparent) 0%, transparent 100%),
+    /* their streaks on the polished floor */
+    radial-gradient(ellipse 0.35% 5% at 33% calc(var(--fy) + 2.5%), rgba(255, 236, 236, 0.10) 0%, transparent 100%),
+    radial-gradient(ellipse 0.35% 5% at 67% calc(var(--fy) + 2.5%), rgba(255, 236, 236, 0.10) 0%, transparent 100%),
+    /* the wall wash behind the product */
+    radial-gradient(ellipse 15% 26% at 50% calc(var(--fy) - 15%),
+      color-mix(in srgb, var(--glow) 15%, transparent) 0%, color-mix(in srgb, var(--glow) 7%, transparent) 38%,
+      color-mix(in srgb, var(--glow) 2%, transparent) 70%, transparent 100%),
+    radial-gradient(ellipse 32% 20% at 50% calc(var(--fy) - 8%), rgba(150, 156, 172, 0.04) 0%, rgba(150, 156, 172, 0.015) 50%, transparent 100%),
+    radial-gradient(ellipse 36% 1.6% at 50% calc(var(--fy) - 4.5%), rgba(190, 196, 210, 0.05) 0%, rgba(190, 196, 210, 0.015) 55%, transparent 100%); }
+/* mist: three soft banks drifting at floor level, over the product's feet */
+.showcase__mist { position: absolute; z-index: 2; left: -20%; right: -20%; top: calc((var(--fy) * 1.8) - 40% - 16%); height: 26%; pointer-events: none;
+  opacity: 0; transition: opacity 1.4s ease;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 25%, #000 75%, transparent); mask-image: linear-gradient(90deg, transparent, #000 25%, #000 75%, transparent); }
+.showcase.has-3d .showcase__mist { opacity: 1; }
+.showcase__mist i { position: absolute; top: 20%; width: 60%; height: 70%; border-radius: 50%; filter: blur(22px);
+  background: radial-gradient(ellipse at 50% 60%, color-mix(in srgb, var(--glow) 10%, rgba(220, 224, 232, 0.10)) 0%, rgba(220, 224, 232, 0.03) 45%, transparent 70%);
+  animation: sc-mist 26s ease-in-out infinite alternate; }
+.showcase__mist i:nth-child(1) { left: 0%; }
+.showcase__mist i:nth-child(2) { left: 30%; top: 35%; animation-duration: 34s; animation-delay: -12s; opacity: 0.8; }
+.showcase__mist i:nth-child(3) { left: 45%; top: 10%; animation-duration: 41s; animation-delay: -20s; opacity: 0.6; }
+@keyframes sc-mist { from { transform: translateX(-12%) scaleY(0.9); } to { transform: translateX(14%) scaleY(1.1); } }
+@media (prefers-reduced-motion: reduce) { .showcase__mist i { animation: none; } }
+@media (max-width: 900px) {   /* Phase 95: a narrow bay — no wall strips (they would frame it as a box); turntable + mist stay */
+  .showcase__room::before { background:
+    radial-gradient(ellipse 15% 26% at 50% calc(var(--fy) - 15%), color-mix(in srgb, var(--glow) 13%, transparent) 0%, color-mix(in srgb, var(--glow) 5%, transparent) 45%, transparent 100%),
+    radial-gradient(ellipse 36% 1.6% at 50% calc(var(--fy) - 4.5%), rgba(190, 196, 210, 0.04) 0%, transparent 100%); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   PHASE 96 — the relief wall (owner's references: interlocking dark frames with rounded openings; "now and then an outline
+   through the abstract shapes in the colour of the floor light"). The product is back at its full size; no turntable, no LED
+   strips. The wall sits behind the product down to just above its foot, and dissolves into the page on every side and into
+   the floor below — no box.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+.showcase__wall { position: absolute; z-index: 0; left: -42%; right: -42%; top: -22%; bottom: calc(140% - var(--fy) * 1.8 + 4%); pointer-events: none;
+  -webkit-mask-image: radial-gradient(ellipse 46% 62% at 50% 62%, #000 30%, rgba(0, 0, 0, 0.55) 60%, transparent 100%), linear-gradient(180deg, transparent 0%, #000 18%, #000 70%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image: radial-gradient(ellipse 46% 62% at 50% 62%, #000 30%, rgba(0, 0, 0, 0.55) 60%, transparent 100%), linear-gradient(180deg, transparent 0%, #000 18%, #000 70%, transparent 100%);
+  mask-composite: intersect; opacity: 0.95; }
+.showcase__wall svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.showcase__wall .tf { fill: none; stroke: var(--glow); stroke-width: 1.2; opacity: 0.08; }
+.showcase__wall .tr { fill: none; stroke: var(--glow); stroke-width: 2; stroke-linecap: round; stroke-dasharray: 9 91; stroke-dashoffset: 100; opacity: 0;
+  filter: drop-shadow(0 0 4px var(--glow)) drop-shadow(0 0 10px var(--glow)); animation: scw-trace 12.4s linear infinite; animation-delay: var(--d, 0s); }
+@keyframes scw-trace { 0% { stroke-dashoffset: 100; opacity: 0; } 4% { opacity: 1; } 42% { opacity: 1; } 48% { stroke-dashoffset: 0; opacity: 0; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .showcase__wall .tr { animation: none; opacity: 0; } }
+/* the wall light: brightest behind the product, a soft fall-off; the strips of Phase 95 go */
+.showcase__room::before { background:
+    radial-gradient(ellipse 15% 26% at 50% calc(var(--fy) - 15%),
+      color-mix(in srgb, var(--glow) 12%, transparent) 0%, color-mix(in srgb, var(--glow) 5%, transparent) 40%, transparent 100%),
+    radial-gradient(ellipse 36% 1.6% at 50% calc(var(--fy) - 4.5%), rgba(190, 196, 210, 0.04) 0%, transparent 100%); }
+.showcase__room { z-index: 1; }   /* the wash lies over the relief */
+.showcase .showcase__live { z-index: 2; }
+
+/* Phase 96b: the wall stops where it meets the floor (--wy, measured behind the product), with a soft corner shadow */
+@property --wy { syntax: "<percentage>"; inherits: true; initial-value: 55%; }
+.showcase { transition: --glow 1200ms ease, --fy 900ms cubic-bezier(0.22, 1, 0.36, 1), --wy 900ms cubic-bezier(0.22, 1, 0.36, 1); }
+.showcase__wall { bottom: calc(100% - var(--wy));
+  -webkit-mask-image: radial-gradient(ellipse 46% 70% at 50% 75%, #000 30%, rgba(0, 0, 0, 0.55) 62%, transparent 100%), linear-gradient(180deg, transparent 0%, #000 22%, #000 90%, transparent 100%);
+  mask-image: radial-gradient(ellipse 46% 70% at 50% 75%, #000 30%, rgba(0, 0, 0, 0.55) 62%, transparent 100%), linear-gradient(180deg, transparent 0%, #000 22%, #000 90%, transparent 100%); }
+.showcase__wall::after { content: ""; position: absolute; left: 20%; right: 20%; bottom: 0; height: 12%;
+  background: radial-gradient(ellipse 50% 100% at 50% 100%, rgba(0, 0, 0, 0.6), transparent 70%); }
+
+/* Phase 96c: a stronger relief — bevelled frames catching a top-left light, deeper shadows; the product's colour tints the
+   edges near the middle; wider before it dissolves */
+.showcase__wall { -webkit-mask-image: radial-gradient(ellipse 52% 78% at 50% 72%, #000 38%, rgba(0, 0, 0, 0.6) 66%, transparent 100%), linear-gradient(180deg, transparent 0%, #000 16%, #000 90%, transparent 100%);
+  mask-image: radial-gradient(ellipse 52% 78% at 50% 72%, #000 38%, rgba(0, 0, 0, 0.6) 66%, transparent 100%), linear-gradient(180deg, transparent 0%, #000 16%, #000 90%, transparent 100%); opacity: 1; }
+.showcase__wall .scw-light { z-index: 2; }
+.showcase__wall .scw-tint { position: absolute; inset: 0; z-index: 1; pointer-events: none; mix-blend-mode: color-dodge;
+  background: radial-gradient(ellipse 30% 45% at 50% 70%, color-mix(in srgb, var(--glow) 38%, transparent) 0%, color-mix(in srgb, var(--glow) 12%, transparent) 50%, transparent 100%); }
+.showcase__wall .tf { opacity: 0.14; }
+
+/* Phase 97: the room is real 3D now (drawer-viewer setRoom); the painted relief wall of Phase 96 stays out while a model is on
+   the stage, and the CSS wall wash steps back */
+.showcase.has-3d .showcase__wall, .showcase.is-3d .showcase__wall { opacity: 0; transition: opacity 600ms ease; }
+.showcase.is-3d .showcase__room::before { opacity: 0.4; }
+
+/* Phase 99 (owner: "make the floor black like the first time, take out the rectangular cut with faded edges, fade the background
+   nicely and modern"): the 3D stage draws nothing but the product and its shadow on the page's own black; the background is one
+   seamless, soft light — a wide wash on the wall behind and a pool of the product's colour lying on the floor. No relief, no room. */
+.showcase__wall { display: none; }
+.showcase.is-3d .showcase__room::after { opacity: 1; }
+.showcase.is-3d .showcase__room::before { opacity: 1; }
+.showcase__room::before { background:
+    radial-gradient(ellipse 22% 34% at 50% calc(var(--fy) - 16%), color-mix(in srgb, var(--glow) 11%, transparent) 0%, color-mix(in srgb, var(--glow) 5%, transparent) 38%, color-mix(in srgb, var(--glow) 1.5%, transparent) 70%, transparent 100%),
+    radial-gradient(ellipse 40% 24% at 50% calc(var(--fy) - 8%), rgba(150, 156, 172, 0.03) 0%, transparent 100%); }
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   PHASE 100 — the wall is the owner's own image (sweeping dark plates with thin red neon edges), turned landscape, at full
+   quality across the whole section, behind the see-through 3D product. It fades in from the section's top and down into the
+   black floor the product stands on; the red lines breathe slowly like neon. No vignette, no cut, no 3D room.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+.showcase__backdrop { position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: url("images/showcase/wall-neon.webp?v=1") center 38% / cover no-repeat;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 12%, #000 52%, rgba(0, 0, 0, 0.35) 66%, transparent 76%);
+  mask-image: linear-gradient(180deg, transparent 0%, #000 12%, #000 52%, rgba(0, 0, 0, 0.35) 66%, transparent 76%); }
+.showcase__backdrop::after { content: ""; position: absolute; inset: 0; background: inherit; mix-blend-mode: screen;
+  filter: saturate(2.4) brightness(1.5) contrast(1.6); opacity: 0.2; animation: sc-neon 6s ease-in-out infinite; }
+@keyframes sc-neon { 0%, 100% { opacity: 0.12; } 50% { opacity: 0.5; } }
+@media (prefers-reduced-motion: reduce) { .showcase__backdrop::after { animation: none; opacity: 0.25; } }
+@media (max-width: 900px) { .showcase__backdrop { background-image: url("images/showcase/wall-neon-1280.webp?v=1"); background-size: auto 46%; background-position: 22% 0%;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 8%, #000 32%, transparent 55%); mask-image: linear-gradient(180deg, transparent 0%, #000 8%, #000 32%, transparent 55%); } }
+/* the image is the wall: the painted wall wash steps out; the pool of light on the floor stays */
+.showcase__room::before, .showcase.is-3d .showcase__room::before { opacity: 0; }
+.showcase .showcase__main { position: relative; z-index: 2; }
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   PHASE 101 — the room is the owner's image (a wall of sweeping dark plates with red neon edges, and a floor), at full
+   resolution, laid out by showcase.js so the product's foot stands on its floor. Four layers: the wall and the floor move at
+   different rates with the camera (parallax: --px1/--py1 and --px2/--py2, zoom --bs); the neon (isolated red only) carries a
+   breathing bloom and a pulse of light that runs along it. The old flat image of Phase 100 is gone.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+.showcase__backdrop { background: none !important; overflow: hidden;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 70px, #000 calc(var(--bd-bottom, 100%) - 140px), transparent var(--bd-bottom, 100%));
+  mask-image: linear-gradient(180deg, transparent 0, #000 70px, #000 calc(var(--bd-bottom, 100%) - 140px), transparent var(--bd-bottom, 100%)); }
+.showcase__backdrop::after { content: none !important; }
+.bd-layer { position: absolute; left: var(--bd-x, 0); top: var(--bd-y, 0); width: var(--bd-w, 100%); height: var(--bd-h, 100%);
+  background-size: 100% 100%; background-repeat: no-repeat; transform-origin: 50% 75%; will-change: transform; }
+.bd-wall, .bd-glow, .bd-sweep { transform: translate3d(var(--px1, 0px), var(--py1, 0px), 0) scale(var(--bs, 1)); }
+.bd-floor { transform: translate3d(var(--px2, 0px), var(--py2, 0px), 0) scale(var(--bs, 1)); }
+.bd-wall { background-image: url("images/showcase/room-neon.webp?v=1");
+  -webkit-mask-image: linear-gradient(180deg, #000 0, #000 73%, transparent 77%); mask-image: linear-gradient(180deg, #000 0, #000 73%, transparent 77%); }
+.bd-floor { background-image: url("images/showcase/room-neon.webp?v=1");
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, transparent 73%, #000 77%); mask-image: linear-gradient(180deg, transparent 0, transparent 73%, #000 77%); }
+/* neon VFX: a bloom that breathes, with a rare soft flicker */
+.bd-glow { background-image: url("images/showcase/room-neon-glow.webp?v=1"); mix-blend-mode: screen; opacity: 0.55; animation: bd-breathe 6.5s ease-in-out infinite; }
+@keyframes bd-breathe { 0%, 100% { opacity: 0.4; } 45% { opacity: 0.85; } 47% { opacity: 0.62; } 49% { opacity: 0.85; } 70% { opacity: 0.7; } }
+/* and a pulse of light that runs along the neon, left to right */
+.bd-sweep { background-image: url("images/showcase/room-neon-core.webp?v=1"); mix-blend-mode: screen; filter: brightness(1.8) saturate(1.3);
+  -webkit-mask-image: linear-gradient(100deg, transparent 0%, transparent 44%, #000 50%, transparent 56%, transparent 100%); -webkit-mask-size: 260% 100%; -webkit-mask-repeat: no-repeat;
+  mask-image: linear-gradient(100deg, transparent 0%, transparent 44%, #000 50%, transparent 56%, transparent 100%); mask-size: 260% 100%; mask-repeat: no-repeat;
+  animation: bd-sweep 7.5s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
+@keyframes bd-sweep { 0% { -webkit-mask-position: 100% 0; mask-position: 100% 0; } 70%, 100% { -webkit-mask-position: 0% 0; mask-position: 0% 0; } }
+@media (prefers-reduced-motion: reduce) { .bd-glow, .bd-sweep { animation: none; } .bd-sweep { opacity: 0; } }
+@media (max-width: 900px) { .bd-wall, .bd-floor { background-image: url("images/showcase/room-neon-1600.webp?v=1"); } }
+/* the image has its own light: the painted pool steps back to a faint warmth under the product */
+.showcase__room::after { opacity: 0.35 !important; }
+
+/* Phase 102: in the Blender room the 3D canvas draws the room itself — the image backdrop and the painted pool step out, and
+   the canvas melts into the page at its top and bottom */
+.showcase.has-room .showcase__backdrop, .showcase.has-room .showcase__room, .showcase.has-room .showcase__mist { opacity: 0; transition: opacity 700ms ease; }
+.showcase.has-room .showcase__live > #drawer-stage-3d { -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 14%, #000 86%, transparent 100%); mask-image: linear-gradient(180deg, transparent 0%, #000 14%, #000 86%, transparent 100%); }
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   PHASE 103 — a still room, a turning product (owner: "keep the background I gave; the product just turns and zooms; full
+   freedom in Explore in 3D"; then "make the angles right, move the products down a little so they stand on the floor, blur the
+   background a little and give a vignette so the info at the sides reads better"). The camera tilt is locked to the room image's
+   eye height (showcase.js TILT); the 3D layer sits a little lower; the room image is softened and darkened behind the columns.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+.showcase.has-3d .showcase__live { transform: translateY(7%); }
+.bd-wall { filter: blur(0.8px) brightness(0.94); }
+.bd-floor { filter: brightness(0.94); }   /* the floor stays sharp: the product stands on it */
+.bd-glow { filter: blur(1px); }
+.showcase__backdrop::before { content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(7, 8, 11, 0.9) 0%, rgba(7, 8, 11, 0.72) 16%, rgba(7, 8, 11, 0.32) 30%, rgba(7, 8, 11, 0) 40%,
+                           rgba(7, 8, 11, 0) 62%, rgba(7, 8, 11, 0.32) 72%, rgba(7, 8, 11, 0.72) 85%, rgba(7, 8, 11, 0.9) 100%),
+    radial-gradient(ellipse 60% 70% at 50% 58%, rgba(7, 8, 11, 0) 50%, rgba(7, 8, 11, 0.45) 100%); }
+@media (max-width: 900px) {
+  .showcase.has-3d .showcase__live { transform: translateY(4%); }
+  .showcase__backdrop::before { background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(7, 8, 11, 0) 45%, rgba(7, 8, 11, 0.6) 100%); }
+}
+
+/* Phase 104: reset view (bottom right of the stage, once a model is in); the fires counter sits top centre, clear of the copy */
+.showcase__reset { position: absolute; z-index: 5; right: 4%; bottom: 6%; display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px 9px 11px; border-radius: 999px; cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(10, 11, 14, 0.6); color: #fff; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  font: 500 11px/1 var(--font-ui, Inter, sans-serif); letter-spacing: 0.1em; text-transform: uppercase; opacity: 0; pointer-events: none; transition: opacity 400ms ease, background 200ms ease, border-color 200ms ease; }
+.showcase.has-3d .showcase__reset { opacity: 1; pointer-events: auto; }
+.showcase__reset:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.4); }
+.showcase__reset svg { transition: transform 500ms cubic-bezier(0.22, 1, 0.36, 1); }
+.showcase__reset:hover svg { transform: rotate(-200deg); }
+.showcase__live .drawer__fires { left: 50% !important; right: auto !important; top: 4% !important; transform: translateX(-50%) !important; }
+@media (max-width: 900px) { .showcase__reset span { display: none; } .showcase__reset { padding: 10px; right: 14px; bottom: 12px; } }
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   PHASE 105 — richer neon VFX on the room wall (owner: "better vfx light effects on the wall"). All from the neon isolated
+   out of the owner's image (room-neon-core / -glow), so the light lives exactly on its lines:
+     bloom   a wide soft halo that breathes slowly (the neon lighting the air and the plates around it)
+     glow    the tight glow, breathing faster
+     sweep   two pulses of current racing along the neon in opposite directions, white-hot at the centre
+     flicker now and then a neon tube stutters (a short, irregular dip and flash)
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+.bd-bloom { background-image: url("images/showcase/room-neon-glow.webp?v=1"); mix-blend-mode: screen; filter: blur(22px) saturate(1.4) brightness(1.3);
+  opacity: 0.5; animation: bd-bloom 9s ease-in-out infinite; }
+@keyframes bd-bloom { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.75; } }
+.bd-glow { filter: blur(1px) saturate(1.3) brightness(1.15); animation: bd-breathe 5.5s ease-in-out infinite; }
+.bd-sweep { filter: brightness(2.6) saturate(0.85) drop-shadow(0 0 6px rgba(255, 70, 60, 0.9));
+  -webkit-mask-image: linear-gradient(100deg, transparent 0%, transparent 46%, rgba(0,0,0,0.6) 48.5%, #000 50%, rgba(0,0,0,0.6) 51.5%, transparent 54%, transparent 100%);
+  mask-image: linear-gradient(100deg, transparent 0%, transparent 46%, rgba(0,0,0,0.6) 48.5%, #000 50%, rgba(0,0,0,0.6) 51.5%, transparent 54%, transparent 100%);
+  animation: bd-sweep 6.5s cubic-bezier(0.55, 0.05, 0.45, 0.95) infinite; }
+.bd-sweep--b { -webkit-mask-image: linear-gradient(80deg, transparent 0%, transparent 47%, #000 50%, transparent 53%, transparent 100%);
+  mask-image: linear-gradient(80deg, transparent 0%, transparent 47%, #000 50%, transparent 53%, transparent 100%);
+  animation: bd-sweep-b 9.5s cubic-bezier(0.45, 0, 0.55, 1) 2.2s infinite; opacity: 0.85; }
+@keyframes bd-sweep-b { 0% { -webkit-mask-position: 0% 0; mask-position: 0% 0; } 75%, 100% { -webkit-mask-position: 100% 0; mask-position: 100% 0; } }
+.bd-flicker { background-image: url("images/showcase/room-neon-core.webp?v=1"); mix-blend-mode: screen; filter: brightness(1.8);
+  -webkit-mask-image: radial-gradient(ellipse 22% 30% at 78% 34%, #000 30%, transparent 70%); mask-image: radial-gradient(ellipse 22% 30% at 78% 34%, #000 30%, transparent 70%);
+  opacity: 0; animation: bd-flicker 7.3s steps(1, end) infinite; }
+@keyframes bd-flicker { 0%, 60%, 100% { opacity: 0; } 61% { opacity: 0.9; } 62% { opacity: 0.1; } 63.5% { opacity: 1; } 64.5% { opacity: 0.25; } 66% { opacity: 0.85; } 68% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .bd-bloom, .bd-flicker, .bd-sweep--b { animation: none; } .bd-flicker, .bd-sweep--b { opacity: 0; } }
+@media (max-width: 900px) { .bd-bloom { filter: blur(14px) saturate(1.3) brightness(1.2); } .bd-sweep--b, .bd-flicker { display: none; } }
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   PHASE 106 — elegant neon, and no flicker while a model loads (owner: "elegant neon lighting on the walls rather; the loading
+   model flickers"). The flicker was the browser dropping tiles of the backdrop: seven full-size layers with blend modes, a
+   22 px blur and a drop-shadow filter were too much to keep resident while a model uploads to the GPU. Now three layers, no
+   filters on the big ones, no will-change: the room (wall + floor in one, sharp), a tight neon glow that breathes very slowly,
+   and one slow, soft wash of light that glides along the neon now and then.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+.bd-layer { will-change: auto; transform: none !important; contain: paint; }
+.bd-room { background-image: url("images/showcase/room-neon.webp?v=1"); filter: none; }
+.bd-glow { background-image: url("images/showcase/room-neon-glow.webp?v=1"); mix-blend-mode: screen; filter: none; opacity: 0.35;
+  animation: bd-elegant 11s ease-in-out infinite; }
+@keyframes bd-elegant { 0%, 100% { opacity: 0.25; } 50% { opacity: 0.55; } }
+.bd-sweep { background-image: url("images/showcase/room-neon-core.webp?v=1"); mix-blend-mode: screen; filter: none; opacity: 0.7;
+  -webkit-mask-image: linear-gradient(100deg, transparent 0%, transparent 38%, rgba(0,0,0,0.5) 46%, #000 50%, rgba(0,0,0,0.5) 54%, transparent 62%, transparent 100%);
+  mask-image: linear-gradient(100deg, transparent 0%, transparent 38%, rgba(0,0,0,0.5) 46%, #000 50%, rgba(0,0,0,0.5) 54%, transparent 62%, transparent 100%);
+  -webkit-mask-size: 300% 100%; mask-size: 300% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  animation: bd-glide 16s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
+@keyframes bd-glide { 0% { -webkit-mask-position: 100% 0; mask-position: 100% 0; } 55%, 100% { -webkit-mask-position: 0% 0; mask-position: 0% 0; } }
+@media (prefers-reduced-motion: reduce) { .bd-glow, .bd-sweep { animation: none; } .bd-sweep { opacity: 0; } }
+@media (max-width: 900px) { .bd-room { background-image: url("images/showcase/room-neon-1600.webp?v=1"); } }
+/* Phase 107: the owner's sharper wall (smooth plates with thin bright neon) composited over the room's floor, with the new
+   neon reflected in the polished floor (source ~/Desktop/inferno-ui/refs/room-neon-v2.png) */
+.bd-room { background-image: url("images/showcase/room-neon-v2.webp?v=1"); }
+.bd-glow { background-image: url("images/showcase/room-neon-v2-glow.webp?v=1"); }
+.bd-sweep { background-image: url("images/showcase/room-neon-v2-core.webp?v=1"); }
+@media (max-width: 900px) { .bd-room { background-image: url("images/showcase/room-neon-v2-1600.webp?v=1"); } }
+
+/* Phase 108: the whole wall, as the owner's picture — no darkening wash over it; only a light shade behind the two text columns */
+.showcase.has-3d .showcase__live { transform: translateY(var(--live-dy, 0px)); transition: opacity 700ms ease, transform 500ms cubic-bezier(0.22, 1, 0.36, 1); }
+.showcase__backdrop::before { background:
+    linear-gradient(90deg, rgba(7, 8, 11, 0.62) 0%, rgba(7, 8, 11, 0.4) 18%, rgba(7, 8, 11, 0) 32%,
+                           rgba(7, 8, 11, 0) 70%, rgba(7, 8, 11, 0.4) 84%, rgba(7, 8, 11, 0.62) 100%); }
+.showcase__backdrop { -webkit-mask-image: linear-gradient(180deg, #000 0, #000 calc(var(--bd-bottom, 100%) - 120px), transparent var(--bd-bottom, 100%));
+  mask-image: linear-gradient(180deg, #000 0, #000 calc(var(--bd-bottom, 100%) - 120px), transparent var(--bd-bottom, 100%)); }
+@media (max-width: 900px) { .showcase__backdrop::before { background: none; } }
+
+/* Phase 109: the wall further away — the picture narrower than the section, its sides and bottom melting into the page */
+.showcase__backdrop .bd-room, .showcase__backdrop .bd-glow { -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%), linear-gradient(180deg, transparent 0%, #000 8%, #000 86%, transparent 100%);
+  -webkit-mask-composite: source-in; mask-image: linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%), linear-gradient(180deg, transparent 0%, #000 8%, #000 86%, transparent 100%);
+  mask-composite: intersect; }
+
+/* Phase 110 (owner: "where the floor and wall meet, maybe a dark black curve so it looks seamless"): an infinity cove — a soft,
+   dark, slightly curved band laid over the wall/floor line, deepest at the line and fading up the wall and out across the floor */
+.bd-cove { position: absolute; left: 0; right: 0; z-index: 1; pointer-events: none; top: calc(var(--bd-hz, 70%) - 11vh); height: 22vh;
+  background:
+    radial-gradient(ellipse 72% 52% at 50% 46%, rgba(4, 5, 7, 0.92) 0%, rgba(4, 5, 7, 0.7) 38%, rgba(4, 5, 7, 0.28) 66%, rgba(4, 5, 7, 0) 100%),
+    linear-gradient(180deg, rgba(4, 5, 7, 0) 0%, rgba(4, 5, 7, 0.55) 44%, rgba(4, 5, 7, 0.55) 52%, rgba(4, 5, 7, 0) 100%); }
+@media (max-width: 900px) { .bd-cove { height: 14vh; top: calc(var(--bd-hz, 40%) - 7vh); } }
+/* Phase 111 (owner: "fix the section start too"): the wall no longer starts on a hard line under the hero — it rises out of the
+   black over the section's first 22 % of height, and the red hairline on the section's top edge goes */
+.showcase__backdrop { -webkit-mask-image: linear-gradient(180deg, transparent 0, rgba(0,0,0,0.35) 9%, #000 22%, #000 calc(var(--bd-bottom, 100%) - 120px), transparent var(--bd-bottom, 100%));
+  mask-image: linear-gradient(180deg, transparent 0, rgba(0,0,0,0.35) 9%, #000 22%, #000 calc(var(--bd-bottom, 100%) - 120px), transparent var(--bd-bottom, 100%)); }
+.products-section.has-showcase::before { display: none; }
+.products-section.has-showcase { border-top-left-radius: 0; border-top-right-radius: 0; }
+.hero__veil, .hero .hero__veil { background: linear-gradient(180deg, rgba(5, 6, 8, 0.3) 0%, rgba(5, 6, 8, 0) 12%, rgba(8, 9, 12, 0) 72%, rgba(8, 9, 12, 0.85) 90%, #08090c 100%); }
+.products-section.has-showcase { box-shadow: none; }
+/* Phase 111b (owner: "make the products' background in the nav at the bottom glass too"): the rail sits on a glass panel —
+   frosted, a hairline rim and a light top edge, like the nav and the buttons */
+.showcase .showcase__rail { position: relative; padding: 14px 18px 12px; border-radius: 22px; border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015)), rgba(10, 11, 14, 0.42);
+  backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 24px 50px -28px rgba(0, 0, 0, 0.9);
+  -webkit-mask-image: none; mask-image: none; }
+@media (max-width: 900px) {
+  .showcase .showcase__rail { border-radius: 18px; margin-left: 12px; margin-right: 12px; width: auto; padding: 10px 8px; }
+}
+
+/* ═ Phase 112 — elegant product logo (owner 2026-10-08: "make the product logo on the left more elegant, maybe make the logo smaller").
+   Smaller, capped in width so wide word-marks don't dominate, a soft shadow instead of a heavy one; the family label gets a fine
+   red hairline in front of it. ═ */
+.showcase .showcase__info { gap: 12px; }
+.showcase .showcase__group { display: inline-flex; align-items: center; gap: 10px; color: rgba(241, 242, 245, 0.55); }
+.showcase .showcase__group::before { content: ''; width: 18px; height: 1px; background: linear-gradient(90deg, rgba(228, 32, 44, 0.9), rgba(228, 32, 44, 0.25)); }
+.showcase .showcase__logo { height: clamp(38px, 3.1vw, 50px); max-width: min(100%, 230px); margin: 2px 0 4px; opacity: 0.96;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.35)); }
+@media (max-width: 900px) { .showcase .showcase__logo { height: 40px; max-width: 200px; } }
+
+/* ═ Phase 113 — life in the neon + a mini blur on the wall (owner 2026-10-08: "let the wall's neon lines get streaks running through
+   them to bring a bit of life, and give the wall a mini blur"). The blur is baked into the picture (room-neon-v3: wall softened,
+   floor below the horizon left sharp — the owner wants the floor crisp) so it costs nothing while a model loads. The streaks: the
+   neon-only layer seen through a narrow comet-shaped window (bright head, soft tail) that glides along the lines; two of them, at
+   different angles, speeds and directions, so they never fall into an obvious rhythm. ═ */
+.bd-room { background-image: url("images/showcase/room-neon-v3.webp?v=1"); }
+@media (max-width: 900px) { .bd-room { background-image: url("images/showcase/room-neon-v3-1600.webp?v=1"); } }
+.bd-sweep { background-image: url("images/showcase/room-neon-v3-core.webp?v=1"); opacity: 1;
+  -webkit-mask-image: linear-gradient(98deg, transparent 0%, transparent 45%, rgba(0,0,0,0.12) 47.2%, rgba(0,0,0,0.5) 49.2%, #000 50%, rgba(0,0,0,0.35) 50.6%, transparent 51.4%, transparent 100%);
+  mask-image: linear-gradient(98deg, transparent 0%, transparent 45%, rgba(0,0,0,0.12) 47.2%, rgba(0,0,0,0.5) 49.2%, #000 50%, rgba(0,0,0,0.35) 50.6%, transparent 51.4%, transparent 100%);
+  -webkit-mask-size: 400% 100%; mask-size: 400% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-position: 0% 0; mask-position: 0% 0;
+  animation: bd-streak-l 7.5s cubic-bezier(0.5, 0, 0.35, 1) infinite; }
+.bd-streak {
+  -webkit-mask-image: linear-gradient(76deg, transparent 0%, transparent 48.6%, rgba(0,0,0,0.35) 49.4%, #000 50%, rgba(0,0,0,0.5) 50.8%, rgba(0,0,0,0.12) 52.8%, transparent 55%, transparent 100%);
+  mask-image: linear-gradient(76deg, transparent 0%, transparent 48.6%, rgba(0,0,0,0.35) 49.4%, #000 50%, rgba(0,0,0,0.5) 50.8%, rgba(0,0,0,0.12) 52.8%, transparent 55%, transparent 100%);
+  -webkit-mask-position: 100% 0; mask-position: 100% 0; opacity: 0.8;
+  animation: bd-streak-r 11s cubic-bezier(0.5, 0, 0.35, 1) 3.2s infinite; }
+/* 400 % wide window: position 0 % puts the head off the right edge, 100 % off the left; the rest of each loop is a pause */
+@keyframes bd-streak-l { 0% { -webkit-mask-position: 0% 0; mask-position: 0% 0; } 52%, 100% { -webkit-mask-position: 100% 0; mask-position: 100% 0; } }
+@keyframes bd-streak-r { 0% { -webkit-mask-position: 100% 0; mask-position: 100% 0; } 46%, 100% { -webkit-mask-position: 0% 0; mask-position: 0% 0; } }
+@media (prefers-reduced-motion: reduce) { .bd-sweep, .bd-streak { animation: none; opacity: 0; } }
+/* the streaks run on a white-hot copy of the neon with its own red bloom (room-neon-v3-hot) — red over red would not show */
+.bd-sweep { background-image: url("images/showcase/room-neon-v3-hot.webp?v=2"); }
+
+/* Phase 113 — products a little forward (owner: "bring the products a bit forward"): lower on the floor (FWD in showcase.js)
+   and a touch larger, scaled about the foot so it stays on the floor */
+.showcase.has-3d .showcase__live { transform: translateY(var(--live-dy, 0px)) scale(1.05); transform-origin: var(--pool-x, 50%) var(--pool-y, 85%); }
+/* … and the premium floor (owner: "that premium glow and reflection on the floor"): the live canvas mirrored about the foot line,
+   faint and fading out across the polished floor, and a pool of the product's own light where it stands */
+/* (Phase 115: the canvas reflection was removed — see below) */
+.showcase__pool { position: absolute; z-index: 0; pointer-events: none; left: var(--pool-x, 50%); top: var(--pool-y, 85%);
+  width: calc(var(--pool-w, 400px) * 1.5); height: calc(var(--pool-w, 400px) * 0.26); transform: translate(-50%, -50%);
+  background:
+    radial-gradient(closest-side, color-mix(in srgb, var(--glow, #e4202c) 46%, transparent) 0%, color-mix(in srgb, var(--glow, #e4202c) 18%, transparent) 45%, transparent 100%),
+    radial-gradient(closest-side, rgba(255, 255, 255, 0.07) 0%, transparent 60%);
+  mix-blend-mode: screen; opacity: 0; transition: opacity 900ms ease 200ms; }
+.showcase.has-3d .showcase__pool { opacity: 1; }
+.showcase__live > #drawer-stage-3d { z-index: 1; }
+/* streak window at 200 %: position 0 % = head at the right edge, 100 % = at the left edge, so the whole run is on the wall */
+.bd-sweep { -webkit-mask-size: 200% 100%; mask-size: 200% 100%;
+  -webkit-mask-image: linear-gradient(98deg, transparent 0%, transparent 42%, rgba(0,0,0,0.1) 45.5%, rgba(0,0,0,0.45) 49%, #000 50%, rgba(0,0,0,0.3) 50.8%, transparent 52%, transparent 100%);
+  mask-image: linear-gradient(98deg, transparent 0%, transparent 42%, rgba(0,0,0,0.1) 45.5%, rgba(0,0,0,0.45) 49%, #000 50%, rgba(0,0,0,0.3) 50.8%, transparent 52%, transparent 100%); }
+.bd-streak { opacity: 0.85;
+  -webkit-mask-image: linear-gradient(74deg, transparent 0%, transparent 48%, rgba(0,0,0,0.3) 49.2%, #000 50%, rgba(0,0,0,0.45) 51%, rgba(0,0,0,0.1) 54.5%, transparent 58%, transparent 100%);
+  mask-image: linear-gradient(74deg, transparent 0%, transparent 48%, rgba(0,0,0,0.3) 49.2%, #000 50%, rgba(0,0,0,0.45) 51%, rgba(0,0,0,0.1) 54.5%, transparent 58%, transparent 100%); }
+@keyframes bd-streak-l { 0% { -webkit-mask-position: -8% 0; mask-position: -8% 0; } 48%, 100% { -webkit-mask-position: 108% 0; mask-position: 108% 0; } }
+@keyframes bd-streak-r { 0% { -webkit-mask-position: 108% 0; mask-position: 108% 0; } 42%, 100% { -webkit-mask-position: -8% 0; mask-position: -8% 0; } }
+/* each comet's tail trails behind its head: the first runs left → right, the second right → left */
+.bd-sweep { animation: bd-streak-r 7.5s cubic-bezier(0.5, 0, 0.35, 1) infinite; }
+.bd-streak { animation: bd-streak-l 11s cubic-bezier(0.5, 0, 0.35, 1) 3.2s infinite; }
+@media (prefers-reduced-motion: reduce) { .bd-sweep, .bd-streak { animation: none; opacity: 0; } }
+/* wider head, longer tail: the comet reads from across the room */
+.bd-sweep:not(.bd-streak) {
+  -webkit-mask-image: linear-gradient(98deg, transparent 0%, transparent 34%, rgba(0,0,0,0.12) 41%, rgba(0,0,0,0.5) 47%, #000 49.4%, #000 50.4%, rgba(0,0,0,0.3) 51.6%, transparent 53%, transparent 100%);
+  mask-image: linear-gradient(98deg, transparent 0%, transparent 34%, rgba(0,0,0,0.12) 41%, rgba(0,0,0,0.5) 47%, #000 49.4%, #000 50.4%, rgba(0,0,0,0.3) 51.6%, transparent 53%, transparent 100%); }
+.bd-streak {
+  -webkit-mask-image: linear-gradient(74deg, transparent 0%, transparent 47%, rgba(0,0,0,0.3) 48.4%, #000 49.6%, #000 50.6%, rgba(0,0,0,0.5) 53%, rgba(0,0,0,0.12) 59%, transparent 66%, transparent 100%);
+  mask-image: linear-gradient(74deg, transparent 0%, transparent 47%, rgba(0,0,0,0.3) 48.4%, #000 49.6%, #000 50.6%, rgba(0,0,0,0.5) 53%, rgba(0,0,0,0.12) 59%, transparent 66%, transparent 100%); }
+
+/* Phase 114 (owner: "that colour shadow on the ground is too much"): the pool of light under the product, barely there — a faint
+   sheen with only a hint of the product's colour */
+.showcase__pool { width: calc(var(--pool-w, 400px) * 1.2); height: calc(var(--pool-w, 400px) * 0.18);
+  background:
+    radial-gradient(closest-side, color-mix(in srgb, var(--glow, #e4202c) 12%, transparent) 0%, color-mix(in srgb, var(--glow, #e4202c) 4%, transparent) 50%, transparent 100%),
+    radial-gradient(closest-side, rgba(255, 255, 255, 0.035) 0%, transparent 60%); }
+
+/* Phase 115 (owner: "product reflection is weird"): the 2D mirror of the canvas is gone — a flat flip can't follow a 3D product's
+   contact points as it turns. The faint pool of light stays. */
+
+/* ═ Phase 116 — the products section head is back (owner: "where is the products section head?"). It was hidden for screen
+   readers only since Phase 84; now it opens the section, centred and quiet, above the showroom: the red label between two fine
+   hairlines and the title in the showcase's display face. ═ */
+.products-section.has-showcase .products-header { position: relative; width: auto; height: auto; margin: 0; overflow: visible; clip-path: none;
+  white-space: normal; padding: clamp(56px, 9vh, 104px) 20px clamp(8px, 2vh, 20px); border: 0; text-align: center; z-index: 3; }
+.products-section.has-showcase .products-header__lead { align-items: center; gap: 14px; }
+.products-section.has-showcase .products-header__label { display: inline-flex; align-items: center; gap: 14px; margin: 0;
+  font: 500 10.5px/1.4 var(--font-ui, Inter, sans-serif); letter-spacing: 0.34em; color: rgba(241, 242, 245, 0.62); }
+.products-section.has-showcase .products-header__label::before,
+.products-section.has-showcase .products-header__label::after { content: ''; width: 34px; height: 1px; }
+.products-section.has-showcase .products-header__label::before { background: linear-gradient(90deg, transparent, rgba(228, 32, 44, 0.9)); }
+.products-section.has-showcase .products-header__label::after { background: linear-gradient(90deg, rgba(228, 32, 44, 0.9), transparent); }
+.products-section.has-showcase .products-header__title { font-family: var(--font-display, sans-serif); font-weight: 400; letter-spacing: 0.01em;
+  font-size: clamp(30px, 3.6vw, 54px); line-height: 1.05; color: #fff; white-space: normal; }
+@media (max-width: 900px) { .products-section.has-showcase .products-header { padding-top: 56px; padding-bottom: 4px; } }
+
+/* ═ Phase 119 — spray mode: the POV button (beside Reset view, only while the cannon sprays), the room stepping back while you
+   stand behind the cannon, and no "Fires out 0 / 3" counter (owner: "take out that fires 0/3"). ═ */
+.drawer__fires { display: none !important; }
+.showcase__pov { position: absolute; z-index: 5; right: calc(4% + 150px); bottom: 6%; display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 14px 9px 11px; border-radius: 999px; cursor: pointer; color: #fff; background: rgba(228, 32, 44, 0.16);
+  border: 1px solid rgba(228, 32, 44, 0.55); font: 500 10.5px/1 var(--font-ui, Inter, sans-serif); letter-spacing: 0.16em; text-transform: uppercase;
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); opacity: 0; transform: translateY(6px); pointer-events: none;
+  transition: opacity 400ms ease, transform 400ms cubic-bezier(0.22, 1, 0.36, 1), background 200ms ease; }
+.showcase.has-3d.is-spraying .showcase__pov { opacity: 1; transform: none; pointer-events: auto; }
+.showcase__pov:hover { background: rgba(228, 32, 44, 0.3); }
+.showcase.is-pov .showcase__pov { background: #e4202c; border-color: #e4202c; }
+.showcase__backdrop { transition: opacity 900ms ease; }
+.showcase.is-pov .showcase__backdrop { opacity: 0.12; }
+.showcase.is-pov .showcase__info, .showcase.is-pov .showcase__actions { opacity: 0.35; transition: opacity 600ms ease; }
+.showcase.is-pov .showcase__info:hover, .showcase.is-pov .showcase__actions:hover { opacity: 1; }
+@media (max-width: 900px) { .showcase__pov { right: auto; left: 4%; } }
+/* Phase 119b (owner: "maybe take out the colour shadows too"): no coloured pool under the product any more */
+.showcase__pool { display: none !important; }
+/* Phase 119c (owner: "don't like how the floor cuts off here"): the 3D canvas (reflection, wet floor, shadow) melts into the page
+   over its lower edge instead of ending on a hard line above the rail */
+.showcase__live > #drawer-stage-3d { -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 calc(var(--rf-f, 84%) + 1%), rgba(0,0,0,0.62) calc(var(--rf-f, 84%) + 5%), rgba(0,0,0,0.3) calc(var(--rf-f, 84%) + 9%), rgba(0,0,0,0.1) calc(var(--rf-f, 84%) + 12.5%), rgba(0,0,0,0.02) 98%, transparent 100%); mask-image: linear-gradient(180deg, #000 0%, #000 calc(var(--rf-f, 84%) + 1%), rgba(0,0,0,0.62) calc(var(--rf-f, 84%) + 5%), rgba(0,0,0,0.3) calc(var(--rf-f, 84%) + 9%), rgba(0,0,0,0.1) calc(var(--rf-f, 84%) + 12.5%), rgba(0,0,0,0.02) 98%, transparent 100%); }
+.showcase.is-pov .showcase__live > #drawer-stage-3d { -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 82%, transparent 100%); mask-image: linear-gradient(180deg, #000 0%, #000 82%, transparent 100%); }
+/* … the hard line was the floor mist's lower edge: it now melts away at the bottom too */
+.showcase .showcase__mist { -webkit-mask-image: linear-gradient(90deg, transparent, #000 25%, #000 75%, transparent), linear-gradient(180deg, transparent 0%, #000 22%, #000 52%, transparent 100%);
+  -webkit-mask-composite: source-in; mask-image: linear-gradient(90deg, transparent, #000 25%, #000 75%, transparent), linear-gradient(180deg, transparent 0%, #000 22%, #000 52%, transparent 100%); mask-composite: intersect; }
+
+/* ═ Phase 121 (owner: "all lines must be those modern red lines, wherever we have lines"): every divider on the site is the same
+   red hairline — fading in from nothing, glowing red through the middle, fading out (as over the contact section). Frames of
+   buttons, fields and panels stay as they are: those are outlines, not lines. ═ */
+:root {
+  --red-line: linear-gradient(90deg, transparent, rgba(255, 32, 48, 0.62) 22%, rgba(255, 70, 60, 0.42) 60%, transparent);
+  --red-line-v: linear-gradient(180deg, transparent, rgba(255, 32, 48, 0.55) 25%, rgba(255, 70, 60, 0.35) 65%, transparent);
+  --red-line-l: linear-gradient(90deg, rgba(255, 32, 48, 0.7), rgba(255, 70, 60, 0.32) 55%, transparent);
+}
+/* the showcase: the product's numbers, the rail's family heads and the dividers between families */
+.showcase__stats > div { border-top: 1px solid transparent; border-image: var(--red-line) 1; }
+.showcase__stats > div:last-child { border-bottom: 1px solid transparent; border-image: var(--red-line) 1; }
+@media (max-width: 900px) {
+  .showcase__stats > div { border-top: 0; border-bottom: 1px solid transparent; border-image: var(--red-line) 1; }
+  .showcase__stats > div + div { border-left: 0; }
+}
+.showcase__fam-head::after { background: var(--red-line-l); }
+.showcase__fam + .showcase__fam { border-left: 1px solid transparent; border-image: var(--red-line-v) 1; }
+/* the details sheet */
+.psheet__stats { border-top: 1px solid transparent; border-bottom: 1px solid transparent; border-image: var(--red-line) 1; }
+.psheet__stat + .psheet__stat { border-left: 1px solid transparent; border-image: var(--red-line-v) 1; }
+.psheet__specs dl > div { border-top: 1px solid transparent; border-image: var(--red-line) 1; }
+.psheet__features li::before { background: var(--red-line-l); }
+.psheet__foot { border-top: 1px solid transparent; border-image: var(--red-line) 1; }
+/* contact + footer */
+.contact-info__block { border-bottom-color: transparent; border-image: var(--red-line) 1; }
+.footer { border-top: 1px solid transparent; border-image: var(--red-line) 1; }
+.footer .footer-note { border-top: 1px solid transparent; border-image: var(--red-line) 1; }
+/* the full-screen 3D viewer */
+.drawer__cta-row { border-top: 1px solid transparent; border-image: var(--red-line) 1; }
+.drawer__info { border-left: 1px solid transparent; border-image: var(--red-line-v) 1; }
+/* the hero's scroll cue */
+.hero__cue-line { background: linear-gradient(180deg, rgba(255, 32, 48, 0.75), transparent); }
+@media (max-width: 900px) {   /* phone: one continuous red line under the three numbers, not three short ones */
+  .showcase__stats > div, .showcase__stats > div:last-child { border: 0; border-image: none; }
+  .showcase__stats { border-bottom: 1px solid transparent; border-image: var(--red-line) 1; }
+}
+/* Phase 121b (owner: "vertical lines can stay the same colour as before"): only the horizontal lines are red */
+.showcase__fam + .showcase__fam { border-image: none; border-left: 1px solid rgba(255, 255, 255, 0.08); }
+.psheet__stat + .psheet__stat { border-image: none; border-left: 1px solid rgba(255, 255, 255, 0.08); }
+.drawer__info { border-image: none; border-left: 1px solid rgba(255, 255, 255, 0.07); }
+.hero__cue-line { background: linear-gradient(rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0)); }
+
+/* ═ Phase 123 — the host-vehicle choice (owner: "an option button to change bakkies"): a quiet segmented pill under the numbers,
+   the chosen vehicle in the white pill, like the nav tab. ═ */
+.showcase__vehicle { display: flex; align-items: center; gap: 14px; margin-top: 2px; }
+.showcase__vehicle[hidden] { display: none; }
+.showcase__vehicle-label { font: 500 9.5px/1.4 var(--font-ui, Inter, sans-serif); letter-spacing: 0.18em; text-transform: uppercase; color: rgba(241, 242, 245, 0.45); }
+.showcase__vehicle-opts { display: inline-flex; padding: 3px; gap: 2px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(10, 11, 14, 0.5);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.showcase__vehicle-opt { appearance: none; border: 0; cursor: pointer; padding: 7px 14px; border-radius: 999px; background: transparent; color: rgba(241, 242, 245, 0.7);
+  font: 500 11px/1 var(--font-ui, Inter, sans-serif); letter-spacing: 0.06em; transition: background 240ms ease, color 240ms ease; }
+.showcase__vehicle-opt:hover { color: #fff; }
+.showcase__vehicle-opt.is-on { background: #fff; color: #0b0c0e; cursor: default; }
+.showcase__vehicle-opt:focus-visible { outline: 2px solid rgba(228, 32, 44, 0.8); outline-offset: 2px; }

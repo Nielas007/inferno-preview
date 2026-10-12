@@ -179,7 +179,7 @@
     2048,
     2048
    ],
-   "kb": 253.5
+   "kb": 332.9
   },
   {
    "file": "textures/A4CU_BODY_ORM_2K.ktx2",
@@ -189,17 +189,7 @@
     2048,
     2048
    ],
-   "kb": 1446.8
-  },
-  {
-   "file": "textures/A4CU_BODY_Normal_512.ktx2",
-   "set": "BODY",
-   "map": "Normal",
-   "size": [
-    512,
-    512
-   ],
-   "kb": 169.2
+   "kb": 1384.9
   },
   {
    "file": "textures/A4CU_CHS_BaseColor_1K.ktx2",
@@ -219,17 +209,17 @@
     1024,
     1024
    ],
-   "kb": 744.6
+   "kb": 744.0
   },
   {
-   "file": "textures/A4CU_CHS_Normal_1K.ktx2",
+   "file": "textures/A4CU_CHS_Normal_512.ktx2",
    "set": "CHS",
    "map": "Normal",
    "size": [
-    1024,
-    1024
+    512,
+    512
    ],
-   "kb": 666.6
+   "kb": 152.9
   },
   {
    "file": "textures/A4CU_CYL_BaseColor_2K.ktx2",
@@ -249,7 +239,7 @@
     2048,
     2048
    ],
-   "kb": 1566.1
+   "kb": 1565.8
   },
   {
    "file": "textures/A4CU_FRM_BaseColor_2K.ktx2",
@@ -269,7 +259,7 @@
     2048,
     2048
    ],
-   "kb": 2218.2
+   "kb": 2217.6
   },
   {
    "file": "textures/A4CU_FRM_Normal_512.ktx2",
@@ -279,7 +269,7 @@
     512,
     512
    ],
-   "kb": 135.6
+   "kb": 135.7
   },
   {
    "file": "textures/A4CU_VEH_BaseColor_2K.ktx2",
@@ -299,17 +289,17 @@
     2048,
     2048
    ],
-   "kb": 2635.3
+   "kb": 2624.9
   },
   {
-   "file": "textures/A4CU_VEH_Normal_1K.ktx2",
+   "file": "textures/A4CU_VEH_Normal_512.ktx2",
    "set": "VEH",
    "map": "Normal",
    "size": [
-    1024,
-    1024
+    512,
+    512
    ],
-   "kb": 673.3
+   "kb": 136.7
   },
   {
    "file": "textures/A4CU_WHEEL_BaseColor_2K.ktx2",
@@ -329,7 +319,7 @@
     2048,
     2048
    ],
-   "kb": 2231.3
+   "kb": 2227.9
   },
   {
    "file": "textures/A4CU_LABEL_BaseColor_2048x1448.ktx2",
@@ -503,7 +493,6 @@
   }
  ],
  "materials": [
-  "BAKED_BODY",
   "BAKED_BODY_COAT60",
   "BAKED_CAN",
   "BAKED_CHS",
@@ -538,22 +527,22 @@
  ],
  "materialTable": {
   "id": "attac-4cu-cruiser/phase80",
-  "sha256": "72ec31e81ebf4914e26a8feff81d5827a9d61f8de59b7d69e56ed557cee9fdd4",
-  "materials": 32
+  "sha256": "3f7f6027ae3bdba650f2501344f1770ac5538ed23942849f103d958d868d7f96",
+  "materials": 31
  },
  "metrics": {
   "tris": {
-   "LOD0": 490204,
-   "LOD1": 267727,
-   "LOD2": 174267
+   "LOD0": 524084,
+   "LOD1": 268567,
+   "LOD2": 174621
   },
   "brotliMB": {
-   "LOD0": 3.204,
-   "LOD1": 2.116,
-   "LOD2": 1.777
+   "LOD0": 3.153,
+   "LOD1": 2.098,
+   "LOD2": 1.764
   },
-  "texturesKTX2MB_own": 15.913,
-  "gpuTexturesMB_own": 63.1,
+  "texturesKTX2MB_own": 14.667,
+  "gpuTexturesMB_own": 60.8,
   "texturesShared": "the Inferno unit's CAN / VAL / REEL / GAUGE / PLATE (+ cutaway CYL / FOAM) sets of models/4cu-trailer/textures - one cached copy for both products",
   "textureSets": {
    "BODY": "2K",
@@ -569,13 +558,12 @@
    "PLATE": "shared"
   },
   "normalMaps": {
-   "BODY": "512",
-   "CHS": "1K",
+   "CHS": "512",
    "FRM": "512",
-   "VEH": "1K"
+   "VEH": "512"
   },
-  "materials": 32,
-  "primitivesPerLOD": 23,
+  "materials": 31,
+  "primitivesPerLOD": 22,
   "phase80": "Bakkie production parity: vehicle baked PBR sets (BaseColor / ORM, normal where it carries detail), the Trailer's production unit, own skid frame, error-driven LODs (1 px at 3750 / 2000 / 850 px), Meshopt + KTX2 UASTC, production Cutaway / System / Gun"
  }
 }

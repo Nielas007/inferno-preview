@@ -7,7 +7,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { FullScreenQuad } from 'three/addons/postprocessing/Pass.js';   // Phase 82r: focus blur passes
-import { ProductionAsset, resetTextureLoader } from './production-asset.js?v=8';
+import { ProductionAsset, resetTextureLoader } from './production-asset.js?v=9';
 import { ProductRenderer, RENDER_CONFIG } from './product-renderer.js?v=11';
 import { ProductAO } from './product-ao.js?v=4';
 import { ProductPost } from './product-post.js?v=12';

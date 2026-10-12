@@ -137,6 +137,7 @@ export class ProductionAsset {
     if (!res.ok) throw new Error(`manifest ${this.url}: ${res.status}`);
     this.manifest = await res.json();
     this.base = new URL(this.manifest.base, new URL(this.url, location.href)).href;
+    this.q = new URL(this.url, location.href).search;   // Phase 125: the manifest's version (?v=) travels to every file of the asset
     this.name = this.manifest.asset || 'asset';
     this.root.name = `${this.name}_production`;
     const lp = this.manifest.lamps && this.manifest.lamps.materialPattern;
@@ -149,11 +150,14 @@ export class ProductionAsset {
   // closed, or a zoom turned back before a fetched-ahead LOD arrived); the parser takes those buffers instead of
   // requesting them again. KTX2 textures still come through the shared loader.
   async _load(file, signal = null) {
-    const { ktx2, gltf } = loaders(this.renderer), url = this.base + file;
-    if (!signal) return gltf.loadAsync(url);
-    const get = async (u, text) => { const r = await fetch(u, { signal }); if (!r.ok) throw new Error(`${u}: ${r.status}`); return text ? r.text() : r.arrayBuffer(); };
-    const src = await get(url, true), json = JSON.parse(src);
-    const buffers = await Promise.all((json.buffers || []).map(b => (b.uri && !b.uri.startsWith('data:') ? get(new URL(b.uri, url).href) : null)));
+    // Phase 125 (owner: "one door doesn't work" - a browser kept an earlier build's textures under the same names): the .gltf, its
+    // buffers and its textures are all requested with the manifest's version, so a rebuilt asset can never mix with a cached one
+    const { ktx2 } = loaders(this.renderer), v = u => (this.q && !u.includes('?') ? u + this.q : u), url = v(this.base + file);
+    const get = async (u, text) => { const r = await fetch(u, signal ? { signal } : undefined); if (!r.ok) throw new Error(`${u}: ${r.status}`); return text ? r.text() : r.arrayBuffer(); };
+    const json = JSON.parse(await get(url, true));
+    for (const im of json.images || []) if (im.uri && !im.uri.startsWith('data:')) im.uri = v(im.uri);
+    const buffers = await Promise.all((json.buffers || []).map(b => (b.uri && !b.uri.startsWith('data:') ? get(v(new URL(b.uri, url).href)) : null)));
+    const src = JSON.stringify(json);
     const loader = new GLTFLoader().setKTX2Loader(ktx2).setMeshoptDecoder(MeshoptDecoder).register(parser => {
       const load = parser.loadBuffer.bind(parser); parser.loadBuffer = i => (buffers[i] ? Promise.resolve(buffers[i]) : load(i)); return { name: 'fetchedBuffers' }; });
     return loader.parseAsync(src, url.slice(0, url.lastIndexOf('/') + 1));

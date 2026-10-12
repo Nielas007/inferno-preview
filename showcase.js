@@ -66,7 +66,7 @@ function init(root) {
   // show the chosen vehicle — the same Inferno unit, on its back.
   const VEHICLES = {
     'attac-bakkie-4cu': [
-      { id: 'cruiser', label: 'Land Cruiser', glb: 'models/attac-4cu-cruiser.asset.json?v=1', config: 'products/attac-4cu-cruiser.json?v=1' },
+      { id: 'cruiser', label: 'Land Cruiser', glb: 'models/attac-4cu-cruiser.asset.json?v=125', config: 'products/attac-4cu-cruiser.json?v=125' },
       { id: 'hilux', label: 'Hilux' },
     ],
   };

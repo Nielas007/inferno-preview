@@ -179,7 +179,7 @@
     2048,
     2048
    ],
-   "kb": 251.6
+   "kb": 253.5
   },
   {
    "file": "textures/A4CU_BODY_ORM_2K.ktx2",
@@ -189,7 +189,7 @@
     2048,
     2048
    ],
-   "kb": 1472.5
+   "kb": 1446.8
   },
   {
    "file": "textures/A4CU_BODY_Normal_512.ktx2",
@@ -199,7 +199,7 @@
     512,
     512
    ],
-   "kb": 168.6
+   "kb": 169.2
   },
   {
    "file": "textures/A4CU_CHS_BaseColor_1K.ktx2",
@@ -219,7 +219,7 @@
     1024,
     1024
    ],
-   "kb": 744.8
+   "kb": 744.6
   },
   {
    "file": "textures/A4CU_CHS_Normal_1K.ktx2",
@@ -249,7 +249,7 @@
     2048,
     2048
    ],
-   "kb": 1565.8
+   "kb": 1566.1
   },
   {
    "file": "textures/A4CU_FRM_BaseColor_2K.ktx2",
@@ -269,7 +269,7 @@
     2048,
     2048
    ],
-   "kb": 2218.3
+   "kb": 2218.2
   },
   {
    "file": "textures/A4CU_FRM_Normal_512.ktx2",
@@ -548,11 +548,11 @@
    "LOD2": 174267
   },
   "brotliMB": {
-   "LOD0": 3.205,
-   "LOD1": 2.117,
-   "LOD2": 1.778
+   "LOD0": 3.204,
+   "LOD1": 2.116,
+   "LOD2": 1.777
   },
-  "texturesKTX2MB_own": 15.937,
+  "texturesKTX2MB_own": 15.913,
   "gpuTexturesMB_own": 63.1,
   "texturesShared": "the Inferno unit's CAN / VAL / REEL / GAUGE / PLATE (+ cutaway CYL / FOAM) sets of models/4cu-trailer/textures - one cached copy for both products",
   "textureSets": {

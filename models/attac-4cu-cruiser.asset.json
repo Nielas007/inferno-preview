@@ -179,7 +179,7 @@
     2048,
     2048
    ],
-   "kb": 141.7
+   "kb": 251.6
   },
   {
    "file": "textures/A4CU_BODY_ORM_2K.ktx2",
@@ -189,7 +189,7 @@
     2048,
     2048
    ],
-   "kb": 1588.7
+   "kb": 1472.5
   },
   {
    "file": "textures/A4CU_BODY_Normal_512.ktx2",
@@ -199,7 +199,7 @@
     512,
     512
    ],
-   "kb": 185.0
+   "kb": 168.6
   },
   {
    "file": "textures/A4CU_CHS_BaseColor_1K.ktx2",
@@ -249,7 +249,7 @@
     2048,
     2048
    ],
-   "kb": 1566.1
+   "kb": 1565.8
   },
   {
    "file": "textures/A4CU_FRM_BaseColor_2K.ktx2",
@@ -543,16 +543,16 @@
  },
  "metrics": {
   "tris": {
-   "LOD0": 535200,
-   "LOD1": 268846,
-   "LOD2": 174290
+   "LOD0": 490204,
+   "LOD1": 267727,
+   "LOD2": 174267
   },
   "brotliMB": {
-   "LOD0": 3.264,
-   "LOD1": 2.121,
-   "LOD2": 1.777
+   "LOD0": 3.205,
+   "LOD1": 2.117,
+   "LOD2": 1.778
   },
-  "texturesKTX2MB_own": 15.961,
+  "texturesKTX2MB_own": 15.937,
   "gpuTexturesMB_own": 63.1,
   "texturesShared": "the Inferno unit's CAN / VAL / REEL / GAUGE / PLATE (+ cutaway CYL / FOAM) sets of models/4cu-trailer/textures - one cached copy for both products",
   "textureSets": {

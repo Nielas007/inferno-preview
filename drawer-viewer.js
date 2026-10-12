@@ -2655,12 +2655,12 @@ function dofBuild() {
         c += (texture2D(t, vUv + dir * 3.2307692) + texture2D(t, vUv - dir * 3.2307692)) * 0.0702703; gl_FragColor = c; }`, depthTest: false, depthWrite: false }));
   DOF.coc = new FullScreenQuad(new T.ShaderMaterial({ uniforms: { tZ: { value: null }, F: { value: 2 } }, vertexShader: FQ_VS,
     fragmentShader: `uniform sampler2D tZ; uniform float F; varying vec2 vUv;
-      void main(){ vec2 z = texture2D(tZ, vUv).rg; float c = z.x > 0.0 && z.y < 0.5 ? smoothstep(0.03, 0.24, F * z.x - 1.0) : 0.0; /* a wide-open aperture: a shallow depth of field */ gl_FragColor = vec4(c, c, c, 1.0); }`, depthTest: false, depthWrite: false }));
+      void main(){ vec2 z = texture2D(tZ, vUv).rg; float c = z.x > 0.0 && z.y < 0.5 ? clamp((F * z.x - 1.0) * 1.15, 0.0, 1.0) : 0.0; /* Phase 124: a natural lens - the blur grows with how far in front of the focus a surface is */ gl_FragColor = vec4(c, c, c, 1.0); }`, depthTest: false, depthWrite: false }));
   DOF.comp = new FullScreenQuad(new T.ShaderMaterial({ uniforms: { tS: { value: null }, tB: { value: null }, tC: { value: null }, tCs: { value: null }, tZ: { value: null }, amt: { value: 0 }, dbg: { value: 0 } }, vertexShader: FQ_VS,
     fragmentShader: `uniform sampler2D tS, tB, tC, tCs, tZ; uniform float amt, dbg; varying vec2 vUv;
       void main(){ vec4 s = texture2D(tS, vUv), b = texture2D(tB, vUv);
-        float c = max(texture2D(tC, vUv).r, min(1.0, texture2D(tCs, vUv).r * 1.7));   // the near blur spreads past its own edge
-        float k = clamp(c, 0.0, 1.0) * amt * (1.0 - smoothstep(0.3, 0.7, texture2D(tZ, vUv).g));   // the cannon itself stays sharp
+        float c = max(texture2D(tC, vUv).r, texture2D(tCs, vUv).r * 0.9);   // the near blur reaches a little past its own edge
+        float k = clamp(c, 0.0, 1.0) * 0.85 * amt * (1.0 - smoothstep(0.3, 0.7, texture2D(tZ, vUv).g));   // the cannon itself stays sharp
         gl_FragColor = mix(s, b, k); if (dbg > 0.5) gl_FragColor = vec4(k, texture2D(tZ, vUv).g, texture2D(tZ, vUv).r * 0.5, 1.0); }`, depthTest: false, depthWrite: false }));
   DOF.built = true;
 }
@@ -2692,7 +2692,7 @@ const DOF_STAGE = {
     DOF.copy.material.uniforms.t.value = DOF.b.texture; R.setRenderTarget(DOF.c2); DOF.copy.render(R);   // the spread CoC
     // 3. the out-of-focus image: half resolution, a wide gaussian (the aperture)
     DOF.copy.material.uniforms.t.value = src.texture; R.setRenderTarget(DOF.a); DOF.copy.render(R);
-    for (const k of COARSE ? [1, 2] : [1, 1.9, 3.2]) { dofPass(R, DOF.blur, DOF.a, DOF.b, new THREE.Vector2(px.x * k, 0)); dofPass(R, DOF.blur, DOF.b, DOF.a, new THREE.Vector2(0, px.y * k)); }
+    for (const k of COARSE ? [1, 1.6] : [1, 1.7]) { dofPass(R, DOF.blur, DOF.a, DOF.b, new THREE.Vector2(px.x * k, 0)); dofPass(R, DOF.blur, DOF.b, DOF.a, new THREE.Vector2(0, px.y * k)); }   // Phase 124: a gentler aperture
     // 4. sharp where in focus, the aperture's blur where not
     const u = DOF.comp.material.uniforms; u.tS.value = src.texture; u.tB.value = DOF.a.texture; u.tC.value = DOF.c.texture; u.tCs.value = DOF.c2.texture; u.tZ.value = DOF.z.texture; u.amt.value = DOF.amt; u.dbg.value = DOF.dbg ? 1 : 0;
     R.setRenderTarget(DOF.out); DOF.comp.render(R);
@@ -2709,7 +2709,7 @@ function povFocus(dt) {
   if (want && P) for (const L of P.a.lods.values()) { const rest = PGUN.rest.get(L.scene); if (rest) for (const e of rest) { e.o.layers.enable(FOCUS_LAYER); if (e.head) e.head.layers.enable(FOCUS_LAYER); } }
   // the lens is focused out on the target (the fires), the cannon held sharp: everything between you and the fires — the cylinders,
   // the vehicle — falls out of focus (they stand at the cannon's own distance, so a focus on the cannon could never blur them)
-  V.camera.getWorldDirection(_dofDir); DOF.F = Math.max(0.05, _dofV.copy(POV.hp).sub(V.camera.position).dot(_dofDir) * 2.6);
+  V.camera.getWorldDirection(_dofDir); DOF.F = Math.max(0.05, _dofV.copy(POV.hp).sub(V.camera.position).dot(_dofDir) * 1.45);   // Phase 124: just beyond the cannon
 }
 
 const _dofDir = new THREE.Vector3(), _dofV = new THREE.Vector3();
@@ -2725,8 +2725,8 @@ function updatePOV(dt) {
     POV.hp.copy(P.hp).applyMatrix4(prodGunYaw(P, PGUN.yaw, POV.M)).applyMatrix4(S);   // its head
     const c = Math.cos(POV.yawOff), sn = Math.sin(POV.yawOff), hx = POV.head.x * c - POV.head.z * sn, hz = POV.head.x * sn + POV.head.z * c;
     // Phase 120 (owner: "POV must be closer" + his reference): right behind the cannon, just above the cylinders, the head up in frame
-    POV.eye.set(POV.j.x - hx * 1.9 * s, POV.hp.y - 0.12 * s, POV.j.z - hz * 1.9 * s);   // just over the cylinder tops: the head whole, the fires beyond
-    POV.look.set(POV.eye.x + hx * 10 * s, POV.eye.y - 0.35 * s, POV.eye.z + hz * 10 * s);
+    POV.eye.set(POV.j.x - hx * 2.1 * s, POV.hp.y - 0.05 * s, POV.j.z - hz * 2.1 * s);   // just over the cylinder tops: the head whole, the fires beyond
+    POV.look.set(POV.eye.x + hx * 10 * s, POV.eye.y - 0.1 * s, POV.eye.z + hz * 10 * s);
     cam.position.lerpVectors(sv.pos, POV.eye, e); POV.t.lerpVectors(sv.tgt, POV.look, e); cam.lookAt(POV.t);
     cam.fov = sv.fov + (52 - sv.fov) * e; cam.near = Math.min(sv.near, sv.near + (0.03 * s - sv.near) * e); cam.updateProjectionMatrix();
   }

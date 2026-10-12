@@ -47,6 +47,7 @@
   "A4CU_CYLINDER_2": "cylinders",
   "A4CU_CYLINDER_3": "cylinders",
   "A4CU_CYLINDER_4": "cylinders",
+  "A4CU_DECALS": "vehicle",
   "A4CU_FRAME": "unit-frame",
   "A4CU_GLAZING": "vehicle",
   "A4CU_LABEL_1": "cylinders",
@@ -178,7 +179,7 @@
     2048,
     2048
    ],
-   "kb": 1166.7
+   "kb": 141.7
   },
   {
    "file": "textures/A4CU_BODY_ORM_2K.ktx2",
@@ -188,7 +189,7 @@
     2048,
     2048
    ],
-   "kb": 2103.0
+   "kb": 1588.7
   },
   {
    "file": "textures/A4CU_BODY_Normal_512.ktx2",
@@ -198,7 +199,7 @@
     512,
     512
    ],
-   "kb": 168.1
+   "kb": 185.0
   },
   {
    "file": "textures/A4CU_CHS_BaseColor_1K.ktx2",
@@ -208,7 +209,7 @@
     1024,
     1024
    ],
-   "kb": 519.1
+   "kb": 112.1
   },
   {
    "file": "textures/A4CU_CHS_ORM_1K.ktx2",
@@ -218,7 +219,7 @@
     1024,
     1024
    ],
-   "kb": 817.5
+   "kb": 744.8
   },
   {
    "file": "textures/A4CU_CHS_Normal_1K.ktx2",
@@ -278,7 +279,7 @@
     512,
     512
    ],
-   "kb": 135.8
+   "kb": 135.6
   },
   {
    "file": "textures/A4CU_VEH_BaseColor_2K.ktx2",
@@ -288,7 +289,7 @@
     2048,
     2048
    ],
-   "kb": 1940.8
+   "kb": 600.8
   },
   {
    "file": "textures/A4CU_VEH_ORM_2K.ktx2",
@@ -298,17 +299,17 @@
     2048,
     2048
    ],
-   "kb": 2843.8
+   "kb": 2635.3
   },
   {
-   "file": "textures/A4CU_VEH_Normal_512.ktx2",
+   "file": "textures/A4CU_VEH_Normal_1K.ktx2",
    "set": "VEH",
    "map": "Normal",
    "size": [
-    512,
-    512
+    1024,
+    1024
    ],
-   "kb": 198.0
+   "kb": 673.3
   },
   {
    "file": "textures/A4CU_WHEEL_BaseColor_2K.ktx2",
@@ -318,7 +319,7 @@
     2048,
     2048
    ],
-   "kb": 1389.0
+   "kb": 288.4
   },
   {
    "file": "textures/A4CU_WHEEL_ORM_2K.ktx2",
@@ -328,7 +329,7 @@
     2048,
     2048
    ],
-   "kb": 2440.5
+   "kb": 2231.3
   },
   {
    "file": "textures/A4CU_LABEL_BaseColor_2048x1448.ktx2",
@@ -503,7 +504,7 @@
  ],
  "materials": [
   "BAKED_BODY",
-  "BAKED_BODY_COAT100",
+  "BAKED_BODY_COAT60",
   "BAKED_CAN",
   "BAKED_CHS",
   "BAKED_CYL_PAINT",
@@ -518,7 +519,7 @@
   "BAKED_REEL_PAINT",
   "BAKED_VAL",
   "BAKED_VEH",
-  "BAKED_VEH_COAT100",
+  "BAKED_VEH_COAT30",
   "BAKED_WHEEL",
   "CUT_BOTTOM",
   "CUT_FOAM",
@@ -537,22 +538,22 @@
  ],
  "materialTable": {
   "id": "attac-4cu-cruiser/phase80",
-  "sha256": "1bc8e2e5647a65dabb46717a58e05df521d8afef78e80ee5806c927a63410a8e",
+  "sha256": "72ec31e81ebf4914e26a8feff81d5827a9d61f8de59b7d69e56ed557cee9fdd4",
   "materials": 32
  },
  "metrics": {
   "tris": {
-   "LOD0": 490200,
-   "LOD1": 267318,
-   "LOD2": 173948
+   "LOD0": 535200,
+   "LOD1": 268846,
+   "LOD2": 174290
   },
   "brotliMB": {
-   "LOD0": 3.207,
-   "LOD1": 2.115,
-   "LOD2": 1.781
+   "LOD0": 3.264,
+   "LOD1": 2.121,
+   "LOD2": 1.777
   },
-  "texturesKTX2MB_own": 20.451,
-  "gpuTexturesMB_own": 62.1,
+  "texturesKTX2MB_own": 15.961,
+  "gpuTexturesMB_own": 63.1,
   "texturesShared": "the Inferno unit's CAN / VAL / REEL / GAUGE / PLATE (+ cutaway CYL / FOAM) sets of models/4cu-trailer/textures - one cached copy for both products",
   "textureSets": {
    "BODY": "2K",
@@ -571,7 +572,7 @@
    "BODY": "512",
    "CHS": "1K",
    "FRM": "512",
-   "VEH": "512"
+   "VEH": "1K"
   },
   "materials": 32,
   "primitivesPerLOD": 23,

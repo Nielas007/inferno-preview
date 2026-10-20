@@ -2898,6 +2898,20 @@ function rlSetup() {
   const hw = new THREE.Vector3().setFromMatrixPosition(RL.hinge.matrixWorld), ax = sz.x < sz.z ? 'x' : 'z';
   RL.front = new THREE.Vector3(); RL.front[ax] = Math.sign(hw[ax] - c[ax]) || 1;
   RL.box.expandByVector(sz.clone().multiplyScalar(-0.03));
+  // Phase 130 (owner: "fix the door's gap"): the door turned about its FRONT edge, so its inner edge swung away from the box and
+  // left a slot of light along the hinge side. A real enclosure door turns about its inner (back) edge at the box corner: move the
+  // pivot there once, keeping every part of the door where it is.
+  if (!RL.hinge.userData.pivotFixed) {
+    let leaf = null, big = 0; RL.hinge.traverse(o => { if (!o.isMesh) return; const v = new THREE.Box3().setFromObject(o).getSize(new THREE.Vector3()); const m = v.x * v.y * v.z + v.x * v.y + v.y * v.z; if (m > big) { big = m; leaf = o; } });
+    const lb = new THREE.Box3().setFromObject(leaf);   // the leaf itself (the hinge barrels stand proud of it)
+    const oldP = new THREE.Vector3().setFromMatrixPosition(RL.hinge.matrixWorld), newP = oldP.clone();
+    newP[ax] = RL.front[ax] > 0 ? lb.min[ax] : lb.max[ax];                  // the leaf's face toward the box
+    const lat = ax === 'x' ? 'z' : 'x'; newP[lat] = Math.abs(lb.min[lat] - oldP[lat]) < Math.abs(lb.max[lat] - oldP[lat]) ? lb.min[lat] : lb.max[lat];   // its hinge-side edge
+    const inH = RL.hinge.worldToLocal(newP.clone());
+    RL.hinge.children.forEach(ch => ch.position.sub(inH));
+    const par = RL.hinge.parent; RL.hinge.position.add(par.worldToLocal(newP.clone()).sub(par.worldToLocal(oldP.clone())));
+    RL.hinge.updateMatrixWorld(true); RL.hinge.userData.pivotFixed = true;
+  }
   RL.steamBox = RL.box.clone(); { const m = 0.07 * RL.H, lat = ax === 'x' ? 'z' : 'x';
     RL.steamBox.min.y += m; RL.steamBox.max.y -= m; RL.steamBox.min[lat] += m; RL.steamBox.max[lat] -= m;
     if (RL.front[ax] > 0) RL.steamBox.max[ax] -= 0.02 * RL.H; else RL.steamBox.min[ax] += 0.02 * RL.H; }
@@ -2999,7 +3013,7 @@ function updateRiteline(dt) {
   for (const S of [J, F]) { S.mat.uniforms.uScale.value = sc; S.mat.uniforms.uTime.value = t; }
   _rlD.subVectors(RL.fireP, RL.burst); const dist = Math.max(_rlD.length(), 0.03 * H); _rlD.normalize();
   _rlU.set(0, 1, 0).cross(_rlD); if (_rlU.lengthSq() < 1e-6) _rlU.set(1, 0, 0); _rlU.normalize(); _rlW.crossVectors(_rlD, _rlU);
-  const jr = !on || t < 3.4 || t > 6.2 ? 0 : (COARSE ? 420 : 900) * (t < 3.6 ? 2.2 : t < 5 ? 1 : 1 - (t - 5) / 1.2);
+  const jr = !on || t < 3.4 ? 0 : (COARSE ? 420 : 900) * (t < 3.6 ? 2.2 : t < 5 ? 1 : 0.55);   // Phase 130: keeps spraying at the burst until stopped
   J.acc += jr * dt; let k = Math.floor(J.acc); J.acc -= k;
   rlEmit(J, k, i => {
     const pop = t < 3.6, cone = pop ? 1.6 : 0.55, a = (Math.random() - 0.5) * cone, c2 = (Math.random() - 0.5) * cone;
@@ -3007,7 +3021,7 @@ function updateRiteline(dt) {
     for (let q = 0; q < 3; q++) J.vel[i * 3 + q] = (_rlD.getComponent(q) + _rlU.getComponent(q) * a + _rlW.getComponent(q) * c2) * sp;
     J.pos[i * 3] = RL.burst.x; J.pos[i * 3 + 1] = RL.burst.y; J.pos[i * 3 + 2] = RL.burst.z; J.life[i] = 0; J.max[i] = 1.4 + Math.random() * 1.2;
   });
-  const fr = !on || t < 3.7 || t > 8.5 ? 0 : (COARSE ? 70 : 150) * (t < 6.5 ? 1 : 1 - (t - 6.5) / 2);
+  const fr = !on || t < 3.7 ? 0 : (COARSE ? 70 : 150) * (t < 6.5 ? 1 : 0.3);   // and the box stays full
   F.acc += fr * dt; k = Math.floor(F.acc); F.acc -= k;
   rlEmit(F, k, i => {                                    // the cloud: born around the fire, thrown out to every corner of the box
     const u = Math.random() * 6.283, v = Math.acos(2 * Math.random() - 1), sp = H * (0.5 + Math.random() * 0.9);
@@ -3018,7 +3032,7 @@ function updateRiteline(dt) {
   if (!on) { for (const S of [J, F]) { S.life.fill(99); S.pts.visible = false; } return; }
   rlStepSteam(J, dt, b, H, 0.05, 2.4);
   rlStepSteam(F, dt, b, H, 0.03, 0.9);
-  F.mat.uniforms.uOpacity.value = 0.32 * (1 - rlEase((t - 15) / 5));   // the box stays full a while, then clears
+  F.mat.uniforms.uOpacity.value = 0.32 - 0.12 * rlEase((t - 7) / 3);   // full, but thin enough that the spray at the burst stays visible
 }
 function renderFrame(withAO = true) {
   const ps = V.aoTargets && V.pr.postSettings();
@@ -3869,6 +3883,7 @@ varying vec3 vRoomP; uniform vec3 uGlow; uniform float uR, uH, uRin, uHalfArc; u
   setRiteline(on) {
     if (!V || !rlSetup()) return false;
     const was = RL.on; RL.on = !!on; RL.t = 0; lastInteract = performance.now();
+    for (const S of [RL.jet, RL.foam]) if (S) { S.life.fill(99); S.acc = 0; S.pts.visible = false; }   // a replay starts clean
     if (RL.on && !was) { RL.cam0 = { p: V.camera.position.clone(), t: V.controls.target.clone() }; rlCamTarget(); }
     if (!RL.on && was && RL.cam0) { RL.camFrom = { p: V.camera.position.clone(), t: V.controls.target.clone() }; RL.camTo = RL.cam0; RL.camK = 0; RL.cam0 = null; }
     return RL.on;

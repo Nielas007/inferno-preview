@@ -5168,3 +5168,11 @@ html.has-scrolled .hero__cue { opacity: 0; transform: translate(-50%, 10px); poi
 .showcase .showcase__info > * { transition: opacity 600ms ease; }
 .showcase.is-riteline .showcase__info > * { opacity: 0.12; }
 .showcase.is-riteline .showcase__info:hover > * { opacity: 1; }
+/* Phase 130: Rewatch — beside Reset view while the Riteline runs */
+.showcase__rlreplay { position: absolute; z-index: 5; right: calc(4% + 150px); bottom: 6%; display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 14px 9px 11px; border-radius: 999px; cursor: pointer; color: #fff; background: rgba(228, 32, 44, 0.16); border: 1px solid rgba(228, 32, 44, 0.55);
+  font: 500 11px/1 var(--font-ui, Inter, sans-serif); letter-spacing: 0.1em; text-transform: uppercase; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  opacity: 0; transform: translateY(6px); pointer-events: none; transition: opacity 400ms ease, transform 400ms cubic-bezier(0.22, 1, 0.36, 1), background 200ms ease; }
+.showcase.has-3d.is-riteline .showcase__rlreplay { opacity: 1; transform: none; pointer-events: auto; }
+.showcase__rlreplay:hover { background: rgba(228, 32, 44, 0.32); }
+@media (max-width: 900px) { .showcase__rlreplay { right: auto; left: 4%; } }

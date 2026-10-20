@@ -511,10 +511,16 @@ function init(root) {
     [3.7, '04', 'The agent blasts out of the burst onto the fire'], [5.4, '05', 'The whole panel floods — fire out, no power needed']];
   const rlCap = document.createElement('div'); rlCap.className = 'showcase__rlcap'; rlCap.setAttribute('aria-live', 'polite');
   let rlRaf = 0, rlLast = '';
+  // Phase 130 (owner: "a rewatch button somewhere"): plays the sequence again from the closed door, while it runs
+  const rlReplay = document.createElement('button'); rlReplay.type = 'button'; rlReplay.className = 'showcase__rlreplay';
+  rlReplay.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg><span>Rewatch</span>';
+  rlReplay.addEventListener('click', e => { e.stopPropagation(); const DV = window.DrawerViewer; if (!DV || !DV.setRiteline) return;
+    DV.setRiteline(true); setActive('activate'); L.view = 'activate'; rlCaptions(true); });
   function rlCaptions(on) {
     cancelAnimationFrame(rlRaf); rlLast = ''; root.classList.toggle('is-riteline', !!on);   // the text steps back while the panel opens over it
     if (!on) { rlCap.classList.remove('is-on'); return; }
     if (!rlCap.isConnected) stage.appendChild(rlCap);
+    if (!rlReplay.isConnected) stage.appendChild(rlReplay);
     const tick = () => {
       const t = window.DrawerViewer && window.DrawerViewer.getRitelineT ? window.DrawerViewer.getRitelineT() : -1;
       if (t < 0) { rlCap.classList.remove('is-on'); return; }

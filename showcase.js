@@ -507,8 +507,8 @@ function init(root) {
     L.view = view;
   }
   // Phase 127: the Riteline's steps, captioned as they happen (how it works, in four lines)
-  const RL_STEPS = [[0, '01', 'Electrical panel in service'], [1.2, '02', 'A fault starts a fire inside the panel'], [3.3, '03', 'The detection tube bursts at the fire'],
-    [3.7, '04', 'Foam agent sprays out of the burst, onto the fire'], [5.6, '05', 'Fire out. No power, no electronics needed']]
+  const RL_STEPS = [[0, '01', 'Electrical panel in service'], [1.2, '02', 'A component catches fire'], [3.3, '03', 'The detection tube bursts right above it'],
+    [3.7, '04', 'The agent blasts out of the burst onto the fire'], [5.4, '05', 'The whole panel floods — fire out, no power needed']];
   const rlCap = document.createElement('div'); rlCap.className = 'showcase__rlcap'; rlCap.setAttribute('aria-live', 'polite');
   let rlRaf = 0, rlLast = '';
   function rlCaptions(on) {

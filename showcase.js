@@ -507,12 +507,12 @@ function init(root) {
     L.view = view;
   }
   // Phase 127: the Riteline's steps, captioned as they happen (how it works, in four lines)
-  const RL_STEPS = [[0, '01', 'Electrical panel in service'], [1.4, '02', 'A breaker overheats'], [3.55, '03', 'The detection tube bursts at the hot spot'],
-    [4.2, '04', 'The cylinder floods the panel — no power needed'], [7.2, '05', 'Fire out. The panel is protected']];
+  const RL_STEPS = [[0, '01', 'Electrical panel in service'], [1.2, '02', 'A fault starts a fire inside the panel'], [3.3, '03', 'The detection tube bursts at the fire'],
+    [3.7, '04', 'Foam agent sprays out of the burst, onto the fire'], [5.6, '05', 'Fire out. No power, no electronics needed']]
   const rlCap = document.createElement('div'); rlCap.className = 'showcase__rlcap'; rlCap.setAttribute('aria-live', 'polite');
   let rlRaf = 0, rlLast = '';
   function rlCaptions(on) {
-    cancelAnimationFrame(rlRaf); rlLast = '';
+    cancelAnimationFrame(rlRaf); rlLast = ''; root.classList.toggle('is-riteline', !!on);   // the text steps back while the panel opens over it
     if (!on) { rlCap.classList.remove('is-on'); return; }
     if (!rlCap.isConnected) stage.appendChild(rlCap);
     const tick = () => {

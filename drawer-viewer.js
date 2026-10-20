@@ -2542,7 +2542,7 @@ function frame() {
   const rA = V.models && V.models[V.url], camMoved = !near(PWR.cam, V.camera.matrixWorld, 2e-5) || !near(PWR.proj, V.camera.projectionMatrix, 1e-5);
   const settling = Math.abs(cutTarget - cutAmt) > 1e-3 || Math.abs(truckTarget - truckAmt) > 1e-3 || Math.abs(dimTarget - dimAmt) > 1e-3
     || Math.abs(gunDimTarget - gunDimAmt) > 1e-3 || (GHOST.amt > 0.004 && GHOST.amt < 0.996) || (PCUT.amt > 0 && PCUT.amt < 1);
-  const fx = (spray && spray.points.visible) || systemOn || WET.max > 0.002 || (RL.key && (RL.on || RL.t > 0)) || now < DIS.wetUntil || DIS.on > 0.01 || (mode === 'gun' && !!prodGunRig()) || PGUN.yaw !== 0 || PGUN.pitch !== 0;
+  const fx = (spray && spray.points.visible) || systemOn || WET.max > 0.002 || (RL.key && (RL.on || RL.t > 0 || !!RL.camTo)) || now < DIS.wetUntil || DIS.on > 0.01 || (mode === 'gun' && !!prodGunRig()) || PGUN.yaw !== 0 || PGUN.pitch !== 0;
   const key = `${V.url}|${mode}|${rA && rA.production ? rA.production.activeLOD : ''}|${V.loaded}`;
   const dirty = camMoved || settling || fx || key !== PWR.key || V.renderer.shadowMap.needsUpdate || now - PWR.lastInput < 1200;
   if (dirty) { PWR.tail = 12; PWR.why = [camMoved && 'cam', settling && 'settle', fx && 'fx', key !== PWR.key && 'key', V.renderer.shadowMap.needsUpdate && 'shadow', now - PWR.lastInput < 1200 && 'input'].filter(Boolean).join(','); }
@@ -2824,108 +2824,158 @@ function renderMirror() {
 }
 
 
-// ── Phase 127: the Riteline activation (owner: "make an activation of how it works") ────────────────────────────────────────
+// ── Phase 127/128: the Riteline activation (owner: "a small fire in the middle of the box by the components, the nearest
+// pipe bursts and the foam agent sprays out of it") ────────────────────────────────────────────────────────────────────────
 // The Riteline box is an electrical panel with a pressurised linear detection tube running past every DIN rail and a 2 kg
-// cylinder on its side. The sequence: the door swings open -> a breaker (RL_Hot) overheats and glows -> the tube bursts at the
-// point nearest the heat -> the pressure drop opens the cylinder valve and the agent discharges through the burst, filling the
-// enclosure as a white cloud -> the heat dies away. DrawerViewer.setRiteline(on) starts / resets it; the GLB carries the nodes
-// Riteline_Door_Hinge (pivot, rotate about its own Y), RL_Hot and RL_Tube (models/riteline/riteline-box-2kg.glb).
-const RL = { on: false, t: 0, key: null, hinge: null, q0: null, hot: null, hotMats: [], light: null, burst: null, pts: null, n: 1300, glow: null, flash: null,
-  pos: null, vel: null, life: null, max: null, next: 0, acc: 0, box: null, seen: false };
+// cylinder on its side. The sequence: the door swings open -> a small fire starts on a component in the middle of the panel ->
+// the tube bursts at its point nearest the fire -> the agent sprays out of the burst as a foam jet onto the fire, foam builds up
+// on the components and the fire dies -> a light agent haze fills the box. DrawerViewer.setRiteline(on) starts / resets it.
+// The GLB carries Riteline_Door_Hinge (pivot), RL_Tube and RL_Generic_061 (the enclosure shell).
+const RL = { on: false, t: 0, key: null, hinge: null, q0: null, cam0: null, camTo: null, camFrom: null, camK: 0, light: null, fire: null, fireP: null, burst: null, box: null,
+  jet: null, foam: null, haze: null, flash: null, glow: null, H: 1, front: null, door: null };
+function rlPoints(n, size, color, opacity, tex, additive) {
+  const P = { n, pos: new Float32Array(n * 3).fill(-1e4), vel: new Float32Array(n * 3), life: new Float32Array(n).fill(99), max: new Float32Array(n).fill(1), next: 0, acc: 0 };
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(P.pos, 3));
+  P.pts = new THREE.Points(geo, new THREE.PointsMaterial({ map: tex, color, size, sizeAttenuation: true, transparent: true, opacity, depthWrite: false,
+    blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending }));
+  P.pts.frustumCulled = false; P.pts.renderOrder = 8; P.pts.visible = false; V.scene.add(P.pts); return P;
+}
 function rlSetup() {
   const r = V.models && V.models[V.url]; if (!r || !r.group) return false;
   if (RL.key === V.url) return !!RL.hinge;
   rlDispose(); RL.key = V.url;
   const g = r.group, by = n => { let f = null; g.traverse(o => { if (!f && o.name && o.name.replace(/[^A-Za-z0-9]/g, '').toLowerCase() === n) f = o; }); return f; };
-  RL.hinge = by('ritelinedoorhinge'); RL.hot = by('rlhot'); const tube = by('rltube');
+  RL.hinge = by('ritelinedoorhinge'); const tube = by('rltube'), shell = by('rlgeneric061');
   if (!RL.hinge) return false;
-  RL.q0 = RL.hinge.quaternion.clone();
+  RL.q0 = RL.hinge.quaternion.clone(); RL.door = RL.hinge;
   g.updateMatrixWorld(true);
-  if (RL.hot) RL.hot.traverse(o => { if (!o.isMesh) return; const ms = Array.isArray(o.material) ? o.material : [o.material];
-    const cl = ms.map(m => { const c = m.clone(); c.emissive = new THREE.Color(0xff3a10); c.emissiveIntensity = 0; return c; });
-    o.material = Array.isArray(o.material) ? cl : cl[0]; RL.hotMats.push(...cl); });
-  const hc = new THREE.Vector3(); if (RL.hot) new THREE.Box3().setFromObject(RL.hot).getCenter(hc);
-  // the burst: the tube vertex nearest the overheating breaker
-  RL.burst = hc.clone();
+  RL.box = new THREE.Box3().setFromObject(shell || g);
+  const c = RL.box.getCenter(new THREE.Vector3()), sz = RL.box.getSize(new THREE.Vector3()); RL.H = sz.y;
+  // the front: the shallow horizontal axis of the shell, on the side the door hangs
+  const hw = new THREE.Vector3().setFromMatrixPosition(RL.hinge.matrixWorld), ax = sz.x < sz.z ? 'x' : 'z';
+  RL.front = new THREE.Vector3(); RL.front[ax] = Math.sign(hw[ax] - c[ax]) || 1;
+  RL.box.expandByVector(sz.clone().multiplyScalar(-0.03));
+  // the fire: on the first component a ray from the open front meets, in the middle of the panel
+  const skip = new Set(); RL.hinge.traverse(o => skip.add(o)); if (tube) tube.traverse(o => skip.add(o));
+  const targets = []; g.traverse(o => { if (o.isMesh && !skip.has(o) && o !== shell) targets.push(o); });
+  const start = c.clone().addScaledVector(RL.front, sz[ax] * 0.9).add(new THREE.Vector3(0, -0.04 * RL.H, 0));
+  const ray = new THREE.Raycaster(start, RL.front.clone().negate(), 0, sz[ax] * 3);
+  const hit = ray.intersectObjects(targets, false)[0];
+  RL.fireP = hit ? hit.point.clone().addScaledVector(RL.front, 0.012 * RL.H) : c.clone();
+  // the burst: the tube vertex nearest the fire
+  RL.burst = RL.fireP.clone().addScaledVector(RL.front, 0.05 * RL.H);
   if (tube) { let best = Infinity; const v = new THREE.Vector3();
     tube.traverse(o => { if (!o.isMesh) return; const p = o.geometry.attributes.position;
-      for (let i = 0; i < p.count; i += 3) { v.fromBufferAttribute(p, i).applyMatrix4(o.matrixWorld); const d = v.distanceToSquared(hc); if (d < best) { best = d; RL.burst.copy(v); } } }); }
-  // the enclosure: the model's bounds without the cylinder hanging on its side (the cloud stays inside the box)
-  const shell = by('rlgeneric061'); RL.box = new THREE.Box3().setFromObject(shell || g);
-  { const sz = RL.box.getSize(new THREE.Vector3()); RL.box.expandByVector(sz.multiplyScalar(-0.03)); }   // inside the walls
-  const cyl = by('rlcylinder'); if (cyl) { const cb = new THREE.Box3().setFromObject(cyl);
-    if (cb.max.x <= RL.box.min.x + (RL.box.max.x - RL.box.min.x) * 0.3) RL.box.min.x = cb.max.x; else if (cb.min.x >= RL.box.max.x - (RL.box.max.x - RL.box.min.x) * 0.3) RL.box.max.x = cb.min.x;
-    if (cb.max.z <= RL.box.min.z + (RL.box.max.z - RL.box.min.z) * 0.3) RL.box.min.z = cb.max.z; else if (cb.min.z >= RL.box.max.z - (RL.box.max.z - RL.box.min.z) * 0.3) RL.box.max.z = cb.min.z; }
-  RL.light = new THREE.PointLight(0xff5a1e, 0, (RL.box.max.y - RL.box.min.y) * 1.2, 1.2); RL.light.position.copy(hc); V.scene.add(RL.light);
-  const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'), gr = x.createRadialGradient(64, 64, 0, 64, 64, 64);
-    gr.addColorStop(0, 'rgba(255,240,200,1)'); gr.addColorStop(0.25, 'rgba(255,140,40,0.85)'); gr.addColorStop(0.6, 'rgba(255,60,10,0.25)'); gr.addColorStop(1, 'rgba(255,40,0,0)');
-    x.fillStyle = gr; x.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c); })();
-  const Hs = RL.box.max.y - RL.box.min.y;
+      for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i).applyMatrix4(o.matrixWorld); const d = v.distanceToSquared(RL.fireP); if (d < best) { best = d; RL.burst.copy(v); } } }); }
+  const H = RL.H;
+  // the fire: two crossed flame cards (the site's own flame shader), its glow and its light
+  RL.fire = new THREE.Group(); RL.fire.position.copy(RL.fireP); V.scene.add(RL.fire);
+  RL.fire.userData.cards = [0, 1].map(k => {
+    const m = new THREE.ShaderMaterial({ uniforms: { uTime: { value: 0 }, uSeed: { value: 2.3 + k * 1.9 }, uAmt: { value: 0 } }, vertexShader: FIRE_VS, fragmentShader: FIRE_FS,
+      defines: { OCT: COARSE ? 3 : 5 }, transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
+    const w = (k ? 0.065 : 0.085) * H, hh = (k ? 0.11 : 0.14) * H, geo = new THREE.PlaneGeometry(w, hh); geo.translate(0, hh / 2 - 0.02 * H, 0);
+    const mesh = new THREE.Mesh(geo, m); mesh.position.x = (k ? 0.01 : -0.006) * H; mesh.renderOrder = 9; RL.fire.add(mesh); return mesh;
+  });
+  const glowTex = radialTex([[0, 'rgba(255,200,120,1)'], [0.3, 'rgba(255,110,30,0.6)'], [1, 'rgba(255,60,0,0)']]);
   RL.glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending, opacity: 0 }));
-  RL.glow.position.copy(hc); RL.glow.scale.setScalar(Hs * 0.32); RL.glow.renderOrder = 7; V.scene.add(RL.glow);
-  RL.flash = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xdfefff, transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending, opacity: 0 }));
-  RL.flash.position.copy(RL.burst); RL.flash.scale.setScalar(Hs * 0.2); RL.flash.renderOrder = 7; V.scene.add(RL.flash);
-  // the agent cloud
-  const n = RL.n; RL.pos = new Float32Array(n * 3).fill(-1e4); RL.vel = new Float32Array(n * 3); RL.life = new Float32Array(n).fill(9); RL.max = new Float32Array(n).fill(1);
-  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(RL.pos, 3));
-  const size = (RL.box.max.y - RL.box.min.y) * 0.3;
-  RL.pts = new THREE.Points(geo, new THREE.PointsMaterial({ map: sprayTexture(), color: 0xf2f5f8, size, sizeAttenuation: true, transparent: true, opacity: 0.0, depthWrite: false }));
-  RL.pts.frustumCulled = false; RL.pts.renderOrder = 6; V.scene.add(RL.pts);
+  RL.glow.position.copy(RL.fireP); RL.glow.scale.setScalar(H * 0.3); RL.glow.renderOrder = 8; V.scene.add(RL.glow);
+  RL.flash = new THREE.Sprite(new THREE.SpriteMaterial({ map: radialTex([[0, 'rgba(255,255,255,1)'], [0.3, 'rgba(210,235,255,0.7)'], [1, 'rgba(180,220,255,0)']]), color: 0xffffff, transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending, opacity: 0 }));
+  RL.flash.position.copy(RL.burst); RL.flash.renderOrder = 9; V.scene.add(RL.flash);
+  RL.light = new THREE.PointLight(0xff6a24, 0, H * 0.9, 1.4); RL.light.position.copy(RL.fireP).addScaledVector(RL.front, 0.05 * H); V.scene.add(RL.light);
+  // the agent: a foam jet out of the burst, foam that builds up where it lands, and a light haze in the box
+  const puff = sprayTexture();
+  RL.jet = rlPoints(COARSE ? 900 : 1800, H * 0.04, 0xffffff, 0.9, puff, false); RL.jet.pts.material.depthTest = false; RL.jet.pts.renderOrder = 10;
+  RL.foam = rlPoints(COARSE ? 600 : 1100, H * 0.085, 0xf6f8fa, 0.95, puff, false); RL.foam.pts.material.depthTest = false; RL.foam.pts.renderOrder = 10;
+  RL.haze = rlPoints(COARSE ? 300 : 600, H * 0.3, 0xeef2f6, 0.0, puff, false);
   return true;
 }
 function rlDispose() {
-  if (RL.hinge && RL.q0) RL.hinge.quaternion.copy(RL.q0);   // the door shut and the breaker cold again for the next visit
-  for (const m of RL.hotMats) m.emissiveIntensity = 0;
-  if (RL.pts) { V.scene.remove(RL.pts); RL.pts.geometry.dispose(); RL.pts.material.dispose(); }
+  if (RL.hinge && RL.q0) RL.hinge.quaternion.copy(RL.q0);   // the door shut again for the next visit
+  for (const P of [RL.jet, RL.foam, RL.haze]) if (P) { V.scene.remove(P.pts); P.pts.geometry.dispose(); P.pts.material.dispose(); }
+  for (const sp of [RL.glow, RL.flash]) if (sp) { V.scene.remove(sp); sp.material.dispose(); }
+  if (RL.glow) RL.glow.material.map && RL.glow.material.map.dispose();
+  if (RL.fire) { V.scene.remove(RL.fire); RL.fire.userData.cards.forEach(m => { m.geometry.dispose(); m.material.dispose(); }); }
   if (RL.light) V.scene.remove(RL.light);
-  for (const sp of [RL.glow, RL.flash]) if (sp) { V.scene.remove(sp); sp.material.map.dispose(); sp.material.dispose(); }
-  Object.assign(RL, { on: false, t: 0, key: null, hinge: null, q0: null, hot: null, hotMats: [], light: null, burst: null, pts: null, next: 0, acc: 0, box: null, glow: null, flash: null });
+  Object.assign(RL, { on: false, t: 0, key: null, hinge: null, q0: null, cam0: null, camTo: null, light: null, fire: null, fireP: null, burst: null, box: null, jet: null, foam: null, haze: null, flash: null, glow: null });
 }
 const rlEase = x => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
-const _rlQ = new THREE.Quaternion(), _rlY = new THREE.Vector3(0, 1, 0);
+const _rlQ = new THREE.Quaternion(), _rlY = new THREE.Vector3(0, 1, 0), _rlD = new THREE.Vector3(), _rlU = new THREE.Vector3(), _rlW = new THREE.Vector3();
+function rlEmit(P, k, fn) { while (k-- > 0) { const i = P.next; P.next = (P.next + 1) % P.n; fn(i); } }
+// Phase 128: the activation's camera - in front of the open panel, a little to the side away from the door, the panel filling
+// the frame (owner: "the default view must be this big"); it glides there with the door and back on stop
+function rlCamTarget() {
+  const c = RL.box.getCenter(new THREE.Vector3()), H = RL.H, fov = THREE.MathUtils.degToRad(V.camera.fov);
+  const d = (H * 0.62) / Math.tan(fov / 2) / Math.min(1, V.camera.aspect * 0.9);
+  const hinge = new THREE.Vector3().setFromMatrixPosition(RL.hinge.matrixWorld), side = new THREE.Vector3(RL.front.z, 0, -RL.front.x);
+  if (side.dot(new THREE.Vector3().subVectors(c, hinge)) < 0) side.negate();   // away from the hinge: you look past the open door
+  const p = c.clone().addScaledVector(RL.front, d).addScaledVector(side, d * 0.32).add(new THREE.Vector3(0, H * 0.08, 0));
+  RL.camFrom = { p: V.camera.position.clone(), t: V.controls.target.clone() }; RL.camTo = { p, t: c.clone().add(new THREE.Vector3(0, -H * 0.02, 0)) }; RL.camK = 0;
+}
+function rlCamStep(dt) {
+  if (!RL.camTo) return;
+  RL.camK = Math.min(1, RL.camK + dt / 1.3); const e = rlEase(RL.camK);
+  V.camera.position.lerpVectors(RL.camFrom.p, RL.camTo.p, e); V.controls.target.lerpVectors(RL.camFrom.t, RL.camTo.t, e); V.camera.lookAt(V.controls.target);
+  if (RL.camK >= 1) RL.camTo = null;
+}
 function updateRiteline(dt) {
+  if (RL.key === (V && V.url)) { rlCamStep(dt); if (RL.on || RL.camTo) { V.controls.autoRotate = false; lastInteract = performance.now(); } }
   if (!RL.key || RL.key !== (V && V.url) || !RL.hinge) return;
-  RL.t = RL.on ? RL.t + dt : Math.max(0, RL.t - dt * 2.5);           // stop = everything winds back quickly
-  const t = RL.t, H = RL.box.max.y - RL.box.min.y;
-  // 1. the door (0 - 1.4 s)
-  const open = RL.on ? rlEase(t / 1.4) : rlEase(Math.min(t, 1.4) / 1.4);
-  RL.hinge.quaternion.copy(RL.q0).multiply(_rlQ.setFromAxisAngle(_rlY, -1.85 * open));
-  // 2. the breaker overheats (1.4 - 3.6 s), cools once the agent is in (4.2 - 6.8 s)
-  const heat = RL.on ? rlEase((t - 1.4) / 2.2) * (1 - rlEase((t - 4.2) / 2.6)) : 0;
-  const flick = 0.85 + 0.15 * Math.sin(t * 23) * Math.sin(t * 7.3);
-  for (const m of RL.hotMats) m.emissiveIntensity = heat * 6 * flick;
-  if (RL.light) RL.light.intensity = heat * 9 * flick;
-  if (RL.glow) { RL.glow.material.opacity = heat * 0.95 * flick; RL.glow.scale.setScalar(H * (0.22 + 0.12 * heat)); }
-  // the burst: a white flash where the tube lets go (3.6 s)
-  if (RL.flash) { const f = RL.on ? Math.max(0, 1 - Math.abs(t - 3.75) / 0.35) : 0; RL.flash.material.opacity = f; RL.flash.scale.setScalar(H * (0.12 + 0.25 * f)); }
-  // 3. burst + discharge (from 3.6 s): a hard jet for 0.8 s, then the cylinder empties for ~4 s
-  const p = RL.pos, vel = RL.vel, life = RL.life, max = RL.max, n = RL.n, b = RL.box;
-  const rate = !RL.on || t < 3.6 ? 0 : t < 4.4 ? 900 : t < 8.5 ? 240 * (1 - (t - 4.4) / 4.1) : 0;
-  RL.acc += rate * dt; let k = Math.floor(RL.acc); RL.acc -= k;
-  const sp = H * 1.6;
-  while (k-- > 0) {
-    const i = RL.next; RL.next = (RL.next + 1) % n;
-    const th = Math.random() * Math.PI * 2, ph = Math.acos(2 * Math.random() - 1), s0 = sp * (0.4 + Math.random() * 0.9);
-    vel[i * 3] = Math.sin(ph) * Math.cos(th) * s0; vel[i * 3 + 1] = Math.cos(ph) * s0 * 0.7; vel[i * 3 + 2] = Math.sin(ph) * Math.sin(th) * s0;
-    p[i * 3] = RL.burst.x; p[i * 3 + 1] = RL.burst.y; p[i * 3 + 2] = RL.burst.z; life[i] = 0; max[i] = 5 + Math.random() * 4;
-  }
-  let alive = 0;
-  const drag = Math.exp(-dt * 2.6);
-  for (let i = 0; i < n; i++) {
-    if (life[i] >= max[i]) { p[i * 3 + 1] = -1e4; continue; }
-    life[i] += dt; alive++;
-    for (let c = 0; c < 3; c++) {
-      vel[i * 3 + c] = vel[i * 3 + c] * drag + (Math.random() - 0.5) * H * 0.35 * dt;   // turbulence
-      let x = p[i * 3 + c] + vel[i * 3 + c] * dt; const lo = b.min.getComponent(c), hi = b.max.getComponent(c);
-      if (x < lo) { x = lo; vel[i * 3 + c] *= -0.3; } else if (x > hi) { x = hi; vel[i * 3 + c] *= -0.3; }   // the cloud fills the box
-      p[i * 3 + c] = x;
+  RL.t = RL.on ? RL.t + dt : 0;
+  const t = RL.t, H = RL.H, on = RL.on;
+  // 1. the door (0 - 1.2 s)
+  RL.hinge.quaternion.copy(RL.q0).multiply(_rlQ.setFromAxisAngle(_rlY, -2.2 * (on ? rlEase(t / 1.2) : 0)));
+  // 2. the fire: starts at 1.2 s, full by 2.6 s; the foam reaches it at ~3.7 s and it is out by ~5.4 s
+  const fire = on ? rlEase((t - 1.2) / 1.4) * (1 - rlEase((t - 3.6) / 1.4)) : 0;
+  const flick = 0.82 + 0.18 * Math.sin(t * 21) * Math.sin(t * 6.7);
+  RL.fire.visible = fire > 0.01;
+  RL.fire.quaternion.setFromAxisAngle(_rlY, Math.atan2(V.camera.position.x - RL.fireP.x, V.camera.position.z - RL.fireP.z));   // the flames face you
+  for (const m of RL.fire.userData.cards) { m.material.uniforms.uTime.value = t; m.material.uniforms.uAmt.value = fire * (0.75 + 0.25 * flick); }
+  RL.glow.material.opacity = fire * 0.6 * flick; RL.glow.scale.setScalar(H * (0.14 + 0.1 * fire));
+  RL.light.intensity = fire * 5 * flick;
+  // 3. the burst: a white flash where the tube lets go (3.3 s)
+  const fl = on ? Math.max(0, 1 - Math.abs(t - 3.42) / 0.22) : 0; RL.flash.material.opacity = fl; RL.flash.scale.setScalar(H * (0.05 + 0.12 * fl));
+  // 4. the foam jet: out of the burst, straight at the fire (3.4 - 6.4 s, strongest at first)
+  const J = RL.jet, F = RL.foam, Z = RL.haze, b = RL.box;
+  const jr = !on || t < 3.4 || t > 6.4 ? 0 : (COARSE ? 380 : 760) * (t < 3.55 ? 3 : t < 4.6 ? 1 : 1 - (t - 4.6) / 1.8);
+  J.acc += jr * dt; let k = Math.floor(J.acc); J.acc -= k;
+  _rlD.subVectors(RL.fireP, RL.burst); const dist = Math.max(_rlD.length(), 0.02 * H); _rlD.normalize();
+  _rlU.set(0, 1, 0).cross(_rlD); if (_rlU.lengthSq() < 1e-6) _rlU.set(1, 0, 0); _rlU.normalize(); _rlW.crossVectors(_rlD, _rlU);
+  rlEmit(J, k, i => {
+    const pop = t < 3.55, a = (Math.random() - 0.5) * (pop ? 2.4 : 0.9), c2 = (Math.random() - 0.5) * (pop ? 2.4 : 0.9), sp = (dist + 0.05 * H) / (pop ? 0.5 : 0.32 + Math.random() * 0.12);
+    for (let q = 0; q < 3; q++) J.vel[i * 3 + q] = (_rlD.getComponent(q) + _rlU.getComponent(q) * a + _rlW.getComponent(q) * c2) * sp;
+    J.pos[i * 3] = RL.burst.x; J.pos[i * 3 + 1] = RL.burst.y; J.pos[i * 3 + 2] = RL.burst.z; J.life[i] = 0; J.max[i] = pop ? 0.25 + Math.random() * 0.15 : 0.45 + Math.random() * 0.2;
+  });
+  let ja = 0, fa = 0, za = 0;
+  for (let i = 0; i < J.n; i++) {
+    if (J.life[i] >= J.max[i]) { J.pos[i * 3 + 1] = -1e4; continue; }
+    J.life[i] += dt;
+    for (let q = 0; q < 3; q++) J.pos[i * 3 + q] += J.vel[i * 3 + q] * dt;
+    J.vel[i * 3 + 1] -= H * 0.35 * dt; for (let q = 0; q < 3; q++) J.vel[i * 3 + q] *= Math.exp(-dt * 1.2);
+    const dx = J.pos[i * 3] - RL.fireP.x, dy = J.pos[i * 3 + 1] - RL.fireP.y, dz = J.pos[i * 3 + 2] - RL.fireP.z;
+    if (J.life[i] >= J.max[i] || (J.life[i] > 0.12 && dx * dx + dy * dy + dz * dz < (0.035 * H) ** 2)) {   // it lands: foam builds up there
+      if (Math.random() < 0.35) rlEmit(F, 1, f => { F.pos[f * 3] = J.pos[i * 3] + (Math.random() - 0.5) * 0.05 * H; F.pos[f * 3 + 1] = J.pos[i * 3 + 1] + (Math.random() - 0.5) * 0.04 * H;
+        F.pos[f * 3 + 2] = J.pos[i * 3 + 2] + (Math.random() - 0.5) * 0.05 * H; F.vel[f * 3] = F.vel[f * 3 + 2] = 0; F.vel[f * 3 + 1] = -0.01 * H; F.life[f] = 0; F.max[f] = 30; });
+      J.life[i] = J.max[i]; J.pos[i * 3 + 1] = -1e4; continue;
     }
-    vel[i * 3 + 1] -= H * 0.05 * dt;   // the agent is heavier than air: it settles slowly
+    ja++;
   }
-  RL.pts.geometry.attributes.position.needsUpdate = true; RL.pts.visible = alive > 0;
-  const fill = RL.on ? rlEase((t - 3.6) / 1.2) * (1 - rlEase((t - 10) / 5)) : Math.min(RL.pts.material.opacity, rlEase(t / 1.4));
-  RL.pts.material.opacity = 0.2 * fill;
-  if (!RL.on && t <= 0) { RL.pts.visible = false; for (let i = 0; i < n; i++) life[i] = max[i]; }
+  for (let i = 0; i < F.n; i++) {                       // the foam: settles very slowly, spreads a little
+    if (!on || F.life[i] >= F.max[i]) { F.life[i] = 99; F.pos[i * 3 + 1] = -1e4; continue; }
+    F.life[i] += dt; F.pos[i * 3 + 1] += F.vel[i * 3 + 1] * dt; F.vel[i * 3 + 1] *= Math.exp(-dt * 0.5); fa++;
+  }
+  // a light haze of agent spreading through the box (from 3.6 s)
+  const zr = !on || t < 3.6 || t > 7 ? 0 : (COARSE ? 50 : 90);
+  Z.acc += zr * dt; k = Math.floor(Z.acc); Z.acc -= k;
+  rlEmit(Z, k, i => { for (let q = 0; q < 3; q++) Z.vel[i * 3 + q] = (Math.random() - 0.5) * H * 0.5; Z.pos[i * 3] = RL.fireP.x; Z.pos[i * 3 + 1] = RL.fireP.y; Z.pos[i * 3 + 2] = RL.fireP.z; Z.life[i] = 0; Z.max[i] = 6 + Math.random() * 4; });
+  const drag = Math.exp(-dt * 1.4);
+  for (let i = 0; i < Z.n; i++) {
+    if (!on || Z.life[i] >= Z.max[i]) { Z.life[i] = 99; Z.pos[i * 3 + 1] = -1e4; continue; }
+    Z.life[i] += dt; za++;
+    for (let q = 0; q < 3; q++) { let x = Z.pos[i * 3 + q] + Z.vel[i * 3 + q] * dt; Z.vel[i * 3 + q] = Z.vel[i * 3 + q] * drag + (Math.random() - 0.5) * H * 0.2 * dt;
+      const lo = b.min.getComponent(q), hi = b.max.getComponent(q); if (x < lo) { x = lo; Z.vel[i * 3 + q] *= -0.3; } else if (x > hi) { x = hi; Z.vel[i * 3 + q] *= -0.3; } Z.pos[i * 3 + q] = x; }
+  }
+  Z.pts.material.opacity = on ? 0.12 * rlEase((t - 3.6) / 1.5) : 0;
+  for (const [P, a] of [[J, ja], [F, fa], [Z, za]]) { P.pts.visible = a > 0; if (a > 0) P.pts.geometry.attributes.position.needsUpdate = true; }
 }
 function renderFrame(withAO = true) {
   const ps = V.aoTargets && V.pr.postSettings();
@@ -3773,9 +3823,16 @@ varying vec3 vRoomP; uniform vec3 uGlow; uniform float uR, uH, uRin, uHalfArc; u
   // Vehicle-system discharge — every nozzle sprays at once (system mode only).
   setSystem(on) { systemOn = !!on; return systemOn; },
   // Phase 127: the Riteline activation (door, overheating breaker, tube burst, agent cloud); false winds it back
-  setRiteline(on) { if (!V || !rlSetup()) return false; RL.on = !!on; if (on) RL.t = 0; lastInteract = performance.now(); return RL.on; },
+  setRiteline(on) {
+    if (!V || !rlSetup()) return false;
+    const was = RL.on; RL.on = !!on; RL.t = 0; lastInteract = performance.now();
+    if (RL.on && !was) { RL.cam0 = { p: V.camera.position.clone(), t: V.controls.target.clone() }; rlCamTarget(); }
+    if (!RL.on && was && RL.cam0) { RL.camFrom = { p: V.camera.position.clone(), t: V.controls.target.clone() }; RL.camTo = RL.cam0; RL.camK = 0; RL.cam0 = null; }
+    return RL.on;
+  },
   getRiteline() { return RL.on; },
   getRitelineT() { return RL.on ? RL.t : -1; },
+  ritelineInfo() { return RL.box ? { H: RL.H, fire: RL.fireP.toArray().map(v => +v.toFixed(3)), burst: RL.burst.toArray().map(v => +v.toFixed(3)), front: RL.front.toArray(), dist: +RL.fireP.distanceTo(RL.burst).toFixed(3) } : null; },
   getSystem() { return systemOn; },
   setZoom(t) { setZoom(t); return getZoom(); },
   getZoom() { return getZoom(); },

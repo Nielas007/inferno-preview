@@ -5164,3 +5164,7 @@ html.has-scrolled .hero__cue { opacity: 0; transform: translate(-50%, 10px); poi
 .showcase__rlcap-n { font: 600 10px/1 var(--font-ui, Inter, sans-serif); letter-spacing: 0.16em; color: #ff2030; }
 .showcase__rlcap-t { font: 500 13px/1.2 var(--font-ui, Inter, sans-serif); color: #fff; letter-spacing: 0.01em; }
 @media (max-width: 900px) { .showcase__rlcap { bottom: 4%; max-width: 92vw; white-space: normal; } .showcase__rlcap-t { font-size: 12px; } }
+/* (the info column itself carries a fill-both animation, so its children fade) */
+.showcase .showcase__info > * { transition: opacity 600ms ease; }
+.showcase.is-riteline .showcase__info > * { opacity: 0.12; }
+.showcase.is-riteline .showcase__info:hover > * { opacity: 1; }

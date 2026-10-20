@@ -2833,6 +2833,49 @@ function renderMirror() {
 // The GLB carries Riteline_Door_Hinge (pivot), RL_Tube and RL_Generic_061 (the enclosure shell).
 const RL = { on: false, t: 0, key: null, hinge: null, q0: null, cam0: null, camTo: null, camFrom: null, camK: 0, light: null, fire: null, fireP: null, burst: null, box: null,
   jet: null, foam: null, haze: null, flash: null, glow: null, H: 1, front: null, door: null };
+// Phase 129 (owner: "spray better - think of the VSS activation, the box filling up inside; a steam-looking agent"): the agent
+// is a steam cloud - soft puffs that start small and dense at the burst and grow as they slow, billow and roll off the walls
+function rlSteam(n, size, opacity, depth) {
+  const S = { n, pos: new Float32Array(n * 3).fill(-1e4), vel: new Float32Array(n * 3), life: new Float32Array(n).fill(99), max: new Float32Array(n).fill(1),
+    age: new Float32Array(n), seed: new Float32Array(n), next: 0, acc: 0 };
+  for (let i = 0; i < n; i++) S.seed[i] = Math.random();
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(S.pos, 3));
+  geo.setAttribute('aT', new THREE.BufferAttribute(S.age, 1)); geo.setAttribute('aS', new THREE.BufferAttribute(S.seed, 1));
+  S.mat = new THREE.ShaderMaterial({
+    uniforms: { uSize: { value: size }, uScale: { value: 600 }, uOpacity: { value: opacity }, uTime: { value: 0 } },
+    vertexShader: `attribute float aT; attribute float aS; uniform float uSize, uScale; varying float vT; varying float vS;
+      void main() { vT = aT; vS = aS; vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        gl_PointSize = uSize * (0.25 + 1.6 * sqrt(aT)) * (0.75 + 0.5 * aS) * (uScale / max(0.0001, -mv.z)); gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: `uniform float uOpacity, uTime; varying float vT; varying float vS;
+      float h(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+      float n2(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+        return mix(mix(h(i), h(i + vec2(1.0, 0.0)), f.x), mix(h(i + vec2(0.0, 1.0)), h(i + vec2(1.0, 1.0)), f.x), f.y); }
+      void main() {
+        vec2 q = gl_PointCoord - 0.5; float r = length(q) * 2.0;
+        float wisp = n2(q * 4.0 + vS * 17.0 + uTime * 0.35) * 0.6 + n2(q * 9.0 - vS * 9.0 - uTime * 0.6) * 0.4;   // a billowing edge, not a disc
+        float a = smoothstep(1.0, 0.15, r + (wisp - 0.5) * 0.55);
+        float fade = smoothstep(0.0, 0.06, vT) * (1.0 - smoothstep(0.7, 1.0, vT));
+        vec3 c = mix(vec3(0.86, 0.89, 0.93), vec3(1.0), wisp * 0.5 + 0.35);                                   // white steam, cool grey in its folds
+        gl_FragColor = vec4(c, a * fade * uOpacity); }`,
+    transparent: true, depthWrite: false, depthTest: depth });
+  S.pts = new THREE.Points(geo, S.mat); S.pts.frustumCulled = false; S.pts.renderOrder = 8; S.pts.visible = false; V.scene.add(S.pts); return S;
+}
+function rlStepSteam(S, dt, b, H, rise, drag) {
+  let alive = 0; const dg = Math.exp(-dt * drag);
+  for (let i = 0; i < S.n; i++) {
+    if (S.life[i] >= S.max[i]) { S.pos[i * 3 + 1] = -1e4; continue; }
+    S.life[i] += dt; S.age[i] = Math.min(1, S.life[i] / S.max[i]); alive++;
+    const sw = S.seed[i] * 6.283 + S.life[i] * 1.7;
+    S.vel[i * 3] = S.vel[i * 3] * dg + Math.cos(sw) * H * 0.12 * dt; S.vel[i * 3 + 2] = S.vel[i * 3 + 2] * dg + Math.sin(sw) * H * 0.12 * dt;
+    S.vel[i * 3 + 1] = S.vel[i * 3 + 1] * dg + rise * H * dt;   // warm steam lifts
+    for (let q = 0; q < 3; q++) { let x = S.pos[i * 3 + q] + S.vel[i * 3 + q] * dt; const lo = b.min.getComponent(q), hi = b.max.getComponent(q);
+      if (x < lo) { x = lo; S.vel[i * 3 + q] = Math.abs(S.vel[i * 3 + q]) * 0.35; } else if (x > hi) { x = hi; S.vel[i * 3 + q] = -Math.abs(S.vel[i * 3 + q]) * 0.35; }   // rolls off the walls
+      S.pos[i * 3 + q] = x; }
+  }
+  S.pts.visible = alive > 0;
+  if (alive) { S.pts.geometry.attributes.position.needsUpdate = true; S.pts.geometry.attributes.aT.needsUpdate = true; }
+  return alive;
+}
 function rlPoints(n, size, color, opacity, tex, additive) {
   const P = { n, pos: new Float32Array(n * 3).fill(-1e4), vel: new Float32Array(n * 3), life: new Float32Array(n).fill(99), max: new Float32Array(n).fill(1), next: 0, acc: 0 };
   const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(P.pos, 3));
@@ -2855,18 +2898,36 @@ function rlSetup() {
   const hw = new THREE.Vector3().setFromMatrixPosition(RL.hinge.matrixWorld), ax = sz.x < sz.z ? 'x' : 'z';
   RL.front = new THREE.Vector3(); RL.front[ax] = Math.sign(hw[ax] - c[ax]) || 1;
   RL.box.expandByVector(sz.clone().multiplyScalar(-0.03));
+  RL.steamBox = RL.box.clone(); { const m = 0.07 * RL.H, lat = ax === 'x' ? 'z' : 'x';
+    RL.steamBox.min.y += m; RL.steamBox.max.y -= m; RL.steamBox.min[lat] += m; RL.steamBox.max[lat] -= m;
+    if (RL.front[ax] > 0) RL.steamBox.max[ax] -= 0.02 * RL.H; else RL.steamBox.min[ax] += 0.02 * RL.H; }
   // the fire: on the first component a ray from the open front meets, in the middle of the panel
   const skip = new Set(); RL.hinge.traverse(o => skip.add(o)); if (tube) tube.traverse(o => skip.add(o));
   const targets = []; g.traverse(o => { if (o.isMesh && !skip.has(o) && o !== shell) targets.push(o); });
-  const start = c.clone().addScaledVector(RL.front, sz[ax] * 0.9).add(new THREE.Vector3(0, -0.04 * RL.H, 0));
-  const ray = new THREE.Raycaster(start, RL.front.clone().negate(), 0, sz[ax] * 3);
-  const hit = ray.intersectObjects(targets, false)[0];
-  RL.fireP = hit ? hit.point.clone().addScaledVector(RL.front, 0.012 * RL.H) : c.clone();
+  // Phase 129 (owner: "the fire must be on a component"): a grid of rays from the open front over the middle of the panel; the
+  // fire starts on the hit nearest the centre that is a COMPONENT (not the mounting plate, cable duct, DIN rail or hardware)
+  const NOT_COMPONENT = /^rl_?(generic_?0?61|generic_?0?62|generic_?0?63|generic_?0?19|generic_?0?55|generic|generic_?0?46|generic_?0?17|generic_?0?02|generic_?0?03|tube|cylinder|valve)(_\d+)?$/i;
+  const comps = targets.filter(o => !NOT_COMPONENT.test(o.name.replace(/[^A-Za-z0-9_]/g, '')));
+  const ray = new THREE.Raycaster(); let best = null;
+  for (let gy = -3; gy <= 3; gy++) for (let gx = -4; gx <= 4; gx++) {
+    const lat = new THREE.Vector3(RL.front.z, 0, -RL.front.x);
+    const o = c.clone().addScaledVector(RL.front, sz[ax] * 0.9).addScaledVector(lat, gx * 0.06 * Math.max(sz.x, sz.z)).add(new THREE.Vector3(0, gy * 0.06 * RL.H, 0));
+    ray.set(o, RL.front.clone().negate()); ray.far = sz[ax] * 3;
+    const h = ray.intersectObjects(targets, false)[0];   // the first surface seen from the front must itself be a component
+    if (!h || !comps.includes(h.object)) continue;
+    const d = Math.abs(gx) * 0.8 + Math.abs(gy);
+    if (!best || d < best.d) best = { d, p: h.point.clone(), name: h.object.name };
+  }
+  RL.fireP = best ? best.p.addScaledVector(RL.front, 0.006 * RL.H) : c.clone();
+  RL.fireOn = best ? best.name : null;
   // the burst: the tube vertex nearest the fire
   RL.burst = RL.fireP.clone().addScaledVector(RL.front, 0.05 * RL.H);
-  if (tube) { let best = Infinity; const v = new THREE.Vector3();
-    tube.traverse(o => { if (!o.isMesh) return; const p = o.geometry.attributes.position;
-      for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i).applyMatrix4(o.matrixWorld); const d = v.distanceToSquared(RL.fireP); if (d < best) { best = d; RL.burst.copy(v); } } }); }
+  if (tube) { let best = Infinity; const tri = new THREE.Triangle(), q = new THREE.Vector3(), A = new THREE.Vector3(), B = new THREE.Vector3(), C = new THREE.Vector3();
+    tube.traverse(o => { if (!o.isMesh) return; const p = o.geometry.attributes.position, ix = o.geometry.index, n = ix ? ix.count : p.count;
+      for (let i = 0; i < n; i += 3) {   // the nearest point ON the tube's surface (its straight runs have vertices only at their ends)
+        const a0 = ix ? ix.getX(i) : i, a1 = ix ? ix.getX(i + 1) : i + 1, a2 = ix ? ix.getX(i + 2) : i + 2;
+        tri.set(A.fromBufferAttribute(p, a0).applyMatrix4(o.matrixWorld), B.fromBufferAttribute(p, a1).applyMatrix4(o.matrixWorld), C.fromBufferAttribute(p, a2).applyMatrix4(o.matrixWorld));
+        tri.closestPointToPoint(RL.fireP, q); const d = q.distanceToSquared(RL.fireP); if (d < best) { best = d; RL.burst.copy(q); } } }); }
   const H = RL.H;
   // the fire: two crossed flame cards (the site's own flame shader), its glow and its light
   RL.fire = new THREE.Group(); RL.fire.position.copy(RL.fireP); V.scene.add(RL.fire);
@@ -2884,14 +2945,13 @@ function rlSetup() {
   RL.light = new THREE.PointLight(0xff6a24, 0, H * 0.9, 1.4); RL.light.position.copy(RL.fireP).addScaledVector(RL.front, 0.05 * H); V.scene.add(RL.light);
   // the agent: a foam jet out of the burst, foam that builds up where it lands, and a light haze in the box
   const puff = sprayTexture();
-  RL.jet = rlPoints(COARSE ? 900 : 1800, H * 0.04, 0xffffff, 0.9, puff, false); RL.jet.pts.material.depthTest = false; RL.jet.pts.renderOrder = 10;
-  RL.foam = rlPoints(COARSE ? 600 : 1100, H * 0.085, 0xf6f8fa, 0.95, puff, false); RL.foam.pts.material.depthTest = false; RL.foam.pts.renderOrder = 10;
-  RL.haze = rlPoints(COARSE ? 300 : 600, H * 0.3, 0xeef2f6, 0.0, puff, false);
+  RL.jet = rlSteam(COARSE ? 700 : 1500, H * 0.06, 0.55, true);          // the jet out of the burst
+  RL.foam = rlSteam(COARSE ? 380 : 800, H * 0.2, 0.32, true);           // the cloud that fills the box
   return true;
 }
 function rlDispose() {
   if (RL.hinge && RL.q0) RL.hinge.quaternion.copy(RL.q0);   // the door shut again for the next visit
-  for (const P of [RL.jet, RL.foam, RL.haze]) if (P) { V.scene.remove(P.pts); P.pts.geometry.dispose(); P.pts.material.dispose(); }
+  for (const P of [RL.jet, RL.foam]) if (P) { V.scene.remove(P.pts); P.pts.geometry.dispose(); P.pts.material.dispose(); }
   for (const sp of [RL.glow, RL.flash]) if (sp) { V.scene.remove(sp); sp.material.dispose(); }
   if (RL.glow) RL.glow.material.map && RL.glow.material.map.dispose();
   if (RL.fire) { V.scene.remove(RL.fire); RL.fire.userData.cards.forEach(m => { m.geometry.dispose(); m.material.dispose(); }); }
@@ -2925,7 +2985,7 @@ function updateRiteline(dt) {
   // 1. the door (0 - 1.2 s)
   RL.hinge.quaternion.copy(RL.q0).multiply(_rlQ.setFromAxisAngle(_rlY, -2.2 * (on ? rlEase(t / 1.2) : 0)));
   // 2. the fire: starts at 1.2 s, full by 2.6 s; the foam reaches it at ~3.7 s and it is out by ~5.4 s
-  const fire = on ? rlEase((t - 1.2) / 1.4) * (1 - rlEase((t - 3.6) / 1.4)) : 0;
+  const fire = on ? rlEase((t - 1.2) / 1.4) * (1 - rlEase((t - 3.7) / 1.5)) : 0;
   const flick = 0.82 + 0.18 * Math.sin(t * 21) * Math.sin(t * 6.7);
   RL.fire.visible = fire > 0.01;
   RL.fire.quaternion.setFromAxisAngle(_rlY, Math.atan2(V.camera.position.x - RL.fireP.x, V.camera.position.z - RL.fireP.z));   // the flames face you
@@ -2934,48 +2994,31 @@ function updateRiteline(dt) {
   RL.light.intensity = fire * 5 * flick;
   // 3. the burst: a white flash where the tube lets go (3.3 s)
   const fl = on ? Math.max(0, 1 - Math.abs(t - 3.42) / 0.22) : 0; RL.flash.material.opacity = fl; RL.flash.scale.setScalar(H * (0.05 + 0.12 * fl));
-  // 4. the foam jet: out of the burst, straight at the fire (3.4 - 6.4 s, strongest at first)
-  const J = RL.jet, F = RL.foam, Z = RL.haze, b = RL.box;
-  const jr = !on || t < 3.4 || t > 6.4 ? 0 : (COARSE ? 380 : 760) * (t < 3.55 ? 3 : t < 4.6 ? 1 : 1 - (t - 4.6) / 1.8);
-  J.acc += jr * dt; let k = Math.floor(J.acc); J.acc -= k;
-  _rlD.subVectors(RL.fireP, RL.burst); const dist = Math.max(_rlD.length(), 0.02 * H); _rlD.normalize();
+  // 4. the agent: a hard steam jet out of the burst at the fire (3.4 - 5.5 s), then the cloud billows out and fills the box
+  const J = RL.jet, F = RL.foam, b = RL.steamBox || RL.box, sc = V.renderer.domElement.height / (2 * Math.tan(THREE.MathUtils.degToRad(V.camera.fov) / 2));
+  for (const S of [J, F]) { S.mat.uniforms.uScale.value = sc; S.mat.uniforms.uTime.value = t; }
+  _rlD.subVectors(RL.fireP, RL.burst); const dist = Math.max(_rlD.length(), 0.03 * H); _rlD.normalize();
   _rlU.set(0, 1, 0).cross(_rlD); if (_rlU.lengthSq() < 1e-6) _rlU.set(1, 0, 0); _rlU.normalize(); _rlW.crossVectors(_rlD, _rlU);
+  const jr = !on || t < 3.4 || t > 6.2 ? 0 : (COARSE ? 420 : 900) * (t < 3.6 ? 2.2 : t < 5 ? 1 : 1 - (t - 5) / 1.2);
+  J.acc += jr * dt; let k = Math.floor(J.acc); J.acc -= k;
   rlEmit(J, k, i => {
-    const pop = t < 3.55, a = (Math.random() - 0.5) * (pop ? 2.4 : 0.9), c2 = (Math.random() - 0.5) * (pop ? 2.4 : 0.9), sp = (dist + 0.05 * H) / (pop ? 0.5 : 0.32 + Math.random() * 0.12);
+    const pop = t < 3.6, cone = pop ? 1.6 : 0.55, a = (Math.random() - 0.5) * cone, c2 = (Math.random() - 0.5) * cone;
+    const sp = (dist * 2.4 + H * 0.25) * (0.7 + Math.random() * 0.6) / (pop ? 0.8 : 0.45);
     for (let q = 0; q < 3; q++) J.vel[i * 3 + q] = (_rlD.getComponent(q) + _rlU.getComponent(q) * a + _rlW.getComponent(q) * c2) * sp;
-    J.pos[i * 3] = RL.burst.x; J.pos[i * 3 + 1] = RL.burst.y; J.pos[i * 3 + 2] = RL.burst.z; J.life[i] = 0; J.max[i] = pop ? 0.25 + Math.random() * 0.15 : 0.45 + Math.random() * 0.2;
+    J.pos[i * 3] = RL.burst.x; J.pos[i * 3 + 1] = RL.burst.y; J.pos[i * 3 + 2] = RL.burst.z; J.life[i] = 0; J.max[i] = 1.4 + Math.random() * 1.2;
   });
-  let ja = 0, fa = 0, za = 0;
-  for (let i = 0; i < J.n; i++) {
-    if (J.life[i] >= J.max[i]) { J.pos[i * 3 + 1] = -1e4; continue; }
-    J.life[i] += dt;
-    for (let q = 0; q < 3; q++) J.pos[i * 3 + q] += J.vel[i * 3 + q] * dt;
-    J.vel[i * 3 + 1] -= H * 0.35 * dt; for (let q = 0; q < 3; q++) J.vel[i * 3 + q] *= Math.exp(-dt * 1.2);
-    const dx = J.pos[i * 3] - RL.fireP.x, dy = J.pos[i * 3 + 1] - RL.fireP.y, dz = J.pos[i * 3 + 2] - RL.fireP.z;
-    if (J.life[i] >= J.max[i] || (J.life[i] > 0.12 && dx * dx + dy * dy + dz * dz < (0.035 * H) ** 2)) {   // it lands: foam builds up there
-      if (Math.random() < 0.35) rlEmit(F, 1, f => { F.pos[f * 3] = J.pos[i * 3] + (Math.random() - 0.5) * 0.05 * H; F.pos[f * 3 + 1] = J.pos[i * 3 + 1] + (Math.random() - 0.5) * 0.04 * H;
-        F.pos[f * 3 + 2] = J.pos[i * 3 + 2] + (Math.random() - 0.5) * 0.05 * H; F.vel[f * 3] = F.vel[f * 3 + 2] = 0; F.vel[f * 3 + 1] = -0.01 * H; F.life[f] = 0; F.max[f] = 30; });
-      J.life[i] = J.max[i]; J.pos[i * 3 + 1] = -1e4; continue;
-    }
-    ja++;
-  }
-  for (let i = 0; i < F.n; i++) {                       // the foam: settles very slowly, spreads a little
-    if (!on || F.life[i] >= F.max[i]) { F.life[i] = 99; F.pos[i * 3 + 1] = -1e4; continue; }
-    F.life[i] += dt; F.pos[i * 3 + 1] += F.vel[i * 3 + 1] * dt; F.vel[i * 3 + 1] *= Math.exp(-dt * 0.5); fa++;
-  }
-  // a light haze of agent spreading through the box (from 3.6 s)
-  const zr = !on || t < 3.6 || t > 7 ? 0 : (COARSE ? 50 : 90);
-  Z.acc += zr * dt; k = Math.floor(Z.acc); Z.acc -= k;
-  rlEmit(Z, k, i => { for (let q = 0; q < 3; q++) Z.vel[i * 3 + q] = (Math.random() - 0.5) * H * 0.5; Z.pos[i * 3] = RL.fireP.x; Z.pos[i * 3 + 1] = RL.fireP.y; Z.pos[i * 3 + 2] = RL.fireP.z; Z.life[i] = 0; Z.max[i] = 6 + Math.random() * 4; });
-  const drag = Math.exp(-dt * 1.4);
-  for (let i = 0; i < Z.n; i++) {
-    if (!on || Z.life[i] >= Z.max[i]) { Z.life[i] = 99; Z.pos[i * 3 + 1] = -1e4; continue; }
-    Z.life[i] += dt; za++;
-    for (let q = 0; q < 3; q++) { let x = Z.pos[i * 3 + q] + Z.vel[i * 3 + q] * dt; Z.vel[i * 3 + q] = Z.vel[i * 3 + q] * drag + (Math.random() - 0.5) * H * 0.2 * dt;
-      const lo = b.min.getComponent(q), hi = b.max.getComponent(q); if (x < lo) { x = lo; Z.vel[i * 3 + q] *= -0.3; } else if (x > hi) { x = hi; Z.vel[i * 3 + q] *= -0.3; } Z.pos[i * 3 + q] = x; }
-  }
-  Z.pts.material.opacity = on ? 0.12 * rlEase((t - 3.6) / 1.5) : 0;
-  for (const [P, a] of [[J, ja], [F, fa], [Z, za]]) { P.pts.visible = a > 0; if (a > 0) P.pts.geometry.attributes.position.needsUpdate = true; }
+  const fr = !on || t < 3.7 || t > 8.5 ? 0 : (COARSE ? 70 : 150) * (t < 6.5 ? 1 : 1 - (t - 6.5) / 2);
+  F.acc += fr * dt; k = Math.floor(F.acc); F.acc -= k;
+  rlEmit(F, k, i => {                                    // the cloud: born around the fire, thrown out to every corner of the box
+    const u = Math.random() * 6.283, v = Math.acos(2 * Math.random() - 1), sp = H * (0.5 + Math.random() * 0.9);
+    F.vel[i * 3] = Math.sin(v) * Math.cos(u) * sp; F.vel[i * 3 + 1] = Math.cos(v) * sp * 0.8; F.vel[i * 3 + 2] = Math.sin(v) * Math.sin(u) * sp * 0.6;
+    F.pos[i * 3] = RL.fireP.x + (Math.random() - 0.5) * 0.08 * H; F.pos[i * 3 + 1] = RL.fireP.y + (Math.random() - 0.5) * 0.08 * H; F.pos[i * 3 + 2] = RL.fireP.z;
+    F.life[i] = 0; F.max[i] = 9 + Math.random() * 5;
+  });
+  if (!on) { for (const S of [J, F]) { S.life.fill(99); S.pts.visible = false; } return; }
+  rlStepSteam(J, dt, b, H, 0.05, 2.4);
+  rlStepSteam(F, dt, b, H, 0.03, 0.9);
+  F.mat.uniforms.uOpacity.value = 0.32 * (1 - rlEase((t - 15) / 5));   // the box stays full a while, then clears
 }
 function renderFrame(withAO = true) {
   const ps = V.aoTargets && V.pr.postSettings();
@@ -3832,7 +3875,7 @@ varying vec3 vRoomP; uniform vec3 uGlow; uniform float uR, uH, uRin, uHalfArc; u
   },
   getRiteline() { return RL.on; },
   getRitelineT() { return RL.on ? RL.t : -1; },
-  ritelineInfo() { return RL.box ? { H: RL.H, fire: RL.fireP.toArray().map(v => +v.toFixed(3)), burst: RL.burst.toArray().map(v => +v.toFixed(3)), front: RL.front.toArray(), dist: +RL.fireP.distanceTo(RL.burst).toFixed(3) } : null; },
+  ritelineInfo() { return RL.box ? { on: RL.fireOn, H: RL.H, fire: RL.fireP.toArray().map(v => +v.toFixed(3)), burst: RL.burst.toArray().map(v => +v.toFixed(3)), front: RL.front.toArray(), dist: +RL.fireP.distanceTo(RL.burst).toFixed(3) } : null; },
   getSystem() { return systemOn; },
   setZoom(t) { setZoom(t); return getZoom(); },
   getZoom() { return getZoom(); },

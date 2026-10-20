@@ -1,0 +1,43 @@
+{
+ "schema": "inferno.product/1",
+ "id": "riteline-box-2kg",
+ "identity": {
+  "name": {
+   "value": "Riteline Panel Protection",
+   "status": "draft"
+  },
+  "category": {
+   "value": "Fixed installation",
+   "status": "draft"
+  }
+ },
+ "keyFeatures": [
+  {
+   "title": "Detects at the hot spot",
+   "description": "A pressurised red detection tube runs past every DIN rail; heat bursts it exactly where the fault is."
+  },
+  {
+   "title": "No power, no electronics",
+   "description": "The pressure drop opens the 2 kg cylinder's valve on its own - it works with the panel dead."
+  },
+  {
+   "title": "Floods the enclosure",
+   "description": "The agent discharges inside the closed cabinet, right at the source, before a fault becomes a fire."
+  }
+ ],
+ "viewer": {
+  "presentation": {
+   "modes": {
+    "full": true,
+    "system": false,
+    "gun": false,
+    "cutaway": false,
+    "riteline": true
+   }
+  },
+  "camera": {
+   "fill": 0.6,
+   "fillPortrait": 0.72
+  }
+ }
+}

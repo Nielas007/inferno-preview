@@ -5154,3 +5154,13 @@ html.has-scrolled .hero__cue { opacity: 0; transform: translate(-50%, 10px); poi
 .showcase__vehicle-opt:hover { color: #fff; }
 .showcase__vehicle-opt.is-on { background: #fff; color: #0b0c0e; cursor: default; }
 .showcase__vehicle-opt:focus-visible { outline: 2px solid rgba(228, 32, 44, 0.8); outline-offset: 2px; }
+
+/* ═ Phase 127 — the Riteline's activation captions: one quiet line at the foot of the stage, the step number in red ═ */
+.showcase__rlcap { position: absolute; z-index: 5; left: 50%; bottom: 13%; transform: translate(-50%, 8px); display: inline-flex; align-items: center; gap: 12px;
+  padding: 10px 18px 10px 12px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(10, 11, 14, 0.62);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); opacity: 0; pointer-events: none; white-space: nowrap;
+  transition: opacity 420ms ease, transform 520ms cubic-bezier(0.22, 1, 0.36, 1); }
+.showcase__rlcap.is-on { opacity: 1; transform: translate(-50%, 0); }
+.showcase__rlcap-n { font: 600 10px/1 var(--font-ui, Inter, sans-serif); letter-spacing: 0.16em; color: #ff2030; }
+.showcase__rlcap-t { font: 500 13px/1.2 var(--font-ui, Inter, sans-serif); color: #fff; letter-spacing: 0.01em; }
+@media (max-width: 900px) { .showcase__rlcap { bottom: 4%; max-width: 92vw; white-space: normal; } .showcase__rlcap-t { font-size: 12px; } }

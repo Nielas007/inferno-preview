@@ -1792,6 +1792,7 @@ function updateProdGun(dt) {
 // Legacy GLBs only (production assets carry `viewerYaw` in their manifest): the legacy vss-830e.glb arrives tail-on.
 const FRONT_YAW = [
   [/vss-830e\.glb/, Math.PI],
+  [/riteline-box/, Math.PI],   // Phase 127: the Fusion export's door faces -Y; this lands the default view on the door
 ];
 
 const MIST_BUDGET = 9000;   // total particles shared across every nozzle
@@ -2517,6 +2518,7 @@ function frame() {
   wetUpdate(Math.min(_dt, 0.1));       // Phase 119: the sprayed floor dries
   updateMist(_dt);
   updateDischarge(_dt);                // Phase 82j: VSS in-cab mist, escape route, wet ground, camera pull-back
+  if (RL.key) updateRiteline(Math.min(_dt, 0.05));   // Phase 127
   { const rH = V.models && V.models[V.url]; if (rH && rH.production && rH.production.manifest.hide) applyHides(rH); }   // Phase 82m
   _prevTs.t = now;
 
@@ -2540,7 +2542,7 @@ function frame() {
   const rA = V.models && V.models[V.url], camMoved = !near(PWR.cam, V.camera.matrixWorld, 2e-5) || !near(PWR.proj, V.camera.projectionMatrix, 1e-5);
   const settling = Math.abs(cutTarget - cutAmt) > 1e-3 || Math.abs(truckTarget - truckAmt) > 1e-3 || Math.abs(dimTarget - dimAmt) > 1e-3
     || Math.abs(gunDimTarget - gunDimAmt) > 1e-3 || (GHOST.amt > 0.004 && GHOST.amt < 0.996) || (PCUT.amt > 0 && PCUT.amt < 1);
-  const fx = (spray && spray.points.visible) || systemOn || WET.max > 0.002 || now < DIS.wetUntil || DIS.on > 0.01 || (mode === 'gun' && !!prodGunRig()) || PGUN.yaw !== 0 || PGUN.pitch !== 0;
+  const fx = (spray && spray.points.visible) || systemOn || WET.max > 0.002 || (RL.key && (RL.on || RL.t > 0)) || now < DIS.wetUntil || DIS.on > 0.01 || (mode === 'gun' && !!prodGunRig()) || PGUN.yaw !== 0 || PGUN.pitch !== 0;
   const key = `${V.url}|${mode}|${rA && rA.production ? rA.production.activeLOD : ''}|${V.loaded}`;
   const dirty = camMoved || settling || fx || key !== PWR.key || V.renderer.shadowMap.needsUpdate || now - PWR.lastInput < 1200;
   if (dirty) { PWR.tail = 12; PWR.why = [camMoved && 'cam', settling && 'settle', fx && 'fx', key !== PWR.key && 'key', V.renderer.shadowMap.needsUpdate && 'shadow', now - PWR.lastInput < 1200 && 'input'].filter(Boolean).join(','); }
@@ -2821,6 +2823,110 @@ function renderMirror() {
   M.mesh.visible = true;
 }
 
+
+// ── Phase 127: the Riteline activation (owner: "make an activation of how it works") ────────────────────────────────────────
+// The Riteline box is an electrical panel with a pressurised linear detection tube running past every DIN rail and a 2 kg
+// cylinder on its side. The sequence: the door swings open -> a breaker (RL_Hot) overheats and glows -> the tube bursts at the
+// point nearest the heat -> the pressure drop opens the cylinder valve and the agent discharges through the burst, filling the
+// enclosure as a white cloud -> the heat dies away. DrawerViewer.setRiteline(on) starts / resets it; the GLB carries the nodes
+// Riteline_Door_Hinge (pivot, rotate about its own Y), RL_Hot and RL_Tube (models/riteline/riteline-box-2kg.glb).
+const RL = { on: false, t: 0, key: null, hinge: null, q0: null, hot: null, hotMats: [], light: null, burst: null, pts: null, n: 1300, glow: null, flash: null,
+  pos: null, vel: null, life: null, max: null, next: 0, acc: 0, box: null, seen: false };
+function rlSetup() {
+  const r = V.models && V.models[V.url]; if (!r || !r.group) return false;
+  if (RL.key === V.url) return !!RL.hinge;
+  rlDispose(); RL.key = V.url;
+  const g = r.group, by = n => { let f = null; g.traverse(o => { if (!f && o.name && o.name.replace(/[^A-Za-z0-9]/g, '').toLowerCase() === n) f = o; }); return f; };
+  RL.hinge = by('ritelinedoorhinge'); RL.hot = by('rlhot'); const tube = by('rltube');
+  if (!RL.hinge) return false;
+  RL.q0 = RL.hinge.quaternion.clone();
+  g.updateMatrixWorld(true);
+  if (RL.hot) RL.hot.traverse(o => { if (!o.isMesh) return; const ms = Array.isArray(o.material) ? o.material : [o.material];
+    const cl = ms.map(m => { const c = m.clone(); c.emissive = new THREE.Color(0xff3a10); c.emissiveIntensity = 0; return c; });
+    o.material = Array.isArray(o.material) ? cl : cl[0]; RL.hotMats.push(...cl); });
+  const hc = new THREE.Vector3(); if (RL.hot) new THREE.Box3().setFromObject(RL.hot).getCenter(hc);
+  // the burst: the tube vertex nearest the overheating breaker
+  RL.burst = hc.clone();
+  if (tube) { let best = Infinity; const v = new THREE.Vector3();
+    tube.traverse(o => { if (!o.isMesh) return; const p = o.geometry.attributes.position;
+      for (let i = 0; i < p.count; i += 3) { v.fromBufferAttribute(p, i).applyMatrix4(o.matrixWorld); const d = v.distanceToSquared(hc); if (d < best) { best = d; RL.burst.copy(v); } } }); }
+  // the enclosure: the model's bounds without the cylinder hanging on its side (the cloud stays inside the box)
+  const shell = by('rlgeneric061'); RL.box = new THREE.Box3().setFromObject(shell || g);
+  { const sz = RL.box.getSize(new THREE.Vector3()); RL.box.expandByVector(sz.multiplyScalar(-0.03)); }   // inside the walls
+  const cyl = by('rlcylinder'); if (cyl) { const cb = new THREE.Box3().setFromObject(cyl);
+    if (cb.max.x <= RL.box.min.x + (RL.box.max.x - RL.box.min.x) * 0.3) RL.box.min.x = cb.max.x; else if (cb.min.x >= RL.box.max.x - (RL.box.max.x - RL.box.min.x) * 0.3) RL.box.max.x = cb.min.x;
+    if (cb.max.z <= RL.box.min.z + (RL.box.max.z - RL.box.min.z) * 0.3) RL.box.min.z = cb.max.z; else if (cb.min.z >= RL.box.max.z - (RL.box.max.z - RL.box.min.z) * 0.3) RL.box.max.z = cb.min.z; }
+  RL.light = new THREE.PointLight(0xff5a1e, 0, (RL.box.max.y - RL.box.min.y) * 1.2, 1.2); RL.light.position.copy(hc); V.scene.add(RL.light);
+  const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'), gr = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+    gr.addColorStop(0, 'rgba(255,240,200,1)'); gr.addColorStop(0.25, 'rgba(255,140,40,0.85)'); gr.addColorStop(0.6, 'rgba(255,60,10,0.25)'); gr.addColorStop(1, 'rgba(255,40,0,0)');
+    x.fillStyle = gr; x.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c); })();
+  const Hs = RL.box.max.y - RL.box.min.y;
+  RL.glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending, opacity: 0 }));
+  RL.glow.position.copy(hc); RL.glow.scale.setScalar(Hs * 0.32); RL.glow.renderOrder = 7; V.scene.add(RL.glow);
+  RL.flash = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xdfefff, transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending, opacity: 0 }));
+  RL.flash.position.copy(RL.burst); RL.flash.scale.setScalar(Hs * 0.2); RL.flash.renderOrder = 7; V.scene.add(RL.flash);
+  // the agent cloud
+  const n = RL.n; RL.pos = new Float32Array(n * 3).fill(-1e4); RL.vel = new Float32Array(n * 3); RL.life = new Float32Array(n).fill(9); RL.max = new Float32Array(n).fill(1);
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(RL.pos, 3));
+  const size = (RL.box.max.y - RL.box.min.y) * 0.3;
+  RL.pts = new THREE.Points(geo, new THREE.PointsMaterial({ map: sprayTexture(), color: 0xf2f5f8, size, sizeAttenuation: true, transparent: true, opacity: 0.0, depthWrite: false }));
+  RL.pts.frustumCulled = false; RL.pts.renderOrder = 6; V.scene.add(RL.pts);
+  return true;
+}
+function rlDispose() {
+  if (RL.hinge && RL.q0) RL.hinge.quaternion.copy(RL.q0);   // the door shut and the breaker cold again for the next visit
+  for (const m of RL.hotMats) m.emissiveIntensity = 0;
+  if (RL.pts) { V.scene.remove(RL.pts); RL.pts.geometry.dispose(); RL.pts.material.dispose(); }
+  if (RL.light) V.scene.remove(RL.light);
+  for (const sp of [RL.glow, RL.flash]) if (sp) { V.scene.remove(sp); sp.material.map.dispose(); sp.material.dispose(); }
+  Object.assign(RL, { on: false, t: 0, key: null, hinge: null, q0: null, hot: null, hotMats: [], light: null, burst: null, pts: null, next: 0, acc: 0, box: null, glow: null, flash: null });
+}
+const rlEase = x => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
+const _rlQ = new THREE.Quaternion(), _rlY = new THREE.Vector3(0, 1, 0);
+function updateRiteline(dt) {
+  if (!RL.key || RL.key !== (V && V.url) || !RL.hinge) return;
+  RL.t = RL.on ? RL.t + dt : Math.max(0, RL.t - dt * 2.5);           // stop = everything winds back quickly
+  const t = RL.t, H = RL.box.max.y - RL.box.min.y;
+  // 1. the door (0 - 1.4 s)
+  const open = RL.on ? rlEase(t / 1.4) : rlEase(Math.min(t, 1.4) / 1.4);
+  RL.hinge.quaternion.copy(RL.q0).multiply(_rlQ.setFromAxisAngle(_rlY, -1.85 * open));
+  // 2. the breaker overheats (1.4 - 3.6 s), cools once the agent is in (4.2 - 6.8 s)
+  const heat = RL.on ? rlEase((t - 1.4) / 2.2) * (1 - rlEase((t - 4.2) / 2.6)) : 0;
+  const flick = 0.85 + 0.15 * Math.sin(t * 23) * Math.sin(t * 7.3);
+  for (const m of RL.hotMats) m.emissiveIntensity = heat * 6 * flick;
+  if (RL.light) RL.light.intensity = heat * 9 * flick;
+  if (RL.glow) { RL.glow.material.opacity = heat * 0.95 * flick; RL.glow.scale.setScalar(H * (0.22 + 0.12 * heat)); }
+  // the burst: a white flash where the tube lets go (3.6 s)
+  if (RL.flash) { const f = RL.on ? Math.max(0, 1 - Math.abs(t - 3.75) / 0.35) : 0; RL.flash.material.opacity = f; RL.flash.scale.setScalar(H * (0.12 + 0.25 * f)); }
+  // 3. burst + discharge (from 3.6 s): a hard jet for 0.8 s, then the cylinder empties for ~4 s
+  const p = RL.pos, vel = RL.vel, life = RL.life, max = RL.max, n = RL.n, b = RL.box;
+  const rate = !RL.on || t < 3.6 ? 0 : t < 4.4 ? 900 : t < 8.5 ? 240 * (1 - (t - 4.4) / 4.1) : 0;
+  RL.acc += rate * dt; let k = Math.floor(RL.acc); RL.acc -= k;
+  const sp = H * 1.6;
+  while (k-- > 0) {
+    const i = RL.next; RL.next = (RL.next + 1) % n;
+    const th = Math.random() * Math.PI * 2, ph = Math.acos(2 * Math.random() - 1), s0 = sp * (0.4 + Math.random() * 0.9);
+    vel[i * 3] = Math.sin(ph) * Math.cos(th) * s0; vel[i * 3 + 1] = Math.cos(ph) * s0 * 0.7; vel[i * 3 + 2] = Math.sin(ph) * Math.sin(th) * s0;
+    p[i * 3] = RL.burst.x; p[i * 3 + 1] = RL.burst.y; p[i * 3 + 2] = RL.burst.z; life[i] = 0; max[i] = 5 + Math.random() * 4;
+  }
+  let alive = 0;
+  const drag = Math.exp(-dt * 2.6);
+  for (let i = 0; i < n; i++) {
+    if (life[i] >= max[i]) { p[i * 3 + 1] = -1e4; continue; }
+    life[i] += dt; alive++;
+    for (let c = 0; c < 3; c++) {
+      vel[i * 3 + c] = vel[i * 3 + c] * drag + (Math.random() - 0.5) * H * 0.35 * dt;   // turbulence
+      let x = p[i * 3 + c] + vel[i * 3 + c] * dt; const lo = b.min.getComponent(c), hi = b.max.getComponent(c);
+      if (x < lo) { x = lo; vel[i * 3 + c] *= -0.3; } else if (x > hi) { x = hi; vel[i * 3 + c] *= -0.3; }   // the cloud fills the box
+      p[i * 3 + c] = x;
+    }
+    vel[i * 3 + 1] -= H * 0.05 * dt;   // the agent is heavier than air: it settles slowly
+  }
+  RL.pts.geometry.attributes.position.needsUpdate = true; RL.pts.visible = alive > 0;
+  const fill = RL.on ? rlEase((t - 3.6) / 1.2) * (1 - rlEase((t - 10) / 5)) : Math.min(RL.pts.material.opacity, rlEase(t / 1.4));
+  RL.pts.material.opacity = 0.2 * fill;
+  if (!RL.on && t <= 0) { RL.pts.visible = false; for (let i = 0; i < n; i++) life[i] = max[i]; }
+}
 function renderFrame(withAO = true) {
   const ps = V.aoTargets && V.pr.postSettings();
   if (ps) {
@@ -3666,6 +3772,10 @@ varying vec3 vRoomP; uniform vec3 uGlow; uniform float uR, uH, uRin, uHalfArc; u
   setMirror(on, strength) { MIRROR.on = !!on; if (Number.isFinite(strength)) MIRROR.strength = strength; return MIRROR.on; },
   // Vehicle-system discharge — every nozzle sprays at once (system mode only).
   setSystem(on) { systemOn = !!on; return systemOn; },
+  // Phase 127: the Riteline activation (door, overheating breaker, tube burst, agent cloud); false winds it back
+  setRiteline(on) { if (!V || !rlSetup()) return false; RL.on = !!on; if (on) RL.t = 0; lastInteract = performance.now(); return RL.on; },
+  getRiteline() { return RL.on; },
+  getRitelineT() { return RL.on ? RL.t : -1; },
   getSystem() { return systemOn; },
   setZoom(t) { setZoom(t); return getZoom(); },
   getZoom() { return getZoom(); },

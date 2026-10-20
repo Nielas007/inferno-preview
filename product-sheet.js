@@ -172,7 +172,7 @@ async function views(c) {
   const v = ['full'];
   if (modes.system) v.push('system');
   if (modes.cutaway) v.push('cutaway');
-  if (modes.gun || /vss/.test(d.productGlb || '')) v.push('activate');
+  if (modes.gun || modes.riteline || /vss/.test(d.productGlb || '')) v.push('activate');   // Phase 127: + the Riteline
   return v;
 }
 window.ProductSheet = { open, close, open3D, views };

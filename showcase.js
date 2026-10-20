@@ -23,6 +23,7 @@ function init(root) {
     'wall-guard-50l': ['images/showcase/wall-guard-50l-700.webp?v=1', 'images/showcase/wall-guard-50l-1400.webp?v=1'],
     'generator-lss': ['images/showcase/generator-lss-700.webp?v=1', 'images/showcase/generator-lss-1400.webp?v=1'],
     'transformer-lss': ['images/showcase/transformer-lss-700.webp?v=1', 'images/showcase/transformer-lss-1400.webp?v=1'],
+    'riteline-box': ['images/showcase/riteline-box-700.webp?v=1', 'images/showcase/riteline-box-1400.webp?v=1'],   // Phase 127
   };
   // each product's own logo (the name, as the brand writes it)
   const LOGO = {
@@ -46,11 +47,11 @@ function init(root) {
   // glow per product: red for the red-cylinder rigs, amber for the haul truck, cool mist for generator rooms, copper for transformers
   const GLOW = { 'attac-unit-2cu': '#e4202c', 'attac-bakkie-4cu': '#d81d3a', 'attac-trailer': '#ef3a24', 'inferno-beast': '#c9472a',
     'skiddy': '#e02a2a', 'vss': '#e3a12c', 'extinguishers': '#e5202a', 'wall-guard-130l': '#c8202e', 'wall-guard-50l': '#e2372e',
-    'generator-lss': '#3fa6e0', 'transformer-lss': '#d97a3a' };
+    'generator-lss': '#3fa6e0', 'transformer-lss': '#d97a3a', 'riteline-box': '#e4202c' };
   // short rail names (the stage shows the full name)
   const SHORT = { 'attac-unit-2cu': 'Attac 2CU', 'attac-bakkie-4cu': 'Attac 4CU', 'attac-trailer': 'Attac Trailer', 'inferno-beast': 'Beast',
     'skiddy': 'Skiddy', 'vss': 'VSS', 'extinguishers': 'Extinguishers', 'wall-guard-130l': 'Wall Guard 130 L', 'wall-guard-50l': 'Wall Guard 50 L',
-    'generator-lss': 'Generator', 'transformer-lss': 'Transformer' };
+    'generator-lss': 'Generator', 'transformer-lss': 'Transformer', 'riteline-box': 'Riteline' };
   // three headline numbers, from the card's own specs
   const pickStats = card => {
     let specs = []; try { specs = JSON.parse(card.dataset.productSpecs || '[]'); } catch (e) {}
@@ -438,12 +439,14 @@ function init(root) {
     if (L.url !== glb) {
       const token = ++L.token;
       root.classList.remove('has-3d'); L.view = null; setActive(null); sprayOff();
+      if (window.DrawerViewer && window.DrawerViewer.setRiteline) { window.DrawerViewer.setRiteline(false); rlCaptions(false); }   // Phase 127
       L.url = glb;
       loader.start(it);
       L.ready = (async () => {
         const cfg = await getCfg(it.card.dataset.productConfig);
         if (token !== L.token) return false;
         if (cfg && cfg.viewer && cfg.viewer.presentation && DV.setPresentation) DV.setPresentation(glb, cfg.viewer.presentation);
+        if (cfg && cfg.viewer && cfg.viewer.camera && DV.setFraming) DV.setFraming(glb, cfg.viewer.camera);   // Phase 127: legacy GLB framing (the Riteline)
         DV.open(glb);
         const t0 = performance.now();
         while (!(window.__dv && window.__dv.loaded && window.__dv.url === glb)) {
@@ -485,6 +488,10 @@ function init(root) {
   }
   function apply(view) {
     const DV = window.DrawerViewer, vss = /vss/.test(items[cur].card.dataset.productGlb || '');
+    if (/riteline/.test(items[cur].card.dataset.productGlb || '') && DV.setRiteline) {   // Phase 127: the Riteline's own sequence
+      if (view === 'activate') { const on = !(L.view === 'activate' && DV.getRiteline()); DV.setRiteline(on); setActive(on ? 'activate' : null); L.view = on ? 'activate' : null; rlCaptions(on); return; }
+      DV.setRiteline(false); rlCaptions(false);
+    }
     if (view === 'activate') {
       const was = L.view === 'activate' && (vss ? DV.getSystem() : DV.getFoam());
       if (was) { if (vss) DV.setSystem(false); else DV.setFoam(false); if (DV.setSpin) DV.setSpin(false); setActive(null); L.view = null; sprayOff(); return; }   // press again: stop
@@ -499,6 +506,24 @@ function init(root) {
     }
     L.view = view;
   }
+  // Phase 127: the Riteline's steps, captioned as they happen (how it works, in four lines)
+  const RL_STEPS = [[0, '01', 'Electrical panel in service'], [1.4, '02', 'A breaker overheats'], [3.55, '03', 'The detection tube bursts at the hot spot'],
+    [4.2, '04', 'The cylinder floods the panel — no power needed'], [7.2, '05', 'Fire out. The panel is protected']];
+  const rlCap = document.createElement('div'); rlCap.className = 'showcase__rlcap'; rlCap.setAttribute('aria-live', 'polite');
+  let rlRaf = 0, rlLast = '';
+  function rlCaptions(on) {
+    cancelAnimationFrame(rlRaf); rlLast = '';
+    if (!on) { rlCap.classList.remove('is-on'); return; }
+    if (!rlCap.isConnected) stage.appendChild(rlCap);
+    const tick = () => {
+      const t = window.DrawerViewer && window.DrawerViewer.getRitelineT ? window.DrawerViewer.getRitelineT() : -1;
+      if (t < 0) { rlCap.classList.remove('is-on'); return; }
+      const st = RL_STEPS.filter(x => t >= x[0]).pop();
+      if (st && st[1] !== rlLast) { rlLast = st[1]; rlCap.innerHTML = `<span class="showcase__rlcap-n">${st[1]}</span><span class="showcase__rlcap-t">${st[2]}</span>`; rlCap.classList.remove('is-on'); void rlCap.offsetWidth; rlCap.classList.add('is-on'); }
+      rlRaf = requestAnimationFrame(tick);
+    };
+    tick();
+  }
   function setActive(view) {
     actions.querySelectorAll('.showcase__act').forEach(b => b.classList.toggle('is-on', b.dataset.view === view));
     const a = actions.querySelector('.showcase__act[data-view="activate"] .showcase__act-sub');
@@ -509,8 +534,8 @@ function init(root) {
     resetOrbit();
     if (!L.on) return;
     ++L.token; L.url = null; L.view = null;
-    const DV = window.DrawerViewer; if (DV) { DV.setSystem(false); DV.setFoam(false); if (DV.setSpin) DV.setSpin(false); }
-    root.classList.remove('has-3d', 'is-loading'); setActive(null);
+    const DV = window.DrawerViewer; if (DV) { DV.setSystem(false); DV.setFoam(false); if (DV.setSpin) DV.setSpin(false); if (DV.setRiteline) DV.setRiteline(false); }
+    rlCaptions(false); root.classList.remove('has-3d', 'is-loading'); setActive(null);
   }
   function exitLive() {
     resetOrbit();

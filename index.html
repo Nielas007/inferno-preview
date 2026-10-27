@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="preload" href="fonts/Gesrics.otf" as="font" type="font/otf" crossorigin />
   <link rel="preload" href="fonts/inter-latin-var.woff2" as="font" type="font/woff2" crossorigin />
-  <link rel="stylesheet" href="styles.css?v=site137" />
+  <link rel="stylesheet" href="styles.css?v=site140" />
   <!-- Three.js via importmap (Phase 70: in the head, before every module — the hero boot is an async module in the body,
        and an import map that arrives after a module has started loading is ignored). -->
   <script type="importmap">
@@ -512,6 +512,13 @@
         </button>
       </form>
     </div>
+  
+    <!-- Phase 133 (owner's reference: three vehicles from behind in a dark studio; the one under the pointer lights up) -->
+    <div class="contact-garage" aria-label="Our vehicle systems">
+      <button type="button" class="contact-garage__car" data-product="Attac 2CU" style="--i:0"><img src="images/contact/rear_2cu.webp?v=2" alt="Inferno Attac Unit 2CU from behind" loading="lazy" decoding="async"><span>Attac Unit 2CU</span></button>
+      <button type="button" class="contact-garage__car contact-garage__car--mid" data-product="Attac 4CU" style="--i:1"><img src="images/contact/rear_4cu.webp?v=2" alt="Inferno Attac Bakkie 4CU from behind" loading="lazy" decoding="async"><span>Attac Bakkie 4CU</span></button>
+      <button type="button" class="contact-garage__car" data-product="Attac Trailer" style="--i:2"><img src="images/contact/rear_trailer.webp?v=2" alt="Inferno Attac Trailer from behind" loading="lazy" decoding="async"><span>Attac Trailer</span></button>
+    </div>
   </section>
 
   <footer class="footer">
@@ -534,10 +541,10 @@
   <!-- Lenis momentum smooth-scroll (window.Lenis). -->
   <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.14/dist/lenis.min.js"></script>
 
-  <script type="module" src="drawer-viewer.js?v=site278"></script>
+  <script type="module" src="drawer-viewer.js?v=site279"></script>
   <script type="module" src="product-viewer-ui.js?v=14"></script>
   <script type="module" src="product-interaction.js?v=15"></script>
-  <script type="module" src="showcase.js?v=69"></script>
+  <script type="module" src="showcase.js?v=74"></script>
   <script type="module" src="product-sheet.js?v=127"></script>
   <script type="module" src="micro.js?v=3"></script>
 

@@ -67,7 +67,7 @@ function init(root) {
   // show the chosen vehicle — the same Inferno unit, on its back.
   const VEHICLES = {
     'attac-bakkie-4cu': [
-      { id: 'cruiser', label: 'Land Cruiser', glb: 'models/attac-4cu-cruiser.asset.json?v=128', config: 'products/attac-4cu-cruiser.json?v=128' },
+      { id: 'cruiser', label: 'Land Cruiser', glb: 'models/attac-4cu-cruiser.asset.json?v=135', config: 'products/attac-4cu-cruiser.json?v=135' },
       { id: 'hilux', label: 'Hilux' },
     ],
   };
@@ -644,6 +644,13 @@ function init(root) {
   }
 
   addEventListener('resize', () => { if (root.classList.contains('has-3d')) floorToModel(); else setFloor(stage.clientHeight * 0.95); });
+  // Phase 133: a vehicle in the contact section's garage takes you to that product on the stage
+  document.querySelectorAll('.contact-garage__car').forEach(b => b.addEventListener('click', () => {
+    const k = items.findIndex(it => it.short === b.dataset.product); if (k < 0) return;
+    const top = root.getBoundingClientRect().top + scrollY;
+    if (window.__lenis) window.__lenis.scrollTo(top, { duration: 1.2 }); else scrollTo({ top, behavior: 'smooth' });
+    setTimeout(() => go(k), 700);
+  }));
 
   // details: the product sheet slides in (product-sheet.js); its buttons lead on to the 3D drawer
   const details = () => { const it = items[cur]; document.dispatchEvent(new CustomEvent('inferno:details', { detail: { card: it.card, img: it.src, glow: it.glow, group: it.groupLabel, logo: it.logo } })); };

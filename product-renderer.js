@@ -452,7 +452,7 @@ export class ProductRenderer {
     cam.near = Math.max(0.01, -fp.hi[2] - s.depthPad); cam.far = far + s.depthPad;
     cam.updateProjectionMatrix();
     const texel = Math.max(cam.right - cam.left, cam.top - cam.bottom) / size;
-    L.shadow.normalBias = q.normalBiasTexels * texel;
+    L.shadow.normalBias = q.normalBiasTexels * texel * (this.normalBiasScale || 1);   // Phase 132: a per-product scale (thin double-sided panels)
     L.shadow.bias = -q.depthBiasTexels * texel / (cam.far - cam.near);
     this.shadowInfo = { quality: s.quality, mapSize: size, fit: fp.vertices > 8 ? 'casters' : 'box', fitVertices: fp.vertices,
       frustum: [cam.left, cam.right, cam.bottom, cam.top, cam.near, cam.far].map(v => +v.toFixed(3)),

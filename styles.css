@@ -5176,3 +5176,37 @@ html.has-scrolled .hero__cue { opacity: 0; transform: translate(-50%, 10px); poi
 .showcase.has-3d.is-riteline .showcase__rlreplay { opacity: 1; transform: none; pointer-events: auto; }
 .showcase__rlreplay:hover { background: rgba(228, 32, 44, 0.32); }
 @media (max-width: 900px) { .showcase__rlreplay { right: auto; left: 4%; } }
+
+/* ═ Phase 133 — the contact section's garage (owner's reference): three of our vehicles seen from behind, standing in the dark at
+   the foot of the section. Dimmed at rest; the one under the pointer comes up into the light while the others sink back. ═ */
+#contact.contact-section { position: relative; overflow: hidden; padding-bottom: 0; }
+.contact-garage { position: relative; z-index: 1; display: flex; justify-content: center; align-items: flex-end; gap: clamp(0px, 1vw, 16px);
+  max-width: 1500px; margin: clamp(40px, 7vh, 90px) auto 0; padding: 0 3vw; }
+.contact-garage::before { content: ''; position: absolute; inset: auto -10% 0; height: 38%; z-index: 0; pointer-events: none;
+  background: radial-gradient(60% 100% at 50% 100%, rgba(255, 255, 255, 0.05), transparent 70%); }
+.contact-garage::after { content: ''; position: absolute; inset: auto 0 0; height: 18%; z-index: 2; pointer-events: none;
+  background: linear-gradient(180deg, transparent, var(--room-bg, #07080b)); }
+.contact-garage__car { position: relative; z-index: 1; flex: 1 1 0; max-width: 470px; padding: 0; border: 0; background: none; cursor: pointer;
+  filter: brightness(0.62) saturate(0.85); transition: filter 600ms cubic-bezier(0.22, 1, 0.36, 1), transform 600ms cubic-bezier(0.22, 1, 0.36, 1); }
+.contact-garage__car img { display: block; width: 100%; height: auto; }
+.contact-garage__car--mid { max-width: 520px; transform: translateY(4%); }
+.contact-garage__car span { position: absolute; left: 50%; bottom: 14%; transform: translate(-50%, 8px); white-space: nowrap; z-index: 3;
+  font: 500 10.5px/1 var(--font-ui, Inter, sans-serif); letter-spacing: 0.22em; text-transform: uppercase; color: #fff; opacity: 0;
+  transition: opacity 400ms ease, transform 500ms cubic-bezier(0.22, 1, 0.36, 1); }
+/* one under the pointer: it comes up, the others sink back */
+.contact-garage:hover .contact-garage__car { filter: brightness(0.22) saturate(0.6); }
+.contact-garage:hover .contact-garage__car:hover, .contact-garage__car:focus-visible { filter: brightness(1.08) saturate(1.05); }
+.contact-garage__car:hover span, .contact-garage__car:focus-visible span { opacity: 1; transform: translate(-50%, 0); }
+.contact-garage__car:focus-visible { outline: none; }
+@media (hover: none) { .contact-garage__car { filter: brightness(0.85); } }
+@media (max-width: 900px) { .contact-garage { gap: 0; padding: 0 2vw; } .contact-garage__car span { font-size: 9px; letter-spacing: 0.16em; } }
+/* bigger: the vehicles fill the width and stand shoulder to shoulder (owner's reference) */
+.contact-garage { max-width: none; gap: 0; padding: 0 2vw; margin-top: clamp(30px, 5vh, 70px); }
+.contact-garage__car { flex: 0 1 auto; max-width: none; width: clamp(240px, 30vw, 560px); margin: 0 -1.5vw; }
+.contact-garage__car--mid { width: clamp(250px, 31vw, 590px); transform: translateY(6%); z-index: 0; }
+.contact-garage__car img { filter: drop-shadow(0 30px 40px rgba(0, 0, 0, 0.6)); }
+/* sized by height so each stands at the same scale */
+.contact-garage__car, .contact-garage__car--mid { width: auto; }
+.contact-garage__car img { width: auto; height: clamp(220px, 46vh, 520px); max-width: 34vw; object-fit: contain; }
+.contact-garage__car--mid img { height: clamp(230px, 48vh, 540px); }
+@media (max-width: 900px) { .contact-garage__car img { height: auto; width: 33vw; max-width: none; } .contact-garage__car { margin: 0 -1vw; } }

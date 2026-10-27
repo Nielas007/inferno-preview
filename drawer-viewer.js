@@ -8,7 +8,7 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { FullScreenQuad } from 'three/addons/postprocessing/Pass.js';   // Phase 82r: focus blur passes
 import { ProductionAsset, resetTextureLoader } from './production-asset.js?v=9';
-import { ProductRenderer, RENDER_CONFIG } from './product-renderer.js?v=11';
+import { ProductRenderer, RENDER_CONFIG } from './product-renderer.js?v=12';
 import { ProductAO } from './product-ao.js?v=4';
 import { ProductPost } from './product-post.js?v=12';
 import { GroundProjectedSkybox } from 'three/addons/objects/GroundProjectedSkybox.js';   // Phase 102
@@ -831,7 +831,10 @@ function build() {
   });
 
   V.loadUrl = function (url) {
-    if (V.models[url]) { showOnly(url); return; }
+    // Phase 132 (owner: "fix the Cruiser doors"): the Cruiser's thin double-sided door skins self-shadow (fine stripes, dark
+    // bands) at the standard bias; it gets a larger shadow normal offset
+    V.pr.normalBiasScale = /cruiser/.test(url) ? 3.5 : 1;
+    if (V.models[url]) { showOnly(url); V.pr.refitShadow(); return; }
     if (/\.asset\.json(\?|$)/.test(url)) { loadProduction(url); return; }
     if (loaderEl) { loaderEl.classList.remove('is-hidden'); loaderEl.textContent = 'Loading model…'; }
     _gltf.load(url, (gltf) => {

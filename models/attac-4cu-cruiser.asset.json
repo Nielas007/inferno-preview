@@ -189,7 +189,7 @@
     1024,
     1024
    ],
-   "kb": 314.8
+   "kb": 292.2
   },
   {
    "file": "textures/A4CU_CHS_BaseColor_1K.ktx2",
@@ -209,7 +209,7 @@
     1024,
     1024
    ],
-   "kb": 751.8
+   "kb": 737.5
   },
   {
    "file": "textures/A4CU_CHS_Normal_512.ktx2",
@@ -219,7 +219,7 @@
     512,
     512
    ],
-   "kb": 161.0
+   "kb": 152.6
   },
   {
    "file": "textures/A4CU_CYL_BaseColor_2K.ktx2",
@@ -239,7 +239,7 @@
     2048,
     2048
    ],
-   "kb": 1566.1
+   "kb": 1566.0
   },
   {
    "file": "textures/A4CU_FRM_BaseColor_2K.ktx2",
@@ -289,7 +289,7 @@
     2048,
     2048
    ],
-   "kb": 2731.7
+   "kb": 2603.5
   },
   {
    "file": "textures/A4CU_VEH_Normal_512.ktx2",
@@ -299,7 +299,7 @@
     512,
     512
    ],
-   "kb": 171.0
+   "kb": 136.0
   },
   {
    "file": "textures/A4CU_WHEEL_BaseColor_2K.ktx2",
@@ -319,17 +319,7 @@
     2048,
     2048
    ],
-   "kb": 2563.0
-  },
-  {
-   "file": "textures/A4CU_WHEEL_Normal_1K.ktx2",
-   "set": "WHEEL",
-   "map": "Normal",
-   "size": [
-    1024,
-    1024
-   ],
-   "kb": 748.9
+   "kb": 2389.0
   },
   {
    "file": "textures/A4CU_LABEL_BaseColor_2048x1448.ktx2",
@@ -537,7 +527,7 @@
  ],
  "materialTable": {
   "id": "attac-4cu-cruiser/phase80",
-  "sha256": "a2d7d51c86224ce5c2c2d912b8f305e58a9504cd578cc44c59e75f8cc8b7ca27",
+  "sha256": "e0740ba02c6e0cd265af7f67070bfacfc6a410e6308a7fd4f0fa41f96c3ed17d",
   "materials": 31
  },
  "metrics": {
@@ -547,12 +537,12 @@
    "LOD2": 174677
   },
   "brotliMB": {
-   "LOD0": 3.568,
-   "LOD1": 2.514,
-   "LOD2": 1.985
+   "LOD0": 3.275,
+   "LOD1": 2.228,
+   "LOD2": 1.834
   },
-  "texturesKTX2MB_own": 14.662,
-  "gpuTexturesMB_own": 54.1,
+  "texturesKTX2MB_own": 13.504,
+  "gpuTexturesMB_own": 52.8,
   "texturesShared": "the Inferno unit's CAN / VAL / REEL / GAUGE / PLATE (+ cutaway CYL / FOAM) sets of models/4cu-trailer/textures - one cached copy for both products",
   "textureSets": {
    "BODY": "1K",
@@ -570,8 +560,7 @@
   "normalMaps": {
    "CHS": "512",
    "FRM": "512",
-   "VEH": "512",
-   "WHEEL": "1K"
+   "VEH": "512"
   },
   "materials": 31,
   "primitivesPerLOD": 22,
